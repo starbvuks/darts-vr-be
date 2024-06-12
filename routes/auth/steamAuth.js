@@ -1,113 +1,110 @@
 const express = require('express');
-const axios = require('axios');
+const passport = require('passport');
+const SteamStrategy = require('passport-steam').Strategy;
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 
-const app = express();
+const router = express.Router();
 
-// Connect to MongoDB
-mongoose.connect('mongodb+srv://starbvuks:zbzij5p0oU4i4ABw@playground.xrmczcu.mongodb.net/?retryWrites=true&w=majority&appName=playground', { useNewUrlParser: true, useUnifiedTopology: true });
-
-// Define the User model
-const userSchema = new mongoose.Schema({
-  steamId: String,
-  username: String,
-  token: String,
-});
-
-const User = mongoose.model('User', userSchema);
-
-// Define the Steam API endpoint for token verification
-const steamApiUrl = 'https://api.steampowered.com/ISteamUserAuth/AuthenticateUser/v0001';
-
-// Define the Steam API key
 const steamApiKey = '4FEB4A7C7215846689DABEE2FA54E034';
+const returnURL = 'http://localhost:3000/auth/steam/callback';
+const realm = 'http://localhost:3000/';
+const jwtSecretKey = 'darts_vr_secret_key';
 
-// Define the endpoint to handle Steam login
-app.post('/login-steam', async (req, res) => {
-  const { token } = req.body;
+// Define Player Schema
+const PlayerSchema = new mongoose.Schema({
+  steamId: String,
+  email: String,
+  displayName: String,
+  avatar: String,
+});
+const Player = mongoose.model('Player', PlayerSchema);
 
-  // Construct the request to the Steam API
-  const steamApiRequest = {
-    method: 'POST',
-    url: steamApiUrl,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    data: JSON.stringify({
-      key: steamApiKey,
-      token,
-    }),
-  };
+passport.use(new SteamStrategy({
+  returnURL: 'http://localhost:3000/auth/steam/return',
+  realm: 'http://localhost:3000/',
+  apiKey: 'your steam API key'
+}, async (identifier, profile, done) => {
+  const steamId = profile.id;
+  const apiUrl = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${steamApiKey}&steamids=${steamId}`;
+  http.get(apiUrl, async (res) => {
+    const playerData = JSON.parse(res.body).response.players[0];
+    const email = playerData.email;
+    // Create new player
+    const player = new Player({
+      steamId: steamId,
+      email: email,
+      displayName: profile.displayName,
+      avatar: profile.photos[2].value
+    });
+    await player.save();
+    return done(null, player);
+  });
+}));
 
+passport.serializeUser((player, done) => {
+  done(null, player._id);
+});
+
+passport.deserializeUser(async (id, done) => {
   try {
-    // Make the request to the Steam API
-    const response = await axios(steamApiRequest);
+    const player = await Player.findById(id);
+    done(null, player);
+  } catch (error) {
+    done(error);
+  }
+});
 
-    // Extract the Steam ID from the response
-    const steamId = response.data.response.params.steamid;
+router.get('/auth/steam', passport.authenticate('steam', { session: false }));
 
-    // Verify the Steam ID
-    if (steamId) {
-      // Check if the user exists in the database
-      let user = await User.findOne({ steamId });
+router.get('/auth/steam/callback', passport.authenticate('steam', { failureRedirect: '/', session: false }), (req, res) => {
+  // Redirect to the front-end with the entire user profile data in the JWT token
+  const authToken = jwt.sign({ profile: req.user }, jwtSecretKey, { expiresIn: '1h' });
+  res.redirect(`http://localhost:3001/?token=${authToken}`);
+});
 
-      // If the user doesn't exist, create a new one
-      if (!user) {
-        user = new User({ steamId, username: response.data.response.params.vacbanned === '0' ? response.data.response.params.personaname : 'Anonymous' });
-        await user.save();
+// Middleware to authenticate JWT token
+const authenticateJWT = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (authHeader) {
+    const token = authHeader.split(' ')[1];
+
+    jwt.verify(token, jwtSecretKey, (err, user) => {
+      if (err) {
+        return res.sendStatus(403);
       }
-
-      // Generate a JWT token
-      const token = jwt.sign({ userId: user._id }, 'your-secret-key', { expiresIn: '1h' });
-
-      // Update the user's token in the database
-      await User.updateOne({ _id: user._id }, { $set: { token } });
-
-      res.send({ token });
-    } else {
-      res.status(401).send({ message: 'Invalid Steam token' });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({ message: 'Error logging in with Steam' });
+      req.user = user;
+      next();
+    });
+  } else {
+    res.sendStatus(401);
   }
-});
+};
 
-// Define the endpoint to handle logout
-app.post('/logout', async (req, res) => {
-  const { userId } = req.body;
-
-  // Remove the user's token from the database
-  await User.updateOne({ _id: userId }, { $set: { token: null } });
-
-  res.send({ message: 'Logged out successfully' });
-});
-
-// Define the endpoint to verify the user's token
-app.post('/verify-token', async (req, res) => {
-  const { token } = req.body;
-
+// Define the endpoint to fetch user information
+router.get('/user', authenticateJWT, async (req, res) => {
   try {
-    // Verify the JWT token
-    const decoded = jwt.verify(token, 'your-secret-key');
+    // Fetch the user's information based on the decoded JWT token
+    const steamId = req.user.profile.steamId;
+    const player = await Player.findOne({ steamId });
 
-    // Find the user in the database
-    const user = await User.findById(decoded.userId);
-
-    if (user && user.token === token) {
-      res.send({ userId: user._id, username: user.username });
-    } else {
-      res.status(401).send({ message: 'Invalid token' });
+    if (!player) {
+      return res.status(404).send({ message: 'User not found' });
     }
+
+    const userInfo = {
+      steamId: player.steamId,
+      email: player.email,
+      displayName: player.displayName,
+      avatar: player.avatar,
+    };
+
+    res.send(userInfo);
   } catch (error) {
     console.error(error);
-    res.status(401).send({ message: 'Invalid token' });
+    res.status(500).send({ message: 'Error fetching user information' });
   }
 });
 
-// Start the server
-const port = 3000;
-app.listen(port, () => {
-  console.log(`Server started on port ${port}`);
-});
+module.exports = router;
