@@ -3,17 +3,17 @@ const mongoose = require("mongoose");
 const playerSchema = new mongoose.Schema({
   username: String,
   email: String,
-  auth: {
-    platform: String,
-    platformId: String,
+  steamId: String,
+  auth: [{
+    platform: String, // e.g., 'Steam', 'Oculus', 'PlayStation'
+    platformId: String, // Unique identifier for the platform (e.g., Steam ID)
     accessToken: String,
     refreshToken: String,
-    expiresIn: Number
-  },
+    expiresIn: Number,
+  }],
   profile: {
     platformType: String,
     country: String,
-    //ip addrwss
     handedness: String,
     gender: String,
     timeouts: {
