@@ -50,5 +50,4 @@ app.post('/demo-login', (req, res) => {
 
 module.exports = app;
 
-
 // http://localhost:3000/api/users/?userId=6666d32dead7f3bab9218bf8
