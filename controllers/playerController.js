@@ -1,4 +1,4 @@
-const PlayerService = require("../services/PlayerService");
+const PlayerService = require("../services/playerService");
 const jwt = require("jsonwebtoken");
 
 const validateJwt = (req, res, next) => {
