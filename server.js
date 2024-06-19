@@ -36,10 +36,6 @@ app.listen(port, () => {
   console.log(`Server started on port ${port}`);
 });
 
-const userIDs = {
-  user: "6666d32dead7f3bab9218bf8",
-};
-
 app.post('/demo-login', (req, res) => {
   const { user } = req.body;
 
@@ -51,5 +47,8 @@ app.post('/demo-login', (req, res) => {
     res.status(401).send({ message: 'Invalid user ID' });
   }
 });
+
+module.exports = app;
+
 
 // http://localhost:3000/api/users/?userId=6666d32dead7f3bab9218bf8
