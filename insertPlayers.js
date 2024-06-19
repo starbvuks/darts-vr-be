@@ -8,7 +8,7 @@ async function updatePlayerById() {
     await client.connect();
 
     const db = client.db("DARTS");
-    const collection = db.collection("Players");
+    const collection = db.collection("players");
 
     // Import ObjectId from the mongodb package
     const ObjectId = require('mongodb').ObjectId;

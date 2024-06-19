@@ -1,30 +1,24 @@
-const axios = require('axios');
+const { exchangeNpssoForAccessToken, exchangeAccessTokenForRefreshToken, getProfileFromAccessToken } = require('psn-api');
 
-// Function to obtain an access token from PlayStation
-async function getAccessToken(clientId, clientSecret, redirectUri, code) {
-    const url = 'https://api.playstation.com/oauth2/token'; // PlayStation OAuth 2.0 token endpoint
-    const params = new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
-        grant_type: 'authorization_code',
-        redirect_uri: redirectUri,
-        code: code,
-    });
-
+exports.authenticate = async (npsso) => {
     try {
-        const response = await axios.post(url, params);
-        return response.data.access_token;
+        // Exchange the NPSSO code for an access token
+        const accessTokenResponse = await exchangeNpssoForAccessToken(npsso);
+
+        // Optionally exchange access token for refresh token if necessary
+        const refreshTokenResponse = await exchangeAccessTokenForRefreshToken(accessTokenResponse.accessToken);
+
+        // Use the access token to fetch the user's profile
+        const profile = await getProfileFromAccessToken(accessTokenResponse.accessToken);
+
+        return {
+            accessToken: accessTokenResponse.accessToken,
+            refreshToken: refreshTokenResponse.refreshToken,
+            expiresIn: accessTokenResponse.expiresIn,
+            profile,
+        };
     } catch (error) {
-        console.error('Error obtaining PlayStation access token:', error);
-        throw error;
+        console.error('PSN authentication error:', error);
+        throw new Error('PSN authentication failed');
     }
-}
-
-// Simplified session validation - in practice, you'd check the token's validity
-async function validateSession(accessToken) {
-    // Placeholder for session validation logic
-    // In practice, you would check the token's validity against PlayStation's API
-    return { isValid: true }; // Simulated successful validation
-}
-
-module.exports = { getAccessToken, validateSession };
+};

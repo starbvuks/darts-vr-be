@@ -1,7 +1,8 @@
+// oculusRoute.js
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../controllers/auth/oculusController');
+const oculusController = require('../../controllers/auth/oculusController');
 
-router.get('/authenticate', authenticate);
+router.post('/oculus', oculusController.validateOculusSession);
 
 module.exports = router;

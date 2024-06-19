@@ -1,67 +1,49 @@
-// backend/src/controllers/auth/oculusController.js
+// oculusController.js
+const oculusService = require('../../services/auth/oculusService');
+const authService = require('../../services/auth/authService');
+const Player = require('../../models/Player');
 
-const https = require('https');
-const User = require('../../models/Player.js');
-
-exports.validateOculusSession = async (req, res) => {
+const validateOculusSession = async (req, res) => {
   try {
-    const { nonce, userId } = req.body;
+    const { nonce, oculusId } = req.body;
+    const isValid = await oculusService.validateOculusNonce(nonce, oculusId);
 
-    // Validate the Oculus session
-    const oculusUser = await validateOculusSession(userId, nonce);
+    if (isValid) {
+      let player = await Player.findOne({ 'auth.platformId': oculusId });
 
-    // Check if the user exists in the database
-    let user = await User.findOne({ oculusId: userId });
+      if (!player) {
+        player = await Player.findOne({ email: req.body.email });
+        if (player) {
+          player.auth.push({
+            platform: 'Oculus',
+            platformId: oculusId,
+          });
+        } else {
+          player = new Player({
+            email: req.body.email,
+            username: req.body.username,
+            auth: [
+              {
+                platform: 'Oculus',
+                platformId: oculusId,
+              },
+            ],
+          });
+        }
+        await player.save();
+      }
 
-    if (!user) {
-      // Create a new user if not found
-      user = new User({ oculusId: userId });
-      await user.save();
+      const { accessToken, refreshToken } = await authService.generateOculusTokens(oculusId);
+      res.json({ accessToken, refreshToken });
+    } else {
+      res.status(401).json({ message: 'Invalid Oculus nonce' });
     }
-
-    // Generate an access token for the user
-    const accessToken = generateAccessToken(user);
-
-    res.json({ user, accessToken });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Error validating Oculus session:', error);
+    res.status(500).json({ message: 'Error validating Oculus session' });
   }
 };
 
-function validateOculusSession(userId, nonce) {
-  const options = {
-    method: 'POST',
-    hostname: 'graph.oculus.com',
-    path: '/user_nonce_validate',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-  };
-
-  return new Promise((resolve, reject) => {
-    const req = https.request(options, (res) => {
-      let data = '';
-
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-
-      res.on('end', () => {
-        if (res.statusCode === 200) {
-          resolve(JSON.parse(data));
-        } else {
-          reject(new Error('Invalid Oculus session'));
-        }
-      });
-    });
-
-    req.write(`access_token=OC|${oculus.clientId}|${oculus.clientSecret}&nonce=${nonce}&user_id=${userId}`);
-    req.end();
-  });
-}
-
-function generateAccessToken(user) {
-  // Generate and return an access token for the user
-  // ...
-}
+module.exports = {
+  validateOculusSession,
+};

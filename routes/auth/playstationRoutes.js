@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../controllers/auth/playstationController');
+const playstationController = require('../../controllers/auth/playstationController');
 
-router.get('/authenticate', authenticate);
+// PSN authentication route
+router.post('/psn', playstationController.psnAuth);
 
 module.exports = router;
