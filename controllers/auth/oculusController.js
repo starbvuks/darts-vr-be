@@ -33,7 +33,7 @@ const validateOculusSession = async (req, res) => {
         await player.save();
       }
 
-      const { accessToken, refreshToken } = await authService.generateOculusTokens(oculusId);
+      const { accessToken, refreshToken } = await authService.generateTokens(player._id);
       res.json({ accessToken, refreshToken });
     } else {
       res.status(401).json({ message: 'Invalid Oculus nonce' });

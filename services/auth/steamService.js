@@ -30,6 +30,7 @@ exports.authenticateUserTicket = async (authTicket) => {
     }
 
     return data.params.steamid;
+    
   } catch (error) {
     if (error instanceof SteamAuthError) {
       throw error;

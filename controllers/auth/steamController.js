@@ -12,15 +12,11 @@ exports.steamAuth = async (req, res) => {
 
     const steamId = await steamService.authenticateUserTicket(authTicket);
     
+    // Directly find the user by steamId without considering the email
     let user = await User.findOne({ steamId });
     if (!user) {
-      const email = await steamService.getUserEmail(steamId);
-      user = await User.findOne({ email });
-      if (user) {
-        user.steamId = steamId;
-      } else {
-        user = new User({ email, steamId });
-      }
+      // If the user doesn't exist, create a new user instance with just the steamId
+      user = new User({ steamId });
       await user.save();
     }
 
