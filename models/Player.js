@@ -33,6 +33,11 @@ const playerSchema = new mongoose.Schema({
         friendId: mongoose.Schema.Types.ObjectId,
         username: String,
         timestamp: Date,
+        status: {
+          type: String,
+          enum: ['pending', 'accepted', 'denied'],
+          default: 'pending'
+        }
       },
     ],
     receivedRequests: [
@@ -40,6 +45,11 @@ const playerSchema = new mongoose.Schema({
         friendId: mongoose.Schema.Types.ObjectId,
         username: String,
         timestamp: Date,
+        status: {
+          type: String,
+          enum: ['pending', 'accepted', 'denied'],
+          default: 'pending'
+        }
       },
     ],
     recentlyPlayedWith: [
