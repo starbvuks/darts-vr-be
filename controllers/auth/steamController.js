@@ -1,4 +1,4 @@
-const User = require('../../models/Player');
+const Player = require('../../models/Player');
 const steamService = require('../../services/auth/steamService');
 const authService = require('../../services/auth/authService'); 
 
@@ -12,24 +12,31 @@ exports.steamAuth = async (req, res) => {
 
     const steamId = await steamService.authenticateUserTicket(authTicket);
     
-    let user = await User.findOne({ steamId });
-    if (!user) {
-      user = new User({ steamId });
-      await user.save();
+    let player = await Player.findOne({ 'auth.platformId': steamId });
+    if (!player) {
+      player = new Player({
+        auth: [
+          {
+            platform: 'Steam',
+            platformId: steamId,
+          },
+        ],
+      });
+      await player.save();
     }
 
-    const tokens = authService.generateTokens(user._id);
-    res.json(tokens);
+    const { accessToken, refreshToken } = await authService.generateTokens(player._id);
 
-    user.auth.push({
+    player.auth.push({
       platform: 'Steam',
       platformId: steamId,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      expiresIn: '2h',
+      expiresIn: '2h', 
     });
 
-    await user.save();
+    await player.save();
+    res.json({ accessToken, refreshToken });
 
   } catch (error) {
     console.error('Steam auth error:', error);

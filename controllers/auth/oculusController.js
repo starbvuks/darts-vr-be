@@ -1,4 +1,3 @@
-// oculusController.js
 const oculusService = require('../../services/auth/oculusService');
 const authService = require('../../services/auth/authService');
 const Player = require('../../models/Player');
@@ -9,31 +8,33 @@ const validateOculusSession = async (req, res) => {
     const isValid = await oculusService.validateOculusNonce(nonce, oculusId);
 
     if (isValid) {
+
       let player = await Player.findOne({ 'auth.platformId': oculusId });
 
       if (!player) {
-        player = await Player.findOne({ email: req.body.email });
-        if (player) {
-          player.auth.push({
-            platform: 'Oculus',
-            platformId: oculusId,
-          });
-        } else {
-          player = new Player({
-            email: req.body.email,
-            username: req.body.username,
-            auth: [
-              {
-                platform: 'Oculus',
-                platformId: oculusId,
-              },
-            ],
-          });
-        }
+        player = new Player({
+          username: req.body.username, 
+          auth: [
+            {
+              platform: 'Oculus',
+              platformId: oculusId,
+            },
+          ],
+        });
         await player.save();
       }
 
       const { accessToken, refreshToken } = await authService.generateTokens(player._id);
+      
+      player.auth.push({
+        platform: 'Oculus',
+        platformId: oculusId,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresIn: '2h', 
+      });
+
+      await player.save();
       res.json({ accessToken, refreshToken });
     } else {
       res.status(401).json({ message: 'Invalid Oculus nonce' });

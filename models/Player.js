@@ -1,9 +1,10 @@
+const { ObjectId } = require("mongodb");
 const mongoose = require("mongoose");
 
 const playerSchema = new mongoose.Schema({
+  _id: ObjectId,
   username: String,
   email: String,
-  steamId: String,
   auth: [{
     platform: String, // e.g., 'Steam', 'Oculus', 'PlayStation'
     platformId: String, // Unique identifier for the platform (e.g., Steam ID)
@@ -12,7 +13,6 @@ const playerSchema = new mongoose.Schema({
     expiresIn: Number,
   }],
   profile: {
-    platformType: String,
     country: String,
     handedness: String,
     gender: String,
@@ -105,9 +105,22 @@ const playerSchema = new mongoose.Schema({
       totalLeagueDNFs: Number,
       leagueAccuracy: Number,
     },
+    atwStats: {
+      totalAtwGamesPlayed: Number
+    },
+    zombiesStats: {
+      totalGamesPlayed: Number
+    },
+    atwStats: {
+      totalZombiesGamesPlayed: Number
+    },
+    killstreakStats: {
+      totalKillstreakGamesPlayed: Number
+    },
   },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+  deleted: Boolean
 });
 
 module.exports = mongoose.model("Player", playerSchema);
