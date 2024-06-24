@@ -5,13 +5,15 @@ const playerSchema = new mongoose.Schema({
   _id: ObjectId,
   username: String,
   email: String,
-  auth: [{
-    platform: String, // e.g., 'Steam', 'Oculus', 'PlayStation'
-    platformId: String, // Unique identifier for the platform (e.g., Steam ID)
-    accessToken: String,
-    refreshToken: String,
-    expiresIn: Number,
-  }],
+  auth: [
+    {
+      platform: String, // e.g., 'Steam', 'Oculus', 'PlayStation'
+      platformId: String, // Unique identifier for the platform (e.g., Steam ID)
+      accessToken: String,
+      refreshToken: String,
+      expiresIn: Number,
+    },
+  ],
   profile: {
     country: String,
     handedness: String,
@@ -35,9 +37,9 @@ const playerSchema = new mongoose.Schema({
         timestamp: Date,
         status: {
           type: String,
-          enum: ['pending', 'accepted', 'denied'],
-          default: 'pending'
-        }
+          enum: ["pending", "accepted", "denied"],
+          default: "pending",
+        },
       },
     ],
     receivedRequests: [
@@ -47,9 +49,9 @@ const playerSchema = new mongoose.Schema({
         timestamp: Date,
         status: {
           type: String,
-          enum: ['pending', 'accepted', 'denied'],
-          default: 'pending'
-        }
+          enum: ["pending", "accepted", "denied"],
+          default: "pending",
+        },
       },
     ],
     recentlyPlayedWith: [
@@ -60,27 +62,18 @@ const playerSchema = new mongoose.Schema({
       },
     ],
     cosmetics: {
-      hats: [
-        {
-          hatId: mongoose.Schema.Types.ObjectId,
-          hatName: String,
-          hatEquipped: Boolean,
-        },
-      ],
-      gloves: [
-        {
-          glovesId: mongoose.Schema.Types.ObjectId,
-          gloveName: String,
-          gloveEquipped: Boolean,
-        },
-      ],
-      dartSkins: [
-        {
-          dartSkinId: mongoose.Schema.Types.ObjectId,
-          dartSkinName: String,
-          dartSkinEquipped: Boolean,
-        },
-      ],
+      hat: {
+        hatId: mongoose.Schema.Types.ObjectId,
+        hatName: String,
+      },
+      gloves: {
+        glovesId: mongoose.Schema.Types.ObjectId,
+        gloveName: String,
+      },
+      dartSkin: {
+        dartSkinId: mongoose.Schema.Types.ObjectId,
+        dartSkinName: String,
+      },
     },
   },
   stats: {
@@ -106,21 +99,21 @@ const playerSchema = new mongoose.Schema({
       leagueAccuracy: Number,
     },
     atwStats: {
-      totalAtwGamesPlayed: Number
+      totalAtwGamesPlayed: Number,
     },
     zombiesStats: {
-      totalGamesPlayed: Number
+      totalGamesPlayed: Number,
     },
     atwStats: {
-      totalZombiesGamesPlayed: Number
+      totalZombiesGamesPlayed: Number,
     },
     killstreakStats: {
-      totalKillstreakGamesPlayed: Number
+      totalKillstreakGamesPlayed: Number,
     },
   },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-  deleted: Boolean
+  deleted: Boolean,
 });
 
 module.exports = mongoose.model("Player", playerSchema);

@@ -41,7 +41,7 @@ app.post('/demo-login', (req, res) => {
 
   // Validate the provided user ID
   if (user == "6666d32dead7f3bab9218bf8") {
-    const token = jwt.sign({ userID: user }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
+    const token = jwt.sign({ userID: user }, process.env.JWT_SECRET_KEY, { expiresIn: '4h' });
     res.json({ token });
   } else {
     res.status(401).send({ message: 'Invalid user ID' });

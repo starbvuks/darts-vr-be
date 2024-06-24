@@ -9,4 +9,8 @@ router.get('/api/users/requests', playerController.getUserRequests);
 router.get('/api/users/cosmetics', playerController.getUserCosmetics);
 router.get('/api/users/preferences', playerController.getUserPreferences);
 
+router.put('/api/users/handedness', playerController.changeHandedness);
+router.put('/api/users/gender', playerController.changeGender);
+router.put('/api/users/equip-cosmetic', playerController.equipCosmetic);
+
 module.exports = router;
