@@ -1,8 +1,11 @@
 const express = require("express");
-const friendRequestRoutes = require("./controllers/friendsController");
+const router = express.Router();
+const friendsController = require("../controllers/friendsController");
 
-const app = express();
+router.post("/send-request", friendsController.sendFriendRequest);
+router.post("/accept-request", friendsController.acceptFriendRequest);
+router.post("/decline-request", friendsController.declineFriendRequest);
+router.post("/remove-friend", friendsController.removeFriend);
+router.post("/block-player", friendsController.blockPlayer);
 
-app.use(express.json());
-app.use("/api/friends", friendRequestRoutes);
-
+module.exports = router;

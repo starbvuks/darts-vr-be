@@ -1,27 +1,9 @@
 const PlayerService = require("../services/playerService");
+const authService = require("../services/auth/authService");
 const jwt = require("jsonwebtoken");
 
-const validateJwt = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.sendStatus(401); // Unauthorized
-  }
-
-  const token = authHeader.split(" ")[1];
-  // console.log("Token:", token); 
-  jwt.verify(token, process.env.JWT_SECRET_KEY, (err, payload) => {
-    if (err) {
-      console.error("JWT Verification Error:", err); 
-      return res.sendStatus(403); 
-    }
-    // console.log("Payload:", payload);
-    req.userId = payload.userID; 
-    next();
-  });
-};
-
 exports.getUserProfile = (req, res) => {
-  validateJwt(req, res, async () => {
+  authService.validateJwt(req, res, async () => {
     const userId = req.userId;
     const user = await PlayerService.getUserProfile(userId);
     if (!user) {
@@ -32,7 +14,7 @@ exports.getUserProfile = (req, res) => {
 };
 
 exports.getUserStats = async (req, res) => {
-  validateJwt(req, res, async () => {
+  authService.validateJwt(req, res, async () => {
     const userId = req.userId;
     const user = await PlayerService.getUserStats(userId);
     if (!user) {
@@ -43,7 +25,7 @@ exports.getUserStats = async (req, res) => {
 };
 
 exports.getUserFriends = async (req, res) => {
-  validateJwt(req, res, async () => {
+  authService.validateJwt(req, res, async () => {
     const userId = req.userId;
     const user = await PlayerService.getUserFriends(userId);
     if (!user) {
@@ -54,7 +36,7 @@ exports.getUserFriends = async (req, res) => {
 };
 
 exports.getUserRequests = async (req, res) => {
-  validateJwt(req, res, async () => {
+  authService.validateJwt(req, res, async () => {
     const userId = req.userId;
     const user = await PlayerService.getUserRequests(userId);
     if (!user) {
@@ -65,7 +47,7 @@ exports.getUserRequests = async (req, res) => {
 };
 
 exports.getUserCosmetics = async (req, res) => {
-  validateJwt(req, res, async () => {
+  authService.validateJwt(req, res, async () => {
     const userId = req.userId;
     const user = await PlayerService.getUserCosmetics(userId);
     if (!user) {
@@ -76,7 +58,7 @@ exports.getUserCosmetics = async (req, res) => {
 };
 
 exports.getUserPreferences = async (req, res) => {
-  validateJwt(req, res, async () => {
+  authService.validateJwt(req, res, async () => {
     const userId = req.userId;
     const user = await PlayerService.getUserPreferences(userId);
     if (!user) {
@@ -87,7 +69,7 @@ exports.getUserPreferences = async (req, res) => {
 };
 
 exports.changeHandedness = (req, res) => {
-  validateJwt(req, res, async () => {
+  authService.validateJwt(req, res, async () => {
     const { handedness } = req.body;
     const userId = req.userId;
     try {
@@ -100,7 +82,7 @@ exports.changeHandedness = (req, res) => {
 };
 
 exports.changeGender = (req, res) => {
-  validateJwt(req, res, async () => {
+  authService.validateJwt(req, res, async () => {
     const { gender } = req.body;
     const userId = req.userId;
     try {
@@ -113,7 +95,7 @@ exports.changeGender = (req, res) => {
 };
 
 exports.equipCosmetic = (req, res) => {
-  validateJwt(req, res, async () => {
+  authService.validateJwt(req, res, async () => {
     const { cosmeticId } = req.body;
     const userId = req.userId;
     try {

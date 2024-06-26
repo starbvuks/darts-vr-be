@@ -1,56 +1,149 @@
 const Player = require("../models/Player");
 
 async function sendFriendRequest(senderId, receiverId) {
-  const sender = await Player.findById(senderId);
-  const receiver = await Player.findById(receiverId);
+  try {
+    const sender = await Player.findById(senderId);
+    const receiver = await Player.findById(receiverId);
 
-  if (!sender.friends.includes(receiverId)) {
-    sender.sentRequests.push({ friendId: receiverId, timestamp: new Date() });
-    await sender.save();
+    if (!sender.profile.sentRequests) {
+      sender.profile.sentRequests = [];
+    }
 
-    
+    if (!receiver.profile.receivedRequests) {
+      receiver.profile.receivedRequests = [];
+    }
+
+    if (
+      !sender.profile.sentRequests.some(
+        (request) => request.receiverId.toString() === receiverId
+      )
+    ) {
+      // Create a new friend request
+      const newRequest = { senderId, receiverId, timestamp: new Date() };
+
+      sender.profile.sentRequests.push(newRequest);
+      receiver.profile.receivedRequests.push(newRequest);
+
+      await sender.save();
+      await receiver.save();
+    } else {
+      throw new Error("Friend request already sent");
+    }
+
+    return { sender, receiver };
+  } catch (error) {
+    throw error;
   }
-
-  return sender;
 }
 
 async function acceptFriendRequest(senderId, receiverId) {
-  const sender = await Player.findById(senderId);
-  const receiver = await Player.findById(receiverId);
+  try {
+    const sender = await Player.findById(senderId);
+    const receiver = await Player.findById(receiverId);
 
-  if (receiver.receivedRequests.some(req => req.friendId.equals(receiverId))) {
-    const index = receiver.receivedRequests.findIndex(req => req.friendId.equals(receiverId));
-    const request = receiver.receivedRequests.splice(index, 1)[0];
+    // Find the received request with a 'pending' status
+    const receivedRequestIndex = receiver.profile.receivedRequests.findIndex(
+      (request) => request.senderId.equals(senderId) && request.status === 'pending'
+    );
 
-    sender.friends.push({ friendId: receiverId, username: receiver.username, since: new Date() });
-    receiver.friends.push({ friendId: senderId, username: sender.username, since: new Date() });
+    if (receivedRequestIndex !== -1) {
+      // Update the received request status to "accepted"
+      receiver.profile.receivedRequests[receivedRequestIndex].status = "accepted";
+      receiver.profile.receivedRequests[receivedRequestIndex].acceptedAt = new Date();
 
-    await sender.save();
-    await receiver.save();
+      // Add the sender and receiver as friends
+      sender.profile.friends.push({
+        friendId: receiverId,
+        username: receiver.name,
+        since: receiver.profile.receivedRequests[receivedRequestIndex].acceptedAt,
+      });
+      receiver.profile.friends.push({
+        friendId: senderId,
+        username: sender.name,
+        since: receiver.profile.receivedRequests[receivedRequestIndex].acceptedAt,
+      });
 
-  
+      await sender.save();
+      await receiver.save();
+
+      return { sender, receiver };
+    } else {
+      throw new Error("Friend request not found");
+    }
+  } catch (error) {
+    throw error;
   }
-
-  return { sender, receiver };
 }
 
 async function declineFriendRequest(senderId, receiverId) {
-  const sender = await Player.findById(senderId);
-  const receiver = await Player.findById(receiverId);
+  try {
+    const sender = await Player.findById(senderId);
+    const receiver = await Player.findById(receiverId);
 
-  if (receiver.receivedRequests.some(req => req.friendId.equals(receiverId))) {
-    const index = receiver.receivedRequests.findIndex(req => req.friendId.equals(receiverId));
-    const request = receiver.receivedRequests.splice(index, 1)[0];
+    // Find the received request with a 'pending' status
+    const receivedRequestIndex = receiver.profile.receivedRequests.findIndex(
+      (request) => request.senderId.equals(senderId) && request.status === 'pending'
+    );
 
-    await receiver.save();
+    if (receivedRequestIndex !== -1) {
+      // Update the received request status to "denied"
+      receiver.profile.receivedRequests[receivedRequestIndex].status = "denied";
 
+      await receiver.save();
+    } else {
+      throw new Error("Friend request not found");
+    }
+
+    return receiver;
+  } catch (error) {
+    throw error;
   }
-
-  return receiver;
 }
+
+async function removeFriend(playerId, friendId) {
+  try {
+    const player = await Player.findById(playerId);
+
+    // Remove the friend from the player's friends list
+    player.profile.friends = player.profile.friends.filter(
+      (friend) => !friend.friendId.equals(friendId)
+    );
+
+    await player.save();
+    return player;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function blockPlayer(playerId, blockedPlayerId) {
+  try {
+    const player = await Player.findById(playerId);
+
+    // Check if the player is already blocked
+    if (!player.profile.blocked.some((block) => block.playerId.equals(blockedPlayerId))) {
+      // Add the blocked player to the player's blocked list
+      player.profile.blocked.push({
+        playerId: blockedPlayerId,
+        since: new Date(),
+      });
+
+      await player.save();
+    } else {
+      throw new Error('Player is already blocked');
+    }
+
+    return player;
+  } catch (error) {
+    throw error;
+  }
+}
+
 
 module.exports = {
   sendFriendRequest,
   acceptFriendRequest,
   declineFriendRequest,
+  removeFriend,
+  blockPlayer
 };

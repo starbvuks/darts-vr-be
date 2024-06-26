@@ -31,6 +31,9 @@ app.use("/api/auth", oculusAuth);
 const playerInfo = require("./routes/playerRoutes.js");
 app.use("/", playerInfo);
 
+const friendsHandler = require("./routes/friendsRoutes.js");
+app.use("/api/friends", friendsHandler);
+
 const port = 3000;
 app.listen(port, () => {
   console.log(`Server started on port ${port}`);

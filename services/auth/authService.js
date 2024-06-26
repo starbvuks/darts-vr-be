@@ -10,8 +10,7 @@ exports.generateTokens = (userId) => {
   const refreshToken = jwt.sign({ userId }, jwtSecret, { expiresIn: '14d' });
   return { accessToken, refreshToken };
 };
-
-exports.refreshToken = async (req, res) => {
+exports.refreshToken = (req, res) => {
   try {
     const { refreshToken } = req.body;
 
@@ -19,15 +18,38 @@ exports.refreshToken = async (req, res) => {
       return res.status(400).json({ error: 'Refresh token is required' });
     }
 
-    const user = await User.findOne({ 'auth.refreshToken': refreshToken });
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid refresh token' });
-    }
+    jwt.verify(refreshToken, jwtSecret, (err, payload) => {
+      if (err) {
+        console.error('Refresh token verification error:', err);
+        return res.status(401).json({ error: 'Invalid refresh token' });
+      }
 
-    const newAccessToken = generateTokens(user._id).accessToken;
-    res.json({ accessToken: newAccessToken });
+      const { userId } = payload;
+      const newAccessToken = jwt.sign({ userId }, jwtSecret, { expiresIn: '2h' });
+      res.json({ accessToken: newAccessToken });
+    });
   } catch (error) {
     console.error('Token refresh error:', error);
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.validateJwt = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.sendStatus(401); // Unauthorized
+  } 
+
+  const token = authHeader.split(" ")[1];
+  // console.log("Token:", token); 
+  jwt.verify(token, process.env.JWT_SECRET_KEY, (err, payload) => {
+    if (err) {
+      console.error("JWT Verification Error:", err); 
+      return res.sendStatus(403); 
+    }
+    // console.log("Payload:", payload);
+    req.userId = payload.userID; 
+    next();
+  });
+};
+

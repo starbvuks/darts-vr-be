@@ -2,7 +2,6 @@ const { ObjectId } = require("mongodb");
 const mongoose = require("mongoose");
 
 const playerSchema = new mongoose.Schema({
-  _id: ObjectId,
   username: String,
   email: String,
   auth: [
@@ -18,45 +17,52 @@ const playerSchema = new mongoose.Schema({
     country: String,
     handedness: String,
     gender: String,
+    banned: { type: Boolean, default: false },
     timeouts: {
+      timedOut: { type: Boolean, default: false },
       numberOfTimeouts: { type: Number, default: 0 },
-      banned: { type: Boolean, default: false },
       duration: { type: Number, default: 0 },
     },
+    blocked: [
+      {
+        playerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
+        since: Date,
+      },
+    ],
     friends: [
       {
-        friendId: mongoose.Schema.Types.ObjectId,
+        friendId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
         username: String,
         since: Date,
       },
     ],
     sentRequests: [
       {
-        friendId: mongoose.Schema.Types.ObjectId,
-        username: String,
+        senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
+        receiverId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
         timestamp: Date,
         status: {
           type: String,
           enum: ["pending", "accepted", "denied"],
           default: "pending",
         },
-      },
+      }
     ],
     receivedRequests: [
       {
-        friendId: mongoose.Schema.Types.ObjectId,
-        username: String,
+        senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
+        receiverId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
         timestamp: Date,
         status: {
           type: String,
           enum: ["pending", "accepted", "denied"],
           default: "pending",
         },
-      },
+      }
     ],
     recentlyPlayedWith: [
       {
-        playerId: mongoose.Schema.Types.ObjectId,
+        playerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
         username: String,
         lastPlayedDate: Date,
       },
@@ -100,12 +106,19 @@ const playerSchema = new mongoose.Schema({
     },
     atwStats: {
       totalAtwGamesPlayed: Number,
+      highestStreak: Number,
+      highestPoints: Number
     },
     zombiesStats: {
-      totalGamesPlayed: Number,
-    },
-    atwStats: {
       totalZombiesGamesPlayed: Number,
+      highestWave: Number,
+      zombiesKilled: Number,
+      highestPoints: Number,
+      headshots: Number,
+      legShots: Number,
+    },
+    five0OneStats: {
+      totalfive0OneGamesPlayed: Number,
     },
     killstreakStats: {
       totalKillstreakGamesPlayed: Number,
