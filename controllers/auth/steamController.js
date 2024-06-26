@@ -30,8 +30,6 @@ exports.steamAuth = async (req, res) => {
     player.auth.push({
       platform: 'Steam',
       platformId: steamId,
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
       expiresIn: '2h', 
     });
 
