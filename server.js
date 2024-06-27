@@ -4,6 +4,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const http = require('http');
+const { WebSocketServer } = require('ws');
 const setupWebSocket = require('./websockets');
 require("dotenv").config();
 
@@ -39,8 +40,9 @@ app.use("/api/friends", friendsHandler);
 
 const port = 3000;
 const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
 
-setupWebSocket(server);
+setupWebSocket(wss);
 server.listen(port, () => {
   console.log(`Server started on port ${port}`);
 });

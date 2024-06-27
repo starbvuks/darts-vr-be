@@ -1,12 +1,10 @@
-const WebSocket = require('ws');
 const jwt = require('jsonwebtoken');
 const Player = require('./models/Player');
 const friendsService = require('./services/friendsService');
 
-module.exports = (server) => {
-  const wss = new WebSocket.Server({ server });
-
+module.exports = (wss) => {
   wss.on('connection', (ws, req) => {
+
     const token = req.headers.authorization;
     if (!token) {
       console.error('No token provided');
