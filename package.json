@@ -1,5 +1,5 @@
 {
-  "name": "practice-api",
+  "name": "darts-vr-be",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -22,7 +22,8 @@
     "mongoose": "^8.4.1",
     "passport": "^0.7.0",
     "passport-steam": "^1.0.18",
-    "psn-api": "^2.10.1"
+    "psn-api": "^2.10.1",
+    "ws": "^8.17.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.3"

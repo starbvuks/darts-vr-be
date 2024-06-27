@@ -5,30 +5,23 @@ async function sendFriendRequest(senderId, receiverId) {
     const sender = await Player.findById(senderId);
     const receiver = await Player.findById(receiverId);
 
-    if (!sender.profile.sentRequests) {
-      sender.profile.sentRequests = [];
-    }
+    // Check if the friend request already exists
+    const existingRequest = sender.profile.sentRequests.find(
+      (request) => request.receiverId.toString() === receiverId
+    );
 
-    if (!receiver.profile.receivedRequests) {
-      receiver.profile.receivedRequests = [];
-    }
-
-    if (
-      !sender.profile.sentRequests.some(
-        (request) => request.receiverId.toString() === receiverId
-      )
-    ) {
-      // Create a new friend request
-      const newRequest = { senderId, receiverId, timestamp: new Date() };
-
-      sender.profile.sentRequests.push(newRequest);
-      receiver.profile.receivedRequests.push(newRequest);
-
-      await sender.save();
-      await receiver.save();
-    } else {
+    if (existingRequest) {
       throw new Error("Friend request already sent");
     }
+
+    // Create a new friend request
+    const newRequest = { senderId, receiverId, timestamp: new Date() };
+
+    sender.profile.sentRequests.push(newRequest);
+    receiver.profile.receivedRequests.push(newRequest);
+
+    await sender.save();
+    await receiver.save();
 
     return { sender, receiver };
   } catch (error) {

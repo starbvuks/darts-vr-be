@@ -6,17 +6,13 @@ const playerSchema = new mongoose.Schema({
   email: String,
   auth: [
     {
-      platform: String, // e.g., 'Steam', 'Oculus', 'PlayStation'
-      platformId: String, // Unique identifier for the platform (e.g., Steam ID)
-      accessToken: String,
-      refreshToken: String,
-      expiresIn: Number,
+      platform: String, 
+      platformId: String, 
     },
   ],
   profile: {
     country: String,
     handedness: String,
-    gender: String,
     banned: { type: Boolean, default: false },
     timeouts: {
       timedOut: { type: Boolean, default: false },
@@ -25,62 +21,66 @@ const playerSchema = new mongoose.Schema({
     },
     blocked: [
       {
-        playerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
+        playerId: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
         since: Date,
       },
     ],
     friends: [
       {
-        friendId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
+        friendId: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
         username: String,
         since: Date,
       },
     ],
     sentRequests: [
       {
-        senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
-        receiverId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
+        senderId: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
+        receiverId: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
         timestamp: Date,
         status: {
           type: String,
           enum: ["pending", "accepted", "denied"],
           default: "pending",
         },
-      }
+      },
     ],
     receivedRequests: [
       {
-        senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
-        receiverId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
+        senderId: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
+        receiverId: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
         timestamp: Date,
         status: {
           type: String,
           enum: ["pending", "accepted", "denied"],
           default: "pending",
         },
-      }
+      },
     ],
     recentlyPlayedWith: [
       {
-        playerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
+        playerId: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
         username: String,
         lastPlayedDate: Date,
       },
     ],
     cosmetics: {
       hat: {
-        hatId: mongoose.Schema.Types.ObjectId,
-        hatName: String,
+        hatId: mongoose.Schema.Types.ObjectId, 
       },
-      gloves: {
-        glovesId: mongoose.Schema.Types.ObjectId,
-        gloveName: String,
+      hands: {
+        handsId: mongoose.Schema.Types.ObjectId, 
       },
       dartSkin: {
-        dartSkinId: mongoose.Schema.Types.ObjectId,
-        dartSkinName: String,
+        dartSkinId: mongoose.Schema.Types.ObjectId, 
+      },
+      glasses: {
+        glassesId: mongoose.Schema.Types.ObjectId, 
+      },
+      gender: {
+        genderId: mongoose.Schema.Types.ObjectId, 
       },
     },
+    socketIds: [String], 
   },
   stats: {
     totalDartsThrown: Number,
@@ -107,7 +107,7 @@ const playerSchema = new mongoose.Schema({
     atwStats: {
       totalAtwGamesPlayed: Number,
       highestStreak: Number,
-      highestPoints: Number
+      highestPoints: Number,
     },
     zombiesStats: {
       totalZombiesGamesPlayed: Number,

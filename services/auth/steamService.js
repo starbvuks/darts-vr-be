@@ -29,6 +29,7 @@ exports.authenticateUserTicket = async (authTicket) => {
       throw new SteamAuthError('Steam ID not found in response', 'INVALID_RESPONSE');
     }
 
+    console.log(data)
     return data.params.steamid;
     
   } catch (error) {

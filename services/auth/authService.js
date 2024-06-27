@@ -10,7 +10,8 @@ exports.generateTokens = (userId) => {
   const refreshToken = jwt.sign({ userId }, jwtSecret, { expiresIn: '14d' });
   return { accessToken, refreshToken };
 };
-exports.refreshToken = (req, res) => {
+
+exports.refreshToken = async (req, res) => {
   try {
     const { refreshToken } = req.body;
 
@@ -18,13 +19,19 @@ exports.refreshToken = (req, res) => {
       return res.status(400).json({ error: 'Refresh token is required' });
     }
 
-    jwt.verify(refreshToken, jwtSecret, (err, payload) => {
+    jwt.verify(refreshToken, jwtSecret, async (err, payload) => {
       if (err) {
         console.error('Refresh token verification error:', err);
         return res.status(401).json({ error: 'Invalid refresh token' });
       }
 
       const { userId } = payload;
+      const user = await User.findById(userId);
+
+      if (!user) {
+        return res.status(401).json({ error: 'User not found' });
+      }
+
       const newAccessToken = jwt.sign({ userId }, jwtSecret, { expiresIn: '2h' });
       res.json({ accessToken: newAccessToken });
     });
@@ -33,7 +40,6 @@ exports.refreshToken = (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 exports.validateJwt = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {

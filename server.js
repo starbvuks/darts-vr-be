@@ -3,6 +3,8 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
+const http = require('http');
+const setupWebSocket = require('./websockets');
 require("dotenv").config();
 
 // Initialize express
@@ -34,8 +36,12 @@ app.use("/", playerInfo);
 const friendsHandler = require("./routes/friendsRoutes.js");
 app.use("/api/friends", friendsHandler);
 
+
 const port = 3000;
-app.listen(port, () => {
+const server = http.createServer(app);
+
+setupWebSocket(server);
+server.listen(port, () => {
   console.log(`Server started on port ${port}`);
 });
 

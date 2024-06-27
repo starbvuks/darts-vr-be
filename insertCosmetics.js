@@ -1,9 +1,13 @@
 const mongoose = require("mongoose");
 const Cosmetics = require("./models/Cosmetics");
-const { MongoClient } = require('mongodb');
+const { MongoClient } = require("mongodb");
 
-const uri = 'mongodb+srv://starbvuks:zbzij5p0oU4i4ABw@playground.xrmczcu.mongodb.net/DARTS?retryWrites=true&w=majority&appName=playground';
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+const uri =
+  "mongodb+srv://starbvuks:zbzij5p0oU4i4ABw@playground.xrmczcu.mongodb.net/DARTS?retryWrites=true&w=majority&appName=playground";
+const client = new MongoClient(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 async function insertDemoCosmetics() {
   try {
@@ -13,30 +17,35 @@ async function insertDemoCosmetics() {
 
     const demoCosmetics = [
       {
-        name: "Red Baseball Cap",
+        name: "Default Hat",
+        unityId: 0,
         price: 0,
-        type: "hat"
+        type: "hat",
       },
       {
-        name: "Black Leather Gloves",
+        name: "Default Hands",
+        unityId: 0,
         price: 0,
-        type: "gloves"
+        type: "hands",
       },
       {
-        name: "Neon Green Dart Skin",
+        name: "Default Dart Skin",
+        unityId: 0,
         price: 0,
-        type: "dart"
+        type: "dartSkin",
       },
       {
-        name: "Flaming Dart Skin",
+        name: "Default Glasses",
+        unityId: 0,
         price: 0,
-        type: "dart"
+        type: "glasses",
       },
       {
-        name: "Blue Beanie",
+        name: "Male",
+        unityId: 0,
         price: 0,
-        type: "hat"
-      }
+        type: "gender",
+      },
     ];
 
     await collection.insertMany(demoCosmetics);
