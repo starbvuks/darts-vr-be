@@ -6,8 +6,8 @@ const { WebSocket } = require("ws");
 
 module.exports = (wss) => {
   wss.on("connection", (ws, req) => {
-    const urlParams = new url.URL(req.url, "http://localhost:3000");
-    const token = urlParams.searchParams.get("token");
+    const token = req.query.token
+    console.log(token)
 
     if (!token) {
       console.error("No token provided");
@@ -24,6 +24,7 @@ module.exports = (wss) => {
 
       // Listen for friend-related messages
       ws.on("message", (message) => {
+        console.log(`user has connected`);
         try {
           const { type, senderId, receiverId } = JSON.parse(message);
 
