@@ -3,6 +3,7 @@ const authService = require("../services/auth/authService");
 
 exports.sendFriendRequest = async (req, res) => {
   authService.validateJwt(req, res, async () => {
+    console.log(req.body)
     const { receiverId } = req.body;
     const senderId = req.userId;
     console.log("Sender ID:", senderId);
@@ -10,6 +11,19 @@ exports.sendFriendRequest = async (req, res) => {
     try {
       const { sender, receiver } = await friendRequestService.sendFriendRequest(senderId, receiverId);
       res.json({ sender, receiver });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+};
+
+exports.unsendFriendRequest = async (req, res) => {
+  authService.validateJwt(req, res, async () => {
+    const { receiverId } = req.body;
+    const senderId = req.userId;
+    try {
+      await friendRequestService.unsendFriendRequest(senderId, receiverId);
+      res.json({ message: "Friend request unsent" });
     } catch (error) {
       res.status(400).json({ message: error.message });
     }

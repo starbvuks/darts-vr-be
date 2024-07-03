@@ -3,9 +3,9 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
-const http = require('http');
-const { WebSocketServer } = require('ws');
-const setupWebSocket = require('./websockets');
+const http = require("http");
+const { WebSocketServer } = require("ws");
+const setupWebSocket = require("./websockets");
 require("dotenv").config();
 
 // Initialize express
@@ -37,7 +37,6 @@ app.use("/", playerInfo);
 const friendsHandler = require("./routes/friendsRoutes.js");
 app.use("/api/friends", friendsHandler);
 
-
 const port = 3000;
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
@@ -47,18 +46,18 @@ server.listen(port, () => {
   console.log(`Server started on port ${port}`);
 });
 
-app.post('/demo-login', (req, res) => {
+app.post("/demo-login", (req, res) => {
   const { user } = req.body;
 
   // Validate the provided user ID
   if (user == "6666d32dead7f3bab9218bf8") {
-    const token = jwt.sign({ userID: user }, process.env.JWT_SECRET_KEY, { expiresIn: '4h' });
+    const token = jwt.sign({ userID: user }, process.env.JWT_SECRET_KEY, {
+      expiresIn: "4h",
+    });
     res.json({ token });
   } else {
-    res.status(401).send({ message: 'Invalid user ID' });
+    res.status(401).send({ message: "Invalid user ID" });
   }
 });
 
 module.exports = app;
-
-// http://localhost:3000/api/users/?userId=6666d32dead7f3bab9218bf8

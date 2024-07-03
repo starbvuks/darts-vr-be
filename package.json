@@ -20,9 +20,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.6.2",
     "mongoose": "^8.4.1",
-    "passport": "^0.7.0",
-    "passport-steam": "^1.0.18",
     "psn-api": "^2.10.1",
+    "socket.io": "^4.7.5",
     "ws": "^8.17.1"
   },
   "devDependencies": {

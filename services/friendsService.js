@@ -14,6 +14,11 @@ async function sendFriendRequest(senderId, receiverId) {
       throw new Error("Friend request already sent");
     }
 
+    // Check if the sender and receiver are already friends
+    if (sender.profile.friends.some((friend) => friend.friendId.equals(receiverId))) {
+      throw new Error("You are already friends");
+    }
+
     // Create a new friend request
     const newRequest = { senderId, receiverId, timestamp: new Date() };
 
@@ -24,6 +29,31 @@ async function sendFriendRequest(senderId, receiverId) {
     await receiver.save();
 
     return { sender, receiver };
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function unsendFriendRequest(senderId, receiverId) {
+  try {
+    const sender = await Player.findById(senderId);
+    const receiver = await Player.findById(receiverId);
+
+    // Find the sent request with a 'pending' status
+    const sentRequestIndex = sender.profile.sentRequests.findIndex(
+      (request) => request.receiverId.equals(receiverId) && request.status === 'pending'
+    );
+
+    if (sentRequestIndex !== -1) {
+      // Remove the sent request from the sender's and receiver's profiles
+      sender.profile.sentRequests.splice(sentRequestIndex, 1);
+      receiver.profile.receivedRequests.splice(sentRequestIndex, 1);
+
+      await sender.save();
+      await receiver.save();
+    } else {
+      throw new Error("Friend request not found or not pending");
+    }
   } catch (error) {
     throw error;
   }
@@ -43,6 +73,16 @@ async function acceptFriendRequest(senderId, receiverId) {
       // Update the received request status to "accepted"
       receiver.profile.receivedRequests[receivedRequestIndex].status = "accepted";
       receiver.profile.receivedRequests[receivedRequestIndex].acceptedAt = new Date();
+
+      // Find the sent request with a 'pending' status
+      const sentRequestIndex = sender.profile.sentRequests.findIndex(
+        (request) => request.receiverId.equals(receiverId) && request.status === 'pending'
+      );
+
+      if (sentRequestIndex !== -1) {
+        // Update the sent request status to "accepted"
+        sender.profile.sentRequests[sentRequestIndex].status = "accepted";
+      }
 
       // Add the sender and receiver as friends
       sender.profile.friends.push({
@@ -82,7 +122,18 @@ async function declineFriendRequest(senderId, receiverId) {
       // Update the received request status to "denied"
       receiver.profile.receivedRequests[receivedRequestIndex].status = "denied";
 
+      // Find the sent request with a 'pending' status
+      const sentRequestIndex = sender.profile.sentRequests.findIndex(
+        (request) => request.receiverId.equals(receiverId) && request.status === 'pending'
+      );
+
+      if (sentRequestIndex !== -1) {
+        // Update the sent request status to "denied"
+        sender.profile.sentRequests[sentRequestIndex].status = "denied";
+      }
+
       await receiver.save();
+      await sender.save();
     } else {
       throw new Error("Friend request not found");
     }
@@ -138,5 +189,6 @@ module.exports = {
   acceptFriendRequest,
   declineFriendRequest,
   removeFriend,
-  blockPlayer
+  blockPlayer,
+  unsendFriendRequest
 };

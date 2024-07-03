@@ -1,51 +1,16 @@
-const Player = require("../../models/Player");
-const playstationService = require("../../services/auth/playstationService");
-const authService = require("../../services/auth/authService");
+const authService = require('../../services/auth/playstationService');
 
-exports.psnAuth = async (req, res, next) => {
+exports.authenticateUser = async (req, res) => {
   try {
-    const { npsso } = req.body;
-
-    const { accessToken, refreshToken, expiresIn, profile } =
-      await playstationService.authenticate(npsso);
-    const psnId = profile.accountId;
-
-    let player = await Player.findOne({ "auth.platformId": psnId });
-
-    if (!player) {
-      player = new Player({
-        username: profile.onlineId,
-        auth: [
-          {
-            platform: "PlayStation",
-            platformId: psnId,
-            accessToken: accessToken,
-            refreshToken: refreshToken,
-            expiresIn: expiresIn,
-          },
-        ],
-      });
-      await player.save();
-    }
-
-    const tokens = authService.generateTokens(player._id);
-
-    player.auth = player.auth.map((authEntry) =>
-      authEntry.platform === "PlayStation"
-        ? {
-            ...authEntry,
-            accessToken: tokens.accessToken,
-            refreshToken: tokens.refreshToken,
-            expiresIn: "2h",
-          }
-        : authEntry
-    );
-
-    await player.save();
-
-    res.json(tokens);
+    const { idToken } = req.body;
+    const { user, sessionToken } = await authService.authenticateUser(idToken);
+    res.json({ user, sessionToken });
   } catch (error) {
-    console.error(error);
-    res.status(500).send({ message: "PSN authentication failed" });
+    console.error('Error authenticating PlayStation user:', error);
+    if (error instanceof PlayStationAuthError) {
+      res.status(400).json({ error: error.message, type: error.type });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 };

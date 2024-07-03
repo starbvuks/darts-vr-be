@@ -20,7 +20,12 @@ exports.steamAuth = async (req, res) => {
         unityId: "0",
       });
 
+      // Fetch the player's username from the Steam API
+      const playerSummary = await steamService.getPlayerSummaries(steamId);
+      const username = playerSummary.personaname;
+
       player = new Player({
+        username,
         auth: [
           {
             platform: "Steam",
