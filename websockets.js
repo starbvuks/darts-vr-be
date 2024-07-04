@@ -6,8 +6,8 @@ const { WebSocket } = require("ws");
 
 module.exports = (wss) => {
   wss.on("connection", (ws, req) => {
-    const token = req.query.token
-    console.log(token)
+    const urlParams = new url.URL(req.url, "http://localhost:3000");
+    const token = urlParams.searchParams.get("token");
 
     if (!token) {
       console.error("No token provided");
@@ -15,40 +15,39 @@ module.exports = (wss) => {
       return;
     }
 
+    console.log(token);
+
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
       const playerId = decoded.userID;
+      console.log(playerId);
 
-      // Add the userId property to the WebSocket client
-      ws.userId = playerId;
-
-      // Listen for friend-related messages
       ws.on("message", (message) => {
-        console.log(`user has connected`);
         try {
           const { type, senderId, receiverId } = JSON.parse(message);
 
           switch (type) {
-            case "friend_request":
-              handleFriendRequest(senderId, receiverId, ws, playerId);
-              break;
-            case "accept_friend_request":
-              handleAcceptFriendRequest(senderId, receiverId, ws, playerId);
-              break;
-            case "decline_friend_request":
-              handleDeclineFriendRequest(senderId, receiverId, ws, playerId);
-              break;
-            case "remove_friend":
-              handleRemoveFriend(playerId, receiverId, ws);
-              break;
-            case "block_player":
-              handleBlockPlayer(playerId, receiverId, ws);
+            case "send_friend_request":
+              handleSendFriendRequest(senderId, receiverId, ws, wss);
               break;
             case "unsend_friend_request":
-              handleUnsendFriendRequest(senderId, receiverId, ws, playerId);
+              handleUnsendFriendRequest(senderId, receiverId, ws, wss);
+              break;
+            case "accept_friend_request":
+              handleAcceptFriendRequest(senderId, receiverId, ws, wss);
+              break;
+            case "decline_friend_request":
+              handleDeclineFriendRequest(senderId, receiverId, ws, wss);
+              break;
+            case "remove_friend":
+              handleRemoveFriendRequest(senderId, receiverId, ws, wss);
+              break;
+            case "block_player":
+              handleBlockPlayer(senderId, receiverId, ws, wss);
               break;
             default:
-              console.error(`Unknown message type: ${type}`);
+              console.log("Invalid message");
+              break;
           }
         } catch (err) {
           console.error(`Error handling WebSocket message: ${err}`);
@@ -56,7 +55,6 @@ module.exports = (wss) => {
         }
       });
 
-      // Clean up when the connection is closed
       ws.on("close", () => {
         console.log(`user has disconnected`);
       });
@@ -66,121 +64,203 @@ module.exports = (wss) => {
     }
   });
 
-  async function handleFriendRequest(senderId, receiverId, ws, playerId) {
+  async function handleSendFriendRequest(senderId, receiverId, ws, wss) {
     try {
-      const { sender, receiver } = await friendsService.sendFriendRequest(
+      const result = await friendsService.sendFriendRequest(
         senderId,
         receiverId
       );
-      broadcastFriendRequestNotification(receiverId, {
-        type: "friend_request_received",
-        senderId,
-        senderUsername: sender.username,
-        timestamp: new Date().toISOString(),
-      });
-      ws.send(JSON.stringify({ success: true }));
+      if (result.error) {
+        console.error(result.error);
+        ws.send(JSON.stringify({ error: result.error }));
+      } else {
+        const { sender, receiver } = result;
+        broadcastFriendRequestNotification(
+          receiverId,
+          {
+            type: "friend_request_received",
+            senderId,
+            senderUsername: sender.username,
+            timestamp: new Date().toISOString(),
+          },
+          wss
+        );
+        ws.send(JSON.stringify({ success: true }));
+      }
     } catch (err) {
       console.error(`Error handling friend request: ${err}`);
       ws.send(JSON.stringify({ error: err.message }));
     }
   }
-
-  async function handleAcceptFriendRequest(senderId, receiverId, ws, playerId) {
-    try {
-      const { sender, receiver } = await friendsService.acceptFriendRequest(
-        senderId,
-        receiverId
-      );
-      broadcastFriendRequestNotification(sender._id, {
-        type: "friend_request_accepted",
-        senderId: receiver._id,
-        senderUsername: receiver.username,
-      });
-      broadcastFriendRequestNotification(receiver._id, {
-        type: "friend_request_accepted",
-        senderId: sender._id,
-        senderUsername: sender.username,
-      });
-      ws.send(JSON.stringify({ success: true }));
-    } catch (err) {
-      console.error(`Error handling accept friend request: ${err}`);
-      ws.send(JSON.stringify({ error: err.message }));
-    }
-  }
-
-  async function handleDeclineFriendRequest(senderId, receiverId, ws) {
-    try {
-      const receiver = await friendsService.declineFriendRequest(
-        senderId,
-        receiverId
-      );
-      broadcastFriendRequestNotification(senderId, {
-        type: "friend_request_declined",
-        senderId: receiverId,
-        senderUsername: receiver.username,
-      });
-      ws.send(JSON.stringify({ success: true }));
-    } catch (err) {
-      console.error(`Error handling decline friend request: ${err}`);
-      ws.send(JSON.stringify({ error: err.message }));
-    }
-  }
-
-  async function handleRemoveFriend(playerId, friendId, ws) {
-    try {
-      const player = await friendsService.removeFriend(playerId, friendId);
-      broadcastFriendRequestNotification(playerId, {
-        type: "friend_removed",
-        playerId: friendId,
-      });
-      ws.send(JSON.stringify({ success: true }));
-    } catch (err) {
-      console.error(`Error handling remove friend: ${err}`);
-      ws.send(JSON.stringify({ error: err.message }));
-    }
-  }
-
-  async function handleBlockPlayer(playerId, blockedPlayerId, ws) {
-    try {
-      const player = await friendsService.blockPlayer(
-        playerId,
-        blockedPlayerId
-      );
-      broadcastFriendRequestNotification(playerId, {
-        type: "player_blocked",
-        playerId: blockedPlayerId,
-      });
-      ws.send(JSON.stringify({ success: true }));
-    } catch (err) {
-      console.error(`Error handling block player: ${err}`);
-      ws.send(JSON.stringify({ error: err.message }));
-    }
-  }
-
-  async function handleUnsendFriendRequest(senderId, receiverId, ws, playerId) {
-    try {
-      await friendsService.unsendFriendRequest(senderId, receiverId);
-      broadcastFriendRequestNotification(receiverId, {
-        type: "friend_request_unsent",
-        senderId,
-      });
-      ws.send(JSON.stringify({ success: true }));
-    } catch (err) {
-      console.error(`Error handling unsend friend request: ${err}`);
-      ws.send(JSON.stringify({ error: err.message }));
-    }
-  }
-
-  function broadcastFriendRequestNotification(receiverId, notification) {
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(
-          JSON.stringify({
-            ...notification,
-            receiverId,
-          })
-        );
-      }
-    });
-  }
 };
+
+async function handleUnsendFriendRequest(senderId, receiverId, ws, wss) {
+  try {
+    const result = await friendsService.unsendFriendRequest(senderId, receiverId);
+    if (result.error) {
+      console.error(result.error);
+      ws.send(JSON.stringify({ error: result.error }));
+    } else {
+      const { sender, receiver } = result;
+      broadcastFriendRequestNotification(
+        senderId,
+        {
+          type: "friend_request_unsent",
+          receiverId,
+          receiverUsername: receiver.username,
+          timestamp: new Date().toISOString(),
+        },
+        wss
+      );
+      ws.send(JSON.stringify({ success: true }));
+    }
+  } catch (err) {
+    console.error(`Error unsending friend request: ${err}`);
+    ws.send(JSON.stringify({ error: err.message }));
+  }
+}
+
+// HANDLERS
+
+async function handleAcceptFriendRequest(senderId, receiverId, ws, wss) {
+  try {
+    const result = await friendsService.acceptFriendRequest(
+      senderId,
+      receiverId
+    );
+    if (result.error) {
+      console.error(result.error);
+      ws.send(JSON.stringify({ error: result.error }));
+    } else {
+      const { sender, receiver } = result;
+
+      broadcastFriendRequestNotification(
+        sender._id,
+        {
+          type: "friend_request_accepted",
+          senderId: receiver._id,
+          senderUsername: receiver.username,
+        },
+        wss
+      );
+      broadcastFriendRequestNotification(
+        receiver._id,
+        {
+          type: "friend_request_accepted",
+          senderId: sender._id,
+          senderUsername: sender.username,
+        },
+        wss
+      );
+      ws.send(JSON.stringify({ success: true }));
+    }
+  } catch (err) {
+    console.error(`Error handling accept friend request: ${err}`);
+    ws.send(JSON.stringify({ error: err.message }));
+  }
+}
+
+async function handleDeclineFriendRequest(senderId, receiverId, ws, wss) {
+  try {
+    const result = await friendsService.declineFriendRequest(
+      senderId,
+      receiverId
+    );
+    if (result.error) {
+      console.error(result.error);
+      ws.send(JSON.stringify({ error: result.error }));
+    } else {
+      const { sender, receiver } = result;
+
+      broadcastFriendRequestNotification(
+        sender._id,
+        {
+          type: "friend_request_declined",
+          senderId: receiver._id,
+          senderUsername: receiver.username,
+        },
+        wss
+      );
+      broadcastFriendRequestNotification(
+        receiver._id,
+        {
+          type: "friend_request_declined",
+          senderId: sender._id,
+          senderUsername: sender.username,
+        },
+        wss
+      );
+      ws.send(JSON.stringify({ success: true }));
+    }
+  } catch (err) {
+    console.error(`Error handling decline friend request: ${err}`);
+    ws.send(JSON.stringify({ error: err.message }));
+  }
+}
+
+async function handleRemoveFriendRequest(senderId, recieverId, ws, wss) {
+  try {
+    const result = await friendsService.removeFriend(senderId, recieverId);
+
+    if (result.error) {
+      console.error(result.error);
+      ws.send(JSON.stringify({ error: result.error }));
+    } else {
+      const { sender, receiver } = result;
+
+      broadcastFriendRequestNotification(
+        sender._id,
+        {
+          type: "friend_removed",
+          receieverId: receiver._id,
+          receieverUsername: receiver.username,
+        },
+        wss
+      );
+    }
+  } catch (err) {
+    console.error(`Error handling remove friend request: ${err}`);
+    ws.send(JSON.stringify({ error: err.message }));
+  }
+}
+
+async function handleBlockPlayer(senderId, recieverId, ws, wss) {
+  try {
+    const result = await friendsService.blockPlayer(senderId, recieverId);
+
+    if (result.error) {
+      console.error(result.error);
+      ws.send(JSON.stringify({ error: result.error }));
+    } else {
+      const { sender, receiver } = result;
+
+      broadcastFriendRequestNotification(
+        sender._id,
+        {
+          type: "player_blocked",
+          receieverId: receiver._id,
+          receieverUsername: receiver.username,
+        },
+        wss
+      );
+    }
+  } catch (err) {
+    console.error(`Error handling player block: ${err}`);
+    ws.send(JSON.stringify({ error: err.message }));
+  }
+}
+
+// BROADCASTS
+function broadcastFriendRequestNotification(receiverId, notification, wss) {
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(
+        JSON.stringify({
+          ...notification,
+          receiverId,
+        })
+      );
+    }
+  });
+}
+

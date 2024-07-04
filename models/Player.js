@@ -22,6 +22,7 @@ const playerSchema = new mongoose.Schema({
     blocked: [
       {
         playerId: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
+        username: String,
         since: Date,
       },
     ],
@@ -29,6 +30,11 @@ const playerSchema = new mongoose.Schema({
       {
         friendId: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
         username: String,
+        status: {
+          type: String,
+          enum: ["offline", "online", "in-game"],
+          default: "offline",
+        },
         since: Date,
       },
     ],
@@ -108,6 +114,9 @@ const playerSchema = new mongoose.Schema({
       totalAtwGamesPlayed: Number,
       highestStreak: Number,
       highestPoints: Number,
+      atwGames: [
+        mongoose.Schema.Types.ObjectId,
+      ]
     },
     zombiesStats: {
       totalZombiesGamesPlayed: Number,
@@ -116,12 +125,25 @@ const playerSchema = new mongoose.Schema({
       highestPoints: Number,
       headshots: Number,
       legShots: Number,
+      zombiesGames: [
+        mongoose.Schema.Types.ObjectId,
+      ]
     },
     five0OneStats: {
       totalfive0OneGamesPlayed: Number,
+      bullseyeHit: Number,
+      total180s: Number,
+      five0OneGames: [
+        mongoose.Schema.Types.ObjectId,
+      ]
     },
     killstreakStats: {
       totalKillstreakGamesPlayed: Number,
+      highestStreak: Number,
+      minDartsUsed: Number,
+      killstreakGames: [
+        mongoose.Schema.Types.ObjectId,
+      ]
     },
   },
   createdAt: { type: Date, default: Date.now },

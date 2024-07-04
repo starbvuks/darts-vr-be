@@ -56,17 +56,16 @@ exports.declineFriendRequest = async (req, res) => {
   });
 };
 
-exports.removeFriend = async (req, res) => {
-  authService.validateJwt(req, res, async () => {
-    const { friendId } = req.body;
-    const playerId = req.userId;
-    try {
-      const player = await friendRequestService.removeFriend(playerId, friendId);
-      res.json(player);
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  });
+
+exports.removeFriend = async (playerId, friendId) => {
+  try {
+    console.log(`Removing friend: playerId=${playerId}, friendId=${friendId}`);
+    const { player, friend } = await friendsService.removeFriend(playerId, friendId);
+    return { player, friend };
+  } catch (error) {
+    console.error(`Error handling remove friend: ${error}`);
+    throw error;
+  }
 };
 
 exports.blockPlayer = async (req, res) => {
@@ -81,3 +80,15 @@ exports.blockPlayer = async (req, res) => {
     }
   });
 }
+
+exports.searchUsers = async (req, res) => {
+  authService.validateJwt(req, res, async () => {
+    try {
+      const { username, page = 1, limit = 7 } = req.query;
+      const { users, totalPages } = await friendRequestService.searchUsers(username, page, limit);
+      res.json({ users, totalPages });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+};
