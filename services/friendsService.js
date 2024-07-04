@@ -309,6 +309,78 @@ async function blockPlayer(senderId, receiverId) {
   }
 }
 
+async function unblockPlayer(senderId, receiverId) {
+  try {
+    // Check if the player is already unblocked
+    const isBlocked = await Player.exists({
+      _id: senderId,
+      'profile.blocked.playerId': receiverId,
+    });
+
+    if (!isBlocked) {
+      return { error: "Player is not blocked" };
+    }
+
+    // Proceed with unblocking the player
+    const sender = await Player.findById(senderId);
+    const receiver = await Player.findById(receiverId);
+
+    // Remove the receiver from the sender's blocked list
+    sender.profile.blocked = sender.profile.blocked.filter(
+      (block) => !block.playerId.equals(receiverId)
+    );
+
+    // Save the updated player documents
+    await sender.save();
+    await receiver.save();
+
+    return { sender, receiver };
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function updatePlayerStatus(senderId, newStatus, ws) {
+  try {
+    // Find the player and update their status
+    const player = await Player.findById(senderId);
+
+    if (!player) {
+      throw new Error("Player not found");
+    }
+
+    // Check if the new status is valid
+    const validStatuses = ["offline", "online", "in-game"];
+    if (!validStatuses.includes(newStatus)) {
+      throw new Error("Invalid status");
+    }
+
+    // Update the player's status
+    player.profile.status = newStatus;
+    await player.save();
+
+    // Notify the player's friends about the status change
+    const friendIds = player.profile.friends.map((friend) => friend.friendId);
+    const updatedFriends = await Player.find({ _id: { $in: friendIds } });
+
+    updatedFriends.forEach((friend) => {
+      friend.profile.friends.forEach((friendProfile) => {
+        if (friendProfile.friendId.equals(senderId)) {
+          friendProfile.status = newStatus;
+        }
+      });
+      ws.to(friend._id.toString()).emit("friendStatusUpdate", {
+        friendId: senderId,
+        newStatus,
+      });
+      friend.save();
+    });
+
+    return player;
+  } catch (error) {
+    throw error;
+  }
+}
 
 
 module.exports = {
@@ -318,5 +390,7 @@ module.exports = {
   declineFriendRequest,
   removeFriend,
   blockPlayer,
+  unblockPlayer,
+  updatePlayerStatus
 };
 

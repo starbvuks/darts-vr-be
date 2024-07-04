@@ -24,7 +24,7 @@ module.exports = (wss) => {
 
       ws.on("message", (message) => {
         try {
-          const { type, senderId, receiverId } = JSON.parse(message);
+          const { type, senderId, receiverId, newStatus } = JSON.parse(message);
 
           switch (type) {
             case "send_friend_request":
@@ -44,6 +44,12 @@ module.exports = (wss) => {
               break;
             case "block_player":
               handleBlockPlayer(senderId, receiverId, ws, wss);
+              break;
+            case "unblock_player":
+              handleUnblockPlayer(senderId, receiverId, ws, wss);
+              break;
+            case "update_player_status":
+              handleUpdatePlayerStatus(senderId, newStatus, ws, wss);
               break;
             default:
               console.log("Invalid message");
@@ -246,6 +252,58 @@ async function handleBlockPlayer(senderId, recieverId, ws, wss) {
     }
   } catch (err) {
     console.error(`Error handling player block: ${err}`);
+    ws.send(JSON.stringify({ error: err.message }));
+  }
+}
+
+async function handleUnblockPlayer(senderId, recieverId, ws, wss) {
+  try {
+    const result = await friendsService.unblockPlayer(senderId, recieverId);
+
+    if (result.error) {
+      console.error(result.error);
+      ws.send(JSON.stringify({ error: result.error }));
+    } else {
+      const { sender, receiver } = result;
+
+      broadcastFriendRequestNotification(
+        sender._id,
+        {
+          type: "player_unblocked",
+          receieverId: receiver._id,
+          receieverUsername: receiver.username,
+        },
+        wss
+      );
+    }
+  } catch (err) {
+    console.error(`Error handling player block: ${err}`);
+    ws.send(JSON.stringify({ error: err.message }));
+  }
+}
+
+async function handleUpdatePlayerStatus(senderId, newStatus, ws, wss) {
+  try {
+    const result = await friendsService.updatePlayerStatus(senderId, newStatus);
+
+    if (result.error) {
+      console.error(result.error);
+      ws.send(JSON.stringify({ error: result.error }));
+    } else {
+      const { player } = result;
+
+      broadcastFriendRequestNotification(
+        player._id,
+        {
+          type: "player_status_updated",
+          playerId: player._id,
+          playerUsername: player.username,
+        },
+        wss
+      );
+    }
+  } catch (err) {
+    console.error(`Error handling player status update: ${err}`);
     ws.send(JSON.stringify({ error: err.message }));
   }
 }

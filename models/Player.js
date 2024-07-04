@@ -13,6 +13,10 @@ const playerSchema = new mongoose.Schema({
   profile: {
     country: String,
     handedness: String,
+    status: {
+      type: String,
+      enum: ["offline", "online", "in-game"],
+    },
     banned: { type: Boolean, default: false },
     timeouts: {
       timedOut: { type: Boolean, default: false },
