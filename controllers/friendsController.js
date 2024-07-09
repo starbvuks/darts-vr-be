@@ -249,16 +249,19 @@ exports.unblockPlayer = async (req, res, wss) => {
 
 exports.updatePlayerStatus = async (req, res, wss) => {
   authService.validateJwt(req, res, async () => {
-    const { newStatus } = req.body;
-    const playerId = req.userId;
+    const { senderId, newStatus } = req.body;
+    // const playerId = req.userId;
     try {
       const player = await friendsService.updatePlayerStatus(
-        playerId,
+        senderId,
         newStatus
       );
       webSocketHandler.broadcastPlayerStatusUpdateNotification(
-        playerId,
-        newStatus,
+        senderId,
+        {
+          senderId,
+          newStatus,
+        },
         wss
       );
       res.json({ success: true, player });

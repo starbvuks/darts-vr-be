@@ -60,7 +60,6 @@ async function sendFriendRequest(senderId, receiverId) {
     await receiver.save();
 
     return { sender, receiver };
-    
   } catch (error) {
     throw error;
   }
@@ -123,14 +122,14 @@ async function acceptFriendRequest(senderId, receiverId) {
   try {
     // Check if the sender and receiver are already friends
     if (
-      await Player.exists({
+      (await Player.exists({
         _id: senderId,
-        'profile.friends.friendId': receiverId,
-      }) ||
-      await Player.exists({
+        "profile.friends.friendId": receiverId,
+      })) ||
+      (await Player.exists({
         _id: receiverId,
-        'profile.friends.friendId': senderId,
-      })
+        "profile.friends.friendId": senderId,
+      }))
     ) {
       return { error: "You are already friends" };
     }
@@ -138,8 +137,8 @@ async function acceptFriendRequest(senderId, receiverId) {
     // Check if the received friend request exists
     const receivedRequest = await Player.exists({
       _id: receiverId,
-      'profile.receivedRequests.senderId': senderId,
-      'profile.receivedRequests.status': 'pending',
+      "profile.receivedRequests.senderId": senderId,
+      "profile.receivedRequests.status": "pending",
     });
 
     if (!receivedRequest) {
@@ -183,14 +182,14 @@ async function declineFriendRequest(senderId, receiverId) {
   try {
     // Check if the sender and receiver are friends
     if (
-      await Player.exists({
+      (await Player.exists({
         _id: senderId,
-        'profile.friends.friendId': receiverId,
-      }) ||
-      await Player.exists({
+        "profile.friends.friendId": receiverId,
+      })) ||
+      (await Player.exists({
         _id: receiverId,
-        'profile.friends.friendId': senderId,
-      })
+        "profile.friends.friendId": senderId,
+      }))
     ) {
       return { error: "You are already friends" };
     }
@@ -198,8 +197,8 @@ async function declineFriendRequest(senderId, receiverId) {
     // Check if the received friend request exists
     const receivedRequest = await Player.exists({
       _id: receiverId,
-      'profile.receivedRequests.senderId': senderId,
-      'profile.receivedRequests.status': 'pending',
+      "profile.receivedRequests.senderId": senderId,
+      "profile.receivedRequests.status": "pending",
     });
 
     if (!receivedRequest) {
@@ -233,7 +232,7 @@ async function removeFriend(senderId, receiverId) {
     // Check if the sender and receiver are friends
     const areFriends = await Player.exists({
       _id: { $in: [senderId, receiverId] },
-      'profile.friends.friendId': { $in: [senderId, receiverId] },
+      "profile.friends.friendId": { $in: [senderId, receiverId] },
     });
 
     if (!areFriends) {
@@ -266,7 +265,7 @@ async function blockPlayer(senderId, receiverId) {
     // Check if the player is already blocked
     const isBlocked = await Player.exists({
       _id: senderId,
-      'profile.blocked.playerId': receiverId,
+      "profile.blocked.playerId": receiverId,
     });
 
     if (isBlocked) {
@@ -281,9 +280,10 @@ async function blockPlayer(senderId, receiverId) {
     sender.profile.sentRequests = sender.profile.sentRequests.filter(
       (request) => !request.receiverId.equals(receiverId)
     );
-    receiver.profile.receivedRequests = receiver.profile.receivedRequests.filter(
-      (request) => !request.senderId.equals(senderId)
-    );
+    receiver.profile.receivedRequests =
+      receiver.profile.receivedRequests.filter(
+        (request) => !request.senderId.equals(senderId)
+      );
 
     // Remove the sender and receiver from each other's friend list
     sender.profile.friends = sender.profile.friends.filter(
@@ -315,7 +315,7 @@ async function unblockPlayer(senderId, receiverId) {
     // Check if the player is already unblocked
     const isBlocked = await Player.exists({
       _id: senderId,
-      'profile.blocked.playerId': receiverId,
+      "profile.blocked.playerId": receiverId,
     });
 
     if (!isBlocked) {
@@ -341,7 +341,7 @@ async function unblockPlayer(senderId, receiverId) {
   }
 }
 
-async function updatePlayerStatus(senderId, newStatus, ws) {
+async function updatePlayerStatus(senderId, newStatus, wss) {
   try {
     // Find the player and update their status
     const player = await Player.findById(senderId);
@@ -370,9 +370,18 @@ async function updatePlayerStatus(senderId, newStatus, ws) {
           friendProfile.status = newStatus;
         }
       });
-      ws.to(friend._id.toString()).emit("friendStatusUpdate", {
-        friendId: senderId,
-        newStatus,
+      wss.clients.forEach((client) => {
+        if (
+          client.readyState === WebSocket.OPEN
+        ) {
+          client.send(
+            JSON.stringify({
+              type: "friendStatusUpdate",
+              friendId: senderId,
+              newStatus,
+            })
+          );
+        }
       });
       friend.save();
     });
@@ -383,7 +392,6 @@ async function updatePlayerStatus(senderId, newStatus, ws) {
   }
 }
 
-
 module.exports = {
   sendFriendRequest,
   unsendFriendRequest,
@@ -392,6 +400,5 @@ module.exports = {
   removeFriend,
   blockPlayer,
   unblockPlayer,
-  updatePlayerStatus
+  updatePlayerStatus,
 };
-
