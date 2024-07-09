@@ -117,6 +117,11 @@ module.exports = {
   },
 
   broadcastPlayerBlockedNotification: (playerId, blockedPlayerId, wss) => {
+    if (!wss || !wss.clients) {
+      console.error("WebSocket server instance is not available");
+      return;
+    }
+
     wss.clients.forEach((client) => {
       if (
         client.readyState === WebSocket.OPEN &&
@@ -134,6 +139,11 @@ module.exports = {
   },
 
   broadcastPlayerUnblockedNotification: (playerId, unblockedPlayerId, wss) => {
+    if (!wss || !wss.clients) {
+      console.error("WebSocket server instance is not available");
+      return;
+    }
+
     wss.clients.forEach((client) => {
       if (
         client.readyState === WebSocket.OPEN &&
@@ -151,6 +161,11 @@ module.exports = {
   },
 
   broadcastPlayerStatusUpdateNotification: (playerId, newStatus, wss) => {
+    if (!wss || !wss.clients) {
+      console.error("WebSocket server instance is not available");
+      return;
+    }
+
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN && client.userId === playerId) {
         client.send(

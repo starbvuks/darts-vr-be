@@ -52,6 +52,15 @@ app.post("/api/friends/decline-request", (req, res) => {
 app.post("/api/friends/remove-request", (req, res) => {
   friendsController.removeFriend(req, res, wss);
 });
+app.post("/api/friends/block-player", (req, res) => {
+  friendsController.blockPlayer(req, res, wss);
+});
+app.post("/api/friends/unblock-player", (req, res) => {
+  friendsController.unblockPlayer(req, res, wss);
+});
+app.post("/api/friends/update-status", (req, res) => {
+  friendsController.updatePlayerStatus(req, res, wss);
+});
 
 const port = 3000;
 const server = http.createServer(app);

@@ -94,7 +94,7 @@ exports.acceptFriendRequest = async (req, res, wss) => {
             senderUsername: sender.username,
             receiverUsername: receiver.username,
           },
-          req.wss
+          wss
         );
         res.json({ success: true });
       }
@@ -125,7 +125,7 @@ exports.declineFriendRequest = async (req, res, wss) => {
             senderUsername: sender.username,
             receiverUsername: receiver.username,
           },
-          req.wss
+          wss
         );
         res.json({ success: true });
       }
@@ -138,13 +138,13 @@ exports.declineFriendRequest = async (req, res, wss) => {
 
 exports.removeFriend = async (req, res, wss) => {
   authService.validateJwt(req, res, async () => {
-    const { friendId } = req.body;
-    const playerId = req.userId;
+    const { senderId, receiverId } = req.body;
+    // const playerId = req.userId;
     try {
-      const result = await friendsService.removeFriend(playerId, friendId);
+      const result = await friendsService.removeFriend(senderId, receiverId);
       if (result.error) {
         webSocketHandler.broadcastFriendRemovedNotification(
-          playerId,
+          senderId,
           {
             type: "friend_remove_error",
             error: result.error,
@@ -153,10 +153,15 @@ exports.removeFriend = async (req, res, wss) => {
         );
         res.json({ error: result.error });
       } else {
-        const { player, friend } = result;
+        const { sender, receiver } = result;
         webSocketHandler.broadcastFriendRemovedNotification(
-          playerId,
-          friendId,
+          senderId,
+          {
+            senderId,
+            receiverId,
+            senderUsername: sender.username,
+            receiverUsername: receiver.username,
+          },
           wss
         );
         res.json({ success: true });
@@ -168,65 +173,97 @@ exports.removeFriend = async (req, res, wss) => {
   });
 };
 
-exports.blockPlayer = async (req, res) => {
+exports.blockPlayer = async (req, res, wss) => {
   authService.validateJwt(req, res, async () => {
-    const { blockedPlayerId } = req.body;
-    const playerId = req.userId;
+    const { senderId, receiverId } = req.body;
+    // const playerId = req.userId;
     try {
-      const { player, blockedPlayer } = await friendsService.blockPlayer(
-        playerId,
-        blockedPlayerId
-      );
-      webSocketHandler.broadcastPlayerBlockedNotification(
-        playerId,
-        blockedPlayerId,
-        req.wss
-      );
-      res.json({ player, blockedPlayer });
+      const result = await friendsService.blockPlayer(senderId, receiverId);
+      if (result.error) {
+        webSocketHandler.broadcastFriendRequestNotificationError(
+          senderId,
+          {
+            type: "player_block_error",
+            error: result.error,
+          },
+          wss
+        );
+        res.json({ error: result.error });
+      } else {
+        const { sender, receiver } = result;
+        webSocketHandler.broadcastPlayerBlockedNotification(
+          senderId,
+          {
+            senderId,
+            receiverId,
+            senderUsername: sender.username,
+            receiverUsername: receiver.username,
+          },
+          wss
+        );
+        res.json({ success: true });
+      }
     } catch (error) {
+      console.error(`Error handling block player request: ${error}`);
       res.status(400).json({ message: error.message });
     }
   });
 };
 
-exports.unblockPlayer = async (req, res) => {
+exports.unblockPlayer = async (req, res, wss) => {
   authService.validateJwt(req, res, async () => {
-    const { blockedPlayerId } = req.body;
-    const playerId = req.userId;
+    const { senderId, receiverId } = req.body;
+    // const playerId = req.userId;
     try {
-      const { player, unblockedPlayer } = await friendsService.unblockPlayer(
-        playerId,
-        blockedPlayerId
-      );
-      webSocketHandler.broadcastPlayerUnblockedNotification(
-        playerId,
-        blockedPlayerId,
-        req.wss
-      );
-      res.json({ player, unblockedPlayer });
+      const result = await friendsService.unblockPlayer(senderId, receiverId);
+      if (result.error) {
+        webSocketHandler.broadcastFriendRequestNotificationError(
+          senderId,
+          {
+            type: "player_unblock_error",
+            error: result.error,
+          },
+          wss
+        );
+        res.json({ error: result.error });
+      } else {
+        const { sender, receiver } = result;
+        webSocketHandler.broadcastPlayerUnblockedNotification(
+          senderId,
+          {
+            senderId,
+            receiverId,
+            senderUsername: sender.username,
+            receiverUsername: receiver.username,
+          },
+          wss
+        );
+        res.json({ success: true });
+      }
     } catch (error) {
+      console.error(`Error handling unblock player request: ${error}`);
       res.status(400).json({ message: error.message });
     }
   });
 };
 
-exports.updatePlayerStatus = async (req, res) => {
+exports.updatePlayerStatus = async (req, res, wss) => {
   authService.validateJwt(req, res, async () => {
     const { newStatus } = req.body;
     const playerId = req.userId;
     try {
       const player = await friendsService.updatePlayerStatus(
         playerId,
-        newStatus,
-        req.wss
+        newStatus
       );
       webSocketHandler.broadcastPlayerStatusUpdateNotification(
         playerId,
         newStatus,
-        req.wss
+        wss
       );
-      res.json(player);
+      res.json({ success: true, player });
     } catch (error) {
+      console.error(`Error updating player status: ${error}`);
       res.status(400).json({ message: error.message });
     }
   });
