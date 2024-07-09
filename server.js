@@ -106,4 +106,4 @@ app.post("/demo-login", (req, res) => {
   }
 });
 
-module.exports = {app, wss};
+module.exports = app;
