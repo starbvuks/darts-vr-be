@@ -1,16 +1,14 @@
 // oculusService.js
 const axios = require('axios');
 
-const oculusAppId = process.env.OCULUS_APP_ID;
-const oculusAppSecret = process.env.OCULUS_APP_SECRET;
+const oculusAppToken = process.env.OCULUS_APP_TOKEN;
 
 const validateOculusNonce = async (nonce, oculusId) => {
   try {
     const response = await axios.post('https://graph.oculus.com/user_nonce_validate', {
       nonce,
-      access_token: oculusAppSecret,
-      APP_ID: oculusAppId,
-      APP_SECRET: oculusAppSecret
+      access_token: oculusAppToken,
+      user_id: oculusId,
     });
 
     return response.data.is_valid;
