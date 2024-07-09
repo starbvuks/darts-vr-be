@@ -5,7 +5,9 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const http = require("http");
 const { WebSocketServer } = require("ws");
-const setupWebSocket = require("./websockets");
+const url = require("url");
+
+const friendsController = require("./controllers/friendsController");
 require("dotenv").config();
 
 // Initialize express
@@ -34,14 +36,58 @@ app.use("/api/auth", oculusAuth);
 const playerInfo = require("./routes/playerRoutes.js");
 app.use("/", playerInfo);
 
-const friendsHandler = require("./routes/friendsRoutes.js");
-app.use("/api/friends", friendsHandler);
+// friend requests
+app.post("/api/friends/send-request", (req, res) => {
+  friendsController.sendFriendRequest(req, res, wss);
+});
+app.post("/api/friends/unsend-request", (req, res) => {
+  friendsController.unsendFriendRequest(req, res, wss);
+});
+app.post("/api/friends/accept-request", (req, res) => {
+  friendsController.acceptFriendRequest(req, res, wss);
+});
+app.post("/api/friends/decline-request", (req, res) => {
+  friendsController.declineFriendRequest(req, res, wss);
+});
+app.post("/api/friends/remove-request", (req, res) => {
+  friendsController.removeFriend(req, res, wss);
+});
 
 const port = 3000;
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
-setupWebSocket(wss);
+wss.on("connection", (ws, req) => {
+  const urlParams = new url.URL(req.url, "http://localhost:3000");
+  const token = urlParams.searchParams.get("token");
+
+  console.log("WebSocket connection received");
+
+  if (!token) {
+    console.error("No token provided");
+    ws.close(4401, "Unauthorized");
+    return;
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const playerId = decoded.userID;
+
+    console.log(`WebSocket connection established for player: ${playerId}`);
+
+    // Add the userId property to the WebSocket client
+    ws.userId = playerId;
+
+    // Clean up when the connection is closed
+    ws.on("close", () => {
+      console.log(`user has disconnected`);
+    });
+  } catch (err) {
+    console.error("Error verifying token:", err);
+    ws.close();
+  }
+});
+
 server.listen(port, () => {
   console.log(`Server started on port ${port}`);
 });
@@ -60,4 +106,4 @@ app.post("/demo-login", (req, res) => {
   }
 });
 
-module.exports = app;
+module.exports = {app, wss};

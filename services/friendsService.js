@@ -60,6 +60,7 @@ async function sendFriendRequest(senderId, receiverId) {
     await receiver.save();
 
     return { sender, receiver };
+    
   } catch (error) {
     throw error;
   }

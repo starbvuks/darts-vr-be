@@ -116,6 +116,7 @@ const playerSchema = new mongoose.Schema({
     },
     atwStats: {
       totalAtwGamesPlayed: Number,
+      totalAtwGamesWonStreak: Number,
       highestStreak: Number,
       highestPoints: Number,
       atwGames: [

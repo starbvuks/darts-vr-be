@@ -13,7 +13,7 @@ const validateOculusSession = async (req, res) => {
 
       if (!player) {
         player = new Player({
-          username: req.body.username, 
+          // username: req.body.username, 
           auth: [
             {
               platform: 'Oculus',

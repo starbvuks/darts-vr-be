@@ -1,71 +1,171 @@
-const friendRequestService = require("../services/friendsService");
+const friendsService = require("../services/friendsService");
 const authService = require("../services/auth/authService");
+const webSocketHandler = require("../websockets");
 
-exports.sendFriendRequest = async (req, res) => {
+exports.sendFriendRequest = async (req, res, wss) => {
   authService.validateJwt(req, res, async () => {
-    console.log(req.body)
+    const { senderId, receiverId } = req.body;
+    // const senderId = req.userId;
+    try {
+      const result = await friendsService.sendFriendRequest(
+        senderId,
+        receiverId
+      );
+      if (result.error) {
+        res.json({ error: result.error });
+      } else {
+        const { sender, receiver } = result;
+        webSocketHandler.broadcastFriendRequestNotification(
+          receiverId,
+          {
+            type: "friend_request_received",
+            senderId,
+            senderUsername: sender.username,
+            timestamp: new Date().toISOString(),
+          },
+          wss
+        );
+        res.json({ success: true });
+      }
+    } catch (err) {
+      console.error(`Error handling friend request: ${err}`);
+      res.status(400).json({ message: err.message });
+    }
+  });
+};
+
+exports.unsendFriendRequest = async (req, res, wss) => {
+  authService.validateJwt(req, res, async () => {
     const { receiverId } = req.body;
     const senderId = req.userId;
-    console.log("Sender ID:", senderId);
-    console.log("Receiver ID:", receiverId);
     try {
-      const { sender, receiver } = await friendRequestService.sendFriendRequest(senderId, receiverId);
-      res.json({ sender, receiver });
+      const result = await friendsService.unsendFriendRequest(
+        senderId,
+        receiverId
+      );
+      if (result.error) {
+        webSocketHandler.broadcastFriendRequestUnsentNotification(
+          senderId,
+          {
+            type: "friend_request_unsent_error",
+            error: result.error,
+          },
+          wss
+        );
+        res.json({ error: result.error });
+      } else {
+        const { sender, receiver } = result;
+        webSocketHandler.broadcastFriendRequestUnsentNotification(
+          senderId,
+          {
+            type: "friend_request_unsent",
+            receiverId,
+            receiverUsername: receiver.username,
+          },
+          wss
+        );
+        res.json({ success: true });
+      }
     } catch (error) {
+      console.error(`Error handling unsend friend request: ${error}`);
       res.status(400).json({ message: error.message });
     }
   });
 };
 
-exports.unsendFriendRequest = async (req, res) => {
+exports.acceptFriendRequest = async (req, res, wss) => {
   authService.validateJwt(req, res, async () => {
-    const { receiverId } = req.body;
-    const senderId = req.userId;
+    const { senderId, receiverId } = req.body;
+    // const senderId = req.userId;
     try {
-      await friendRequestService.unsendFriendRequest(senderId, receiverId);
-      res.json({ message: "Friend request unsent" });
+      const result = await friendsService.acceptFriendRequest(
+        senderId,
+        receiverId
+      );
+      if (result.error) {
+        res.json({ error: result.error });
+      } else {
+        const { sender, receiver } = result;
+        webSocketHandler.broadcastFriendRequestAcceptedNotification(
+          receiverId,
+          {
+            senderId,
+            receiverId,
+            senderUsername: sender.username,
+            receiverUsername: receiver.username,
+          },
+          req.wss
+        );
+        res.json({ success: true });
+      }
     } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  });
-};
-
-exports.acceptFriendRequest = async (req, res) => {
-  authService.validateJwt(req, res, async () => {
-    const { receiverId } = req.body;
-    const senderId = req.userId;
-    try {
-      const { sender, receiver } = await friendRequestService.acceptFriendRequest(senderId, receiverId);
-      res.json({ sender, receiver });
-    } catch (error) {
+      console.error(`Error handling accept friend request: ${error}`);
       res.status(400).json({ message: "Failed to accept friend request" });
     }
   });
 };
 
-exports.declineFriendRequest = async (req, res) => {
+exports.declineFriendRequest = async (req, res, wss) => {
   authService.validateJwt(req, res, async () => {
-    const { receiverId } = req.body;
-    const senderId = req.userId;
+    const { senderId, receiverId } = req.body;
     try {
-      const receiver = await friendRequestService.declineFriendRequest(senderId, receiverId);
-      res.json(receiver);
+      const result = await friendsService.declineFriendRequest(
+        senderId,
+        receiverId
+      );
+      if (result.error) {
+        res.json({ error: result.error });
+      } else {
+        const { sender, receiver } = result;
+        webSocketHandler.broadcastFriendRequestDeclinedNotification(
+          receiverId,
+          {
+            senderId,
+            receiverId,
+            senderUsername: sender.username,
+            receiverUsername: receiver.username,
+          },
+          req.wss
+        );
+        res.json({ success: true });
+      }
     } catch (error) {
+      console.error(`Error handling decline friend request: ${error}`);
       res.status(500).json({ message: "Failed to decline friend request" });
     }
   });
 };
 
-
-exports.removeFriend = async (playerId, friendId) => {
-  try {
-    console.log(`Removing friend: playerId=${playerId}, friendId=${friendId}`);
-    const { player, friend } = await friendsService.removeFriend(playerId, friendId);
-    return { player, friend };
-  } catch (error) {
-    console.error(`Error handling remove friend: ${error}`);
-    throw error;
-  }
+exports.removeFriend = async (req, res, wss) => {
+  authService.validateJwt(req, res, async () => {
+    const { friendId } = req.body;
+    const playerId = req.userId;
+    try {
+      const result = await friendsService.removeFriend(playerId, friendId);
+      if (result.error) {
+        webSocketHandler.broadcastFriendRemovedNotification(
+          playerId,
+          {
+            type: "friend_remove_error",
+            error: result.error,
+          },
+          wss
+        );
+        res.json({ error: result.error });
+      } else {
+        const { player, friend } = result;
+        webSocketHandler.broadcastFriendRemovedNotification(
+          playerId,
+          friendId,
+          wss
+        );
+        res.json({ success: true });
+      }
+    } catch (error) {
+      console.error(`Error handling remove friend request: ${error}`);
+      res.status(400).json({ message: error.message });
+    }
+  });
 };
 
 exports.blockPlayer = async (req, res) => {
@@ -73,20 +173,59 @@ exports.blockPlayer = async (req, res) => {
     const { blockedPlayerId } = req.body;
     const playerId = req.userId;
     try {
-      const player = await friendRequestService.blockPlayer(playerId, blockedPlayerId);
-      res.json(player);
+      const { player, blockedPlayer } = await friendsService.blockPlayer(
+        playerId,
+        blockedPlayerId
+      );
+      webSocketHandler.broadcastPlayerBlockedNotification(
+        playerId,
+        blockedPlayerId,
+        req.wss
+      );
+      res.json({ player, blockedPlayer });
     } catch (error) {
       res.status(400).json({ message: error.message });
     }
   });
-}
+};
 
-exports.searchUsers = async (req, res) => {
+exports.unblockPlayer = async (req, res) => {
   authService.validateJwt(req, res, async () => {
+    const { blockedPlayerId } = req.body;
+    const playerId = req.userId;
     try {
-      const { username, page = 1, limit = 7 } = req.query;
-      const { users, totalPages } = await friendRequestService.searchUsers(username, page, limit);
-      res.json({ users, totalPages });
+      const { player, unblockedPlayer } = await friendsService.unblockPlayer(
+        playerId,
+        blockedPlayerId
+      );
+      webSocketHandler.broadcastPlayerUnblockedNotification(
+        playerId,
+        blockedPlayerId,
+        req.wss
+      );
+      res.json({ player, unblockedPlayer });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+};
+
+exports.updatePlayerStatus = async (req, res) => {
+  authService.validateJwt(req, res, async () => {
+    const { newStatus } = req.body;
+    const playerId = req.userId;
+    try {
+      const player = await friendsService.updatePlayerStatus(
+        playerId,
+        newStatus,
+        req.wss
+      );
+      webSocketHandler.broadcastPlayerStatusUpdateNotification(
+        playerId,
+        newStatus,
+        req.wss
+      );
+      res.json(player);
     } catch (error) {
       res.status(400).json({ message: error.message });
     }
