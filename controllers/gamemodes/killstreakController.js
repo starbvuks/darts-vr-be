@@ -1,66 +1,67 @@
 const KillstreakService = require('../../services/gamemodes/killstreakService');
 const authService = require('../../services/auth/authService');
+const webSocketHandler = require('../../websockets');
 
 const KillstreakController = {
-  createMatch: async (req, res) => {
-    authService.validateJwt(req, res, async () => {
-      const { player1Id, player2Id, matchType } = req.body;
-      try {
-        const match = await KillstreakService.createMatch(player1Id, player2Id, matchType);
-        res.json(match);
-      } catch (error) {
-        console.error(`Error creating Killstreak match: ${error}`);
-        res.status(400).json({ message: error.message });
-      }
-    });
+  joinOrCreateMatch: async (req, res) => {
+    try {
+      const { playerId, matchType } = req.body;
+      authService.validateJwt(req, res, async () => {
+        const match = await KillstreakService.joinOrCreateMatch(playerId, matchType);
+        res.status(200).json(match);
+      });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
   },
-  updateMatch: async (req, res) => {
-    authService.validateJwt(req, res, async () => {
-      const { matchId, playerId, playerStats } = req.body;
-      try {
-        const match = await KillstreakService.updateMatch(matchId, playerId, playerStats);
-        res.json(match);
-      } catch (error) {
-        console.error(`Error updating Killstreak match: ${error}`);
-        res.status(400).json({ message: error.message });
-      }
-    });
+
+  inviteFriend: async (req, res, wss) => {
+    try {
+      const { playerId, friendId, matchType } = req.body;
+      authService.validateJwt(req, res, async () => {
+        const match = await KillstreakService.createMatch(playerId, matchType);
+        webSocketHandler.sendKillstreakInvitation(friendId, playerId, match.matchId, wss);
+        res.status(200).json(match);
+      });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
   },
-  addRoundWinner: async (req, res) => {
-    authService.validateJwt(req, res, async () => {
-      const { matchId, roundNumber, winner } = req.body;
-      try {
-        const match = await KillstreakService.addRoundWinner(matchId, roundNumber, winner);
-        res.json(match);
-      } catch (error) {
-        console.error(`Error adding round winner: ${error}`);
-        res.status(400).json({ message: error.message });
-      }
-    });
+
+  joinInvitedMatch: async (req, res) => {
+    try {
+      const { matchId, playerId } = req.body;
+      authService.validateJwt(req, res, async () => {
+        const match = await KillstreakService.joinMatch(matchId, playerId);
+        res.status(200).json(match);
+      });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
   },
-  determineMatchWinner: async (req, res) => {
-    authService.validateJwt(req, res, async () => {
-      const { matchId } = req.params;
-      try {
-        const winner = await KillstreakService.determineMatchWinner(matchId);
-        res.json({ winner });
-      } catch (error) {
-        console.error(`Error determining match winner: ${error}`);
-        res.status(400).json({ message: error.message });
-      }
-    });
+
+  updateMatchStats: async (req, res) => {
+    try {
+      const { matchId, player1Stats, player2Stats, roundNumber } = req.body;
+      authService.validateJwt(req, res, async () => {
+        const updatedMatch = await KillstreakService.updateMatchStats(matchId, player1Stats, player2Stats, roundNumber);
+        res.status(200).json(updatedMatch);
+      });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
   },
+
   getMatch: async (req, res) => {
-    authService.validateJwt(req, res, async () => {
+    try {
       const { matchId } = req.params;
-      try {
+      authService.validateJwt(req, res, async () => {
         const match = await KillstreakService.getMatch(matchId);
-        res.json(match);
-      } catch (error) {
-        console.error(`Error fetching Killstreak match: ${error}`);
-        res.status(400).json({ message: error.message });
-      }
-    });
+        res.status(200).json(match);
+      });
+    } catch (error) {
+      res.status(404).json({ message: error.message });
+    }
   },
 };
 

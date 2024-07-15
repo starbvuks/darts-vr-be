@@ -4,18 +4,21 @@ const ZombiesController = require('../../controllers/gamemodes/zombiesController
 const ATWController = require('../../controllers/gamemodes/atwController');
 const KillstreakController = require('../../controllers/gamemodes/killstreakController');
 
-router.post('/api/killstreak/create-match', KillstreakController.createMatch);
-router.post('/api/killstreak/update-match', KillstreakController.updateMatch);
-router.post('/api/killstreak/add-round-winner', KillstreakController.addRoundWinner);
-router.post('/api/killstreak/determine-match-winner', KillstreakController.determineMatchWinner);
-router.get('/api/killstreak/get-match/:matchId', KillstreakController.getMatch);
+// Killstreak Routes
+router.post('/api/killstreak', KillstreakController.joinOrCreateMatch);
+router.post('/api/killstreak/:matchId/join', KillstreakController.joinInvitedMatch);
+router.put('/api/killstreak/:matchId/update', KillstreakController.updateMatchStats);
+router.get('/api/killstreak/:matchId', KillstreakController.getMatch);
+
+// Zombies Routes
+router.post('/api/zombies', ZombiesController.joinOrCreateMatch);
+router.post('/api/zombies/:matchId/join', ZombiesController.joinInvitedMatch);
+router.put('/api/zombies/:matchId/update', ZombiesController.updateMatchStats);
+router.get('/api/zombies/:matchId', ZombiesController.getMatch);
+
 
 router.post('/api/atw/create-match', ATWController.createMatch);
 router.post('/api/atw/update-match', ATWController.updateMatch);
 router.get('/api/atw/get-match/:matchId', ATWController.getMatch);
-
-router.post('/api/zombies/create-match', ZombiesController.createMatch);
-router.post('/api/zombies/update-match', ZombiesController.updateMatch);
-router.get('/api/zombies/get-match/:matchId', ZombiesController.getMatch);
 
 module.exports = router;

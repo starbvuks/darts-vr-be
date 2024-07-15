@@ -9,7 +9,11 @@ module.exports = {
     }
 
     wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
+      if (
+        client.readyState === WebSocket.OPEN &&
+        (client.userId === senderId ||
+          client.userId === notification.receiverId)
+      ) {
         client.send(
           JSON.stringify({
             ...notification,
@@ -27,7 +31,11 @@ module.exports = {
     }
 
     wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
+      if (
+        client.readyState === WebSocket.OPEN &&
+        (client.userId === senderId ||
+          client.userId === notification.receiverId)
+      ) {
         client.send(
           JSON.stringify({
             ...notification,
@@ -38,14 +46,22 @@ module.exports = {
     });
   },
 
-  broadcastFriendRequestAcceptedNotification: (notification, wss) => {
+  broadcastFriendRequestAcceptedNotification: (
+    receiverId,
+    notification,
+    wss
+  ) => {
     if (!wss || !wss.clients) {
       console.error("WebSocket server instance is not available");
       return;
     }
 
     wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
+      if (
+        client.readyState === WebSocket.OPEN &&
+        (client.userId === notification.senderId ||
+          client.userId === notification.receiverId)
+      ) {
         client.send(
           JSON.stringify({
             type: "friend_request_accepted",
@@ -56,14 +72,22 @@ module.exports = {
     });
   },
 
-  broadcastFriendRequestDeclinedNotification: (notification, wss) => {
+  broadcastFriendRequestDeclinedNotification: (
+    receiverId,
+    notification,
+    wss
+  ) => {
     if (!wss || !wss.clients) {
       console.error("WebSocket server instance is not available");
       return;
     }
 
     wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
+      if (
+        client.readyState === WebSocket.OPEN &&
+        (client.userId === notification.senderId ||
+          client.userId === notification.receiverId)
+      ) {
         client.send(
           JSON.stringify({
             type: "friend_request_declined",
@@ -81,7 +105,10 @@ module.exports = {
     }
 
     wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
+      if (
+        client.readyState === WebSocket.OPEN &&
+        (client.userId === playerId || client.userId === friendId)
+      ) {
         client.send(
           JSON.stringify({
             type: "friend_removed",
@@ -100,7 +127,10 @@ module.exports = {
     }
 
     wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
+      if (
+        client.readyState === WebSocket.OPEN &&
+        (client.userId === playerId || client.userId === blockedPlayerId)
+      ) {
         client.send(
           JSON.stringify({
             type: "player_blocked",
@@ -119,7 +149,10 @@ module.exports = {
     }
 
     wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
+      if (
+        client.readyState === WebSocket.OPEN &&
+        (client.userId === playerId || client.userId === unblockedPlayerId)
+      ) {
         client.send(
           JSON.stringify({
             type: "player_unblocked",
@@ -138,7 +171,7 @@ module.exports = {
     }
 
     wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
+      if (client.readyState === WebSocket.OPEN && client.userId === playerId) {
         client.send(
           JSON.stringify({
             type: "player_status_updated",
@@ -149,4 +182,6 @@ module.exports = {
       }
     });
   },
+
+  
 };

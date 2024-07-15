@@ -8,6 +8,8 @@ const { WebSocketServer } = require("ws");
 const url = require("url");
 
 const friendsController = require("./controllers/friendsController");
+const zombiesController = require("./controllers/gamemodes/zombiesController");
+const killstreakController = require("./controllers/gamemodes/killstreakController");
 
 require("dotenv").config();
 
@@ -40,6 +42,12 @@ app.use("/", playerInfo);
 // gamemodes
 const gamemodes = require("./routes/gamemodes/gamemodeRoutes.js");
 app.use("/", gamemodes);
+app.post("/api/zombies/invite", (req, res) => {
+  zombiesController.inviteFriend(req, res, wss);
+});
+app.post("/api/killstreak/invite", (req, res) => {
+  killstreakController.inviteFriend(req, res, wss);
+});
 
 // friend requests
 app.post("/api/friends/send-request", (req, res) => {
