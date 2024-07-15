@@ -130,9 +130,6 @@ const playerSchema = new mongoose.Schema({
       highestPoints: Number,
       headshots: Number,
       legShots: Number,
-      zombiesGames: [
-        mongoose.Schema.Types.ObjectId,
-      ]
     },
     five0OneStats: {
       totalfive0OneGamesPlayed: Number,

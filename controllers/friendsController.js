@@ -19,6 +19,7 @@ exports.sendFriendRequest = async (req, res, wss) => {
           receiverId,
           {
             type: "friend_request_received",
+            receiverId,
             senderId,
             senderUsername: sender.username,
             timestamp: new Date().toISOString(),
@@ -59,6 +60,7 @@ exports.unsendFriendRequest = async (req, res, wss) => {
           senderId,
           {
             type: "friend_request_unsent",
+            senderId,
             receiverId,
             receiverUsername: receiver.username,
           },
@@ -250,7 +252,7 @@ exports.unblockPlayer = async (req, res, wss) => {
 exports.updatePlayerStatus = async (req, res, wss) => {
   authService.validateJwt(req, res, async () => {
     const { senderId, newStatus } = req.body;
-    // const playerId = req.userId;
+    // const senderId = req.userId;
     try {
       const player = await friendsService.updatePlayerStatus(
         senderId,

@@ -392,6 +392,7 @@ async function updatePlayerStatus(senderId, newStatus, wss) {
   }
 }
 
+
 module.exports = {
   sendFriendRequest,
   unsendFriendRequest,

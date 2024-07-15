@@ -20,6 +20,7 @@ const validateOculusSession = async (req, res) => {
         let player = await Player.findOne({ "auth.platformId": oculusId });
 
         if (!player) {
+          // Create a new player document if it doesn't exist
           player = new Player({
             auth: [
               {
@@ -35,15 +36,6 @@ const validateOculusSession = async (req, res) => {
           player._id
         );
 
-        player.auth.push({
-          platform: "Oculus",
-          platformId: oculusId,
-          accessToken: accessToken,
-          refreshToken: refreshToken,
-          expiresIn: "2h",
-        });
-
-        await player.save();
         res.json({ accessToken, refreshToken });
       } else {
         res.status(401).json({ message: "Invalid Oculus nonce" });

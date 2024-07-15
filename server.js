@@ -8,6 +8,7 @@ const { WebSocketServer } = require("ws");
 const url = require("url");
 
 const friendsController = require("./controllers/friendsController");
+
 require("dotenv").config();
 
 // Initialize express
@@ -36,6 +37,10 @@ app.use("/api/auth", oculusAuth);
 const playerInfo = require("./routes/playerRoutes.js");
 app.use("/", playerInfo);
 
+// gamemodes
+const gamemodes = require("./routes/gamemodes/gamemodeRoutes.js");
+app.use("/", gamemodes);
+
 // friend requests
 app.post("/api/friends/send-request", (req, res) => {
   friendsController.sendFriendRequest(req, res, wss);
@@ -61,6 +66,8 @@ app.post("/api/friends/unblock-player", (req, res) => {
 app.post("/api/friends/update-status", (req, res) => {
   friendsController.updatePlayerStatus(req, res, wss);
 });
+
+
 
 const port = 3000;
 const server = http.createServer(app);

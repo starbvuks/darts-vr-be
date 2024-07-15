@@ -27,11 +27,7 @@ module.exports = {
     }
 
     wss.clients.forEach((client) => {
-      if (
-        client.readyState === WebSocket.OPEN &&
-        (client.userId === senderId ||
-          client.userId === notification.receiverId)
-      ) {
+      if (client.readyState === WebSocket.OPEN) {
         client.send(
           JSON.stringify({
             ...notification,
@@ -42,22 +38,14 @@ module.exports = {
     });
   },
 
-  broadcastFriendRequestAcceptedNotification: (
-    receiverId,
-    notification,
-    wss
-  ) => {
+  broadcastFriendRequestAcceptedNotification: (notification, wss) => {
     if (!wss || !wss.clients) {
       console.error("WebSocket server instance is not available");
       return;
     }
 
     wss.clients.forEach((client) => {
-      if (
-        client.readyState === WebSocket.OPEN &&
-        (client.userId === notification.senderId ||
-          client.userId === notification.receiverId)
-      ) {
+      if (client.readyState === WebSocket.OPEN) {
         client.send(
           JSON.stringify({
             type: "friend_request_accepted",
@@ -68,22 +56,14 @@ module.exports = {
     });
   },
 
-  broadcastFriendRequestDeclinedNotification: (
-    receiverId,
-    notification,
-    wss
-  ) => {
+  broadcastFriendRequestDeclinedNotification: (notification, wss) => {
     if (!wss || !wss.clients) {
       console.error("WebSocket server instance is not available");
       return;
     }
 
     wss.clients.forEach((client) => {
-      if (
-        client.readyState === WebSocket.OPEN &&
-        (client.userId === notification.senderId ||
-          client.userId === notification.receiverId)
-      ) {
+      if (client.readyState === WebSocket.OPEN) {
         client.send(
           JSON.stringify({
             type: "friend_request_declined",
@@ -101,10 +81,7 @@ module.exports = {
     }
 
     wss.clients.forEach((client) => {
-      if (
-        client.readyState === WebSocket.OPEN &&
-        (client.userId === playerId || client.userId === friendId)
-      ) {
+      if (client.readyState === WebSocket.OPEN) {
         client.send(
           JSON.stringify({
             type: "friend_removed",
@@ -123,10 +100,7 @@ module.exports = {
     }
 
     wss.clients.forEach((client) => {
-      if (
-        client.readyState === WebSocket.OPEN &&
-        (client.userId === playerId || client.userId === blockedPlayerId)
-      ) {
+      if (client.readyState === WebSocket.OPEN) {
         client.send(
           JSON.stringify({
             type: "player_blocked",
@@ -145,10 +119,7 @@ module.exports = {
     }
 
     wss.clients.forEach((client) => {
-      if (
-        client.readyState === WebSocket.OPEN &&
-        (client.userId === playerId || client.userId === unblockedPlayerId)
-      ) {
+      if (client.readyState === WebSocket.OPEN) {
         client.send(
           JSON.stringify({
             type: "player_unblocked",
@@ -167,7 +138,7 @@ module.exports = {
     }
 
     wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN && client.userId === playerId) {
+      if (client.readyState === WebSocket.OPEN) {
         client.send(
           JSON.stringify({
             type: "player_status_updated",
