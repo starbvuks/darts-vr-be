@@ -1,39 +1,37 @@
-const RedisService = require("./redisService");
-const KillstreakService = require("./gamemodes/killstreakService");
-const ZombiesService = require("./gamemodes/zombiesService");
-// const FiveOhOneService = require("./gamemodes/fiveOhOneService");
+const { v4: uuidv4 } = require('uuid');
+const RedisService = require('./redisService');
+const Zombies = require('../models/Game/Zombies');
+const Killstreak = require('../models/Game/Killstreak');
+// const FiveOhOne = require('../models/Game/FiveOhOne');
 
 const MatchmakingService = {
-  joinMatch: async (gameType, playerCount, playerId) => {
+  joinMatch: async (gameType, playerCount, playerIds) => {
     const queueName = `${gameType}-${playerCount}players`;
 
-    // Add the player to the queue
-    await RedisService.addToQueue(queueName, playerId);
+    // Add the players to the queue
+    await Promise.all(playerIds.map((playerId) => RedisService.addToQueue(queueName, playerId)));
 
     // Check if there are enough players in the queue to start a new match
     const queueLength = await RedisService.getQueueLength(queueName);
     if (queueLength >= playerCount) {
       // Remove the players from the queue
-      const playerIds = await RedisService.getPlayersFromQueue(
-        queueName,
-        playerCount
-      );
+      const playerIdsToMatch = await RedisService.getPlayersFromQueue(queueName, playerCount);
       await RedisService.removePlayersFromQueue(queueName, playerCount);
 
       // Create a new match based on the game type and player count
       let newMatch;
       switch (`${gameType}-${playerCount}`) {
-        case "501-2":
-        case "501-3":
-        case "501-4":
-        //   newMatch = await FiveOhOneService.createMatch(playerIds);
+        case 'zombies-2':
+          newMatch = await this.createZombiesMatch(playerIdsToMatch);
+          break;
+        case 'killstreak-2':
+          newMatch = await this.createKillstreakMatch(playerIdsToMatch);
+          break;
+        case '501-2':
+        case '501-3':
+        // case '501-4':
+        //   newMatch = await this.create501Match(playerIdsToMatch);
         //   break;
-        case "killstreak-2":
-          newMatch = await KillstreakService.createMatch(playerIds);
-          break;
-        case "zombies-2":
-          newMatch = await ZombiesService.createMatch(playerIds);
-          break;
         // Add more game types and player counts as needed
       }
 
@@ -43,10 +41,7 @@ const MatchmakingService = {
         matchId: newMatch.matchId,
         players: newMatch.playerIds,
       });
-      await RedisService.publishMatchCreated(
-        `${gameType}-${playerCount}-match-created`,
-        message
-      );
+      await RedisService.publishMatchCreated(`${gameType}-${playerCount}-match-created`, message);
 
       return newMatch;
     } else {
@@ -54,6 +49,39 @@ const MatchmakingService = {
       return null;
     }
   },
+
+  createZombiesMatch: async (playerIds) => {
+    const newMatch = new Zombies({
+      playerIds,
+      matchType: 'multiplayer',
+      status: 'open',
+      matchId: uuidv4(),
+    });
+    await newMatch.save();
+    return newMatch;
+  },
+
+  createKillstreakMatch: async (playerIds) => {
+    const newMatch = new Killstreak({
+      playerIds,
+      matchType: 'multiplayer',
+      status: 'open',
+      matchId: uuidv4(),
+    });
+    await newMatch.save();
+    return newMatch;
+  },
+
+//   create501Match: async (playerIds) => {
+//     const newMatch = new FiveOhOne({
+//       playerIds,
+//       matchType: 'multiplayer',
+//       status: 'open',
+//       matchId: uuidv4(),
+//     });
+//     await newMatch.save();
+//     return newMatch;
+//   },
 };
 
 module.exports = MatchmakingService;

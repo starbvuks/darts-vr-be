@@ -1,6 +1,6 @@
 const friendsService = require("../services/friendsService");
 const authService = require("../services/auth/authService");
-const webSocketHandler = require("../websockets");
+const webSocketHandler = require("../sockets/websockets");
 
 exports.sendFriendRequest = async (req, res, wss) => {
   authService.validateJwt(req, res, async () => {

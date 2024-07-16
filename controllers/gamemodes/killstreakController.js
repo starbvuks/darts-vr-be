@@ -1,18 +1,13 @@
-const KillstreakService = require("../../services/gamemodes/killstreakService");
-const MatchmakingService = require("../../services/matchmakingService");
-const authService = require("../../services/auth/authService");
-const webSocketHandler = require("../../websockets");
+const KillstreakService = require('../../services/gamemodes/killstreakService');
+const authService = require('../../services/auth/authService');
+const gameWebSocketHandler = require('../../sockets/gameSockets');
 
 const KillstreakController = {
   joinOrCreateMatch: async (req, res) => {
     try {
-      const { playerId } = req.body;
+      const { playerId, matchType } = req.body;
       authService.validateJwt(req, res, async () => {
-        const match = await MatchmakingService.joinMatch(
-          "killstreak",
-          2,
-          playerId
-        );
+        const match = await KillstreakService.joinOrCreateMatch(playerId, matchType);
         res.status(200).json(match);
       });
     } catch (error) {
@@ -22,15 +17,10 @@ const KillstreakController = {
 
   inviteFriend: async (req, res, wss) => {
     try {
-      const { playerId, friendId, matchType } = req.body;
+      const { playerId, friendId, matchId } = req.body;
       authService.validateJwt(req, res, async () => {
-        const match = await KillstreakService.createMatch(playerId, matchType);
-        webSocketHandler.sendKillstreakInvitation(
-          friendId,
-          playerId,
-          match.matchId,
-          wss
-        );
+        const match = await KillstreakService.getMatch(matchId);
+        gameWebSocketHandler.sendKillstreakInvitation(friendId, playerId, matchId, wss);
         res.status(200).json(match);
       });
     } catch (error) {
@@ -50,16 +40,23 @@ const KillstreakController = {
     }
   },
 
+  declineInvitation: async (req, res, wss) => {
+    try {
+      const { friendId, matchId } = req.body;
+      authService.validateJwt(req, res, async () => {
+        gameWebSocketHandler.handleDecline(friendId, matchId, wss);
+        res.status(200).json({ success: true });
+      });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  },
+
   updateMatchStats: async (req, res) => {
     try {
-      const { matchId, player1Stats, player2Stats, roundNumber } = req.body;
+      const { matchId, player1Stats, player2Stats, duration, winner } = req.body;
       authService.validateJwt(req, res, async () => {
-        const updatedMatch = await KillstreakService.updateMatchStats(
-          matchId,
-          player1Stats,
-          player2Stats,
-          roundNumber
-        );
+        const updatedMatch = await KillstreakService.updateMatchStats(matchId, player1Stats, player2Stats, duration, winner);
         res.status(200).json(updatedMatch);
       });
     } catch (error) {

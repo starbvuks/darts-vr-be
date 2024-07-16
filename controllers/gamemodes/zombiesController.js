@@ -1,14 +1,23 @@
+const MatchmakingService = require("../../services/matchmakingService");
 const ZombiesService = require("../../services/gamemodes/zombiesService");
 const authService = require("../../services/auth/authService");
-const webSocketHandler = require("../../websockets");
+const gameWebSocketHandler = require("../../sockets/gameSockets");
 
 const ZombiesController = {
   joinOrCreateMatch: async (req, res) => {
     try {
-      const { playerId, matchType } = req.body;
+      const { playerIds } = req.body;
       authService.validateJwt(req, res, async () => {
-        const match = await ZombiesService.joinOrCreateMatch(playerId, matchType);
-        res.status(200).json(match);
+        const match = await MatchmakingService.joinMatch(
+          "zombies",
+          2,
+          playerIds
+        );
+        if (match) {
+          res.status(200).json(match);
+        } else {
+          res.status(202).json({ message: "Waiting for other players" });
+        }
       });
     } catch (error) {
       res.status(400).json({ message: error.message });
@@ -17,13 +26,17 @@ const ZombiesController = {
 
   inviteFriend: async (req, res, wss) => {
     try {
-      const { playerId, friendId, matchId } = req.body;
+      const { playerId, friendId, matchType } = req.body;
       authService.validateJwt(req, res, async () => {
-        const match = await ZombiesService.getMatch(matchId);
-        webSocketHandler.sendZombiesInvitation(
+        const match = await MatchmakingService.joinMatch(
+          "zombies",
+          2,
+          playerId
+        );
+        gameWebSocketHandler.sendZombiesInvitation(
           friendId,
           playerId,
-          matchId,
+          match.matchId,
           wss
         );
         res.status(200).json(match);
@@ -44,6 +57,7 @@ const ZombiesController = {
       res.status(400).json({ message: error.message });
     }
   },
+
   updateMatchStats: async (req, res) => {
     try {
       const { matchId, player1Stats, player2Stats, duration, winner } =
