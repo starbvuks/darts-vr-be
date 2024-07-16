@@ -3,24 +3,30 @@ const Zombies = require('../../models/Game/Zombies');
 
 const ZombiesService = {
   joinOrCreateMatch: async (playerId, matchType) => {
-    const openMatch = await Zombies.findOneAndUpdate(
-      { player2Id: null, matchType, status: 'open' },
-      { $set: { player2Id: playerId, status: 'closed' } },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
-    );
-
-    if (openMatch.player2Id === playerId) {
-      return openMatch;
-    } else {
-      const newMatch = new Zombies({
-        player1Id: playerId,
+      // Check if there is an open match for the given matchType
+      let match = await Zombies.findOne({
+        player2Id: null,
         matchType,
-        status: 'open',
-        matchId: uuidv4(),
+        status: "open",
       });
-      await newMatch.save();
-      return newMatch;
-    }
+
+      if (match) {
+        // Update the existing open match
+        match.player2Id = playerId;
+        match.status = "closed";
+        await match.save();
+        return match;
+      } else {
+        // Create a new match
+        const newMatch = new Zombies({
+          player1Id: playerId,
+          matchType,
+          status: "open",
+          matchId: uuidv4(),
+        });
+        await newMatch.save();
+        return newMatch;
+      }
   },
 
   joinMatch: async (matchId, playerId) => {
@@ -28,7 +34,10 @@ const ZombiesService = {
     if (!match) {
       throw new Error('Match not found');
     }
-    match.player2Id = playerId;
+    if (match.status === 'closed') {
+      throw new Error('Match is already closed');
+    }
+    match.playerIds.push(playerId);
     match.status = 'closed';
     await match.save();
     return match;

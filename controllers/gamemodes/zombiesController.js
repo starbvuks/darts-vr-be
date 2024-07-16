@@ -1,7 +1,6 @@
-const ZombiesService = require('../../services/gamemodes/zombiesService');
-const authService = require('../../services/auth/authService');
-const webSocketHandler = require('../../websockets');
-
+const ZombiesService = require("../../services/gamemodes/zombiesService");
+const authService = require("../../services/auth/authService");
+const webSocketHandler = require("../../websockets");
 
 const ZombiesController = {
   joinOrCreateMatch: async (req, res) => {
@@ -21,7 +20,12 @@ const ZombiesController = {
       const { playerId, friendId, matchId } = req.body;
       authService.validateJwt(req, res, async () => {
         const match = await ZombiesService.getMatch(matchId);
-        webSocketHandler.sendZombiesInvitation(friendId, playerId, matchId, wss);
+        webSocketHandler.sendZombiesInvitation(
+          friendId,
+          playerId,
+          matchId,
+          wss
+        );
         res.status(200).json(match);
       });
     } catch (error) {
@@ -42,9 +46,16 @@ const ZombiesController = {
   },
   updateMatchStats: async (req, res) => {
     try {
-      const { matchId, player1Stats, player2Stats, duration, winner } = req.body;
+      const { matchId, player1Stats, player2Stats, duration, winner } =
+        req.body;
       authService.validateJwt(req, res, async () => {
-        const updatedMatch = await ZombiesService.updateMatchStats(matchId, player1Stats, player2Stats, duration, winner);
+        const updatedMatch = await ZombiesService.updateMatchStats(
+          matchId,
+          player1Stats,
+          player2Stats,
+          duration,
+          winner
+        );
         res.status(200).json(updatedMatch);
       });
     } catch (error) {

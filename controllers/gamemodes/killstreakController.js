@@ -1,13 +1,18 @@
-const KillstreakService = require('../../services/gamemodes/killstreakService');
-const authService = require('../../services/auth/authService');
-const webSocketHandler = require('../../websockets');
+const KillstreakService = require("../../services/gamemodes/killstreakService");
+const MatchmakingService = require("../../services/matchmakingService");
+const authService = require("../../services/auth/authService");
+const webSocketHandler = require("../../websockets");
 
 const KillstreakController = {
   joinOrCreateMatch: async (req, res) => {
     try {
-      const { playerId, matchType } = req.body;
+      const { playerId } = req.body;
       authService.validateJwt(req, res, async () => {
-        const match = await KillstreakService.joinOrCreateMatch(playerId, matchType);
+        const match = await MatchmakingService.joinMatch(
+          "killstreak",
+          2,
+          playerId
+        );
         res.status(200).json(match);
       });
     } catch (error) {
@@ -20,7 +25,12 @@ const KillstreakController = {
       const { playerId, friendId, matchType } = req.body;
       authService.validateJwt(req, res, async () => {
         const match = await KillstreakService.createMatch(playerId, matchType);
-        webSocketHandler.sendKillstreakInvitation(friendId, playerId, match.matchId, wss);
+        webSocketHandler.sendKillstreakInvitation(
+          friendId,
+          playerId,
+          match.matchId,
+          wss
+        );
         res.status(200).json(match);
       });
     } catch (error) {
@@ -44,7 +54,12 @@ const KillstreakController = {
     try {
       const { matchId, player1Stats, player2Stats, roundNumber } = req.body;
       authService.validateJwt(req, res, async () => {
-        const updatedMatch = await KillstreakService.updateMatchStats(matchId, player1Stats, player2Stats, roundNumber);
+        const updatedMatch = await KillstreakService.updateMatchStats(
+          matchId,
+          player1Stats,
+          player2Stats,
+          roundNumber
+        );
         res.status(200).json(updatedMatch);
       });
     } catch (error) {
