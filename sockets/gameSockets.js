@@ -1,6 +1,8 @@
 // websockets.js
 const { WebSocket } = require("ws");
 
+// in the flow of creating the match, when both players are added how do we get this broadcast to be sent to both the clients who've found a match? The Unity client needs the matchId and confromation that both players have joined the same match. We have the notification 
+
 module.exports = {
   handleMatchCreatedNotification: (channel, message, wss) => {
     const { matchId, players } = JSON.parse(message);

@@ -12,13 +12,14 @@ router.get('/api/killstreak/:matchId', KillstreakController.getMatch);
 
 // Zombies Routes
 router.post('/api/zombies', ZombiesController.joinOrCreateMatch);
-router.post('/api/zombies/:matchId/join', ZombiesController.joinInvitedMatch);
-router.put('/api/zombies/:matchId/update', ZombiesController.updateMatchStats);
-router.get('/api/zombies/:matchId', ZombiesController.getMatch);
+router.post('/api/zombies/create-private', ZombiesController.createPrivateMatch);
+router.post('/api/zombies/join', ZombiesController.joinInvitedMatch);
+router.put('/api/zombies/update', ZombiesController.updateMatchStats);
+router.get('/api/zombies/get-match', ZombiesController.getMatch);
 
 
 router.post('/api/atw/create-match', ATWController.createMatch);
 router.post('/api/atw/update-match', ATWController.updateMatch);
-router.get('/api/atw/get-match/:matchId', ATWController.getMatch);
+router.get('/api/atw/get-match/:matchId', ATWController.getMatch); 
 
 module.exports = router;

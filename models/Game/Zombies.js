@@ -6,7 +6,7 @@ const ZombiesSchema = new mongoose.Schema({
   matchId: String,
   matchType: {
     type: String,
-    enum: ["solo", "multiplayer"],
+    enum: ["solo", "multiplayer", "private-2p"],
   },
   status: {
     type: String,

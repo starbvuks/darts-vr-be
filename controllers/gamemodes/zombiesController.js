@@ -6,20 +6,20 @@ const gameWebSocketHandler = require("../../sockets/gameSockets");
 // 6666d32dead7f3bab9218bf8
 // 6673d54ca1af8512fb61c979
 
-const ZombiesController = {  
+const ZombiesController = {
   joinOrCreateMatch: async (req, res) => {
     try {
       const { matchType, playerId } = req.body;
       authService.validateJwt(req, res, async () => {
-        if (matchType === 'solo') {
+        if (matchType === "solo") {
           const match = await MatchmakingService.createSoloMatch(playerId);
           res.status(200).json(match);
         } else {
-          const match = await MatchmakingService.joinQueue('zombies', playerId);
+          const match = await MatchmakingService.joinQueue("zombies", playerId);
           if (match) {
             res.status(200).json(match);
           } else {
-            res.status(202).json({ message: 'Waiting for other players' });
+            res.status(202).json({ message: "Waiting for other players" });
           }
         }
       });
@@ -28,22 +28,34 @@ const ZombiesController = {
     }
   },
 
+  createPrivateMatch: async (req, res) => {
+    try {
+      authService.validateJwt(req, res, async () => {
+        const { playerId } = req.body;
+        const newMatch = await ZombiesService.createMatch(playerId);
+        if (newMatch instanceof Error) {
+          res.status(500).json({ message: newMatch.message });
+        } else {
+          res.status(200).json(newMatch);
+        }
+      });
+    } catch (error) {
+      console.error("Error in createMatch controller:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  },
+
   inviteFriend: async (req, res, wss) => {
     try {
-      const { playerId, friendId, matchType } = req.body;
+      const { playerId, friendId, matchId } = req.body;
       authService.validateJwt(req, res, async () => {
-        const match = await MatchmakingService.joinMatch(
-          "zombies",
-          2,
-          playerId
-        );
         gameWebSocketHandler.sendZombiesInvitation(
           friendId,
           playerId,
-          match.matchId,
+          matchId,
           wss
         );
-        res.status(200).json(match);
+        res.status(200).json({ message: "Invitation sent" });
       });
     } catch (error) {
       res.status(400).json({ message: error.message });
@@ -55,10 +67,15 @@ const ZombiesController = {
       const { matchId, playerId } = req.body;
       authService.validateJwt(req, res, async () => {
         const match = await ZombiesService.joinMatch(matchId, playerId);
-        res.status(200).json(match);
+        if (match instanceof Error) {
+          res.status(400).json({ message: match.message });
+        } else {
+          res.status(200).json(match);
+        }
       });
     } catch (error) {
-      res.status(400).json({ message: error.message });
+      console.error("Error in joinMatch controller:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   },
 
@@ -74,7 +91,11 @@ const ZombiesController = {
           duration,
           winner
         );
-        res.status(200).json(updatedMatch);
+        if (match instanceof Error) {
+          res.status(400).json({ message: match.message });
+        } else {
+          res.status(200).json(updatedMatch);
+        }
       });
     } catch (error) {
       res.status(400).json({ message: error.message });
@@ -86,10 +107,31 @@ const ZombiesController = {
       const { matchId } = req.params;
       authService.validateJwt(req, res, async () => {
         const match = await ZombiesService.getMatch(matchId);
-        res.status(200).json(match);
+        if (match instanceof Error) {
+          res.status(400).json({ message: match.message });
+        } else {
+          res.status(200).json(match);
+        }
       });
     } catch (error) {
       res.status(404).json({ message: error.message });
+    }
+  },
+
+  closeMatch: async (req, res) => {
+    try {
+      authService.validateJwt(req, res, async () => {
+        const { matchId } = req.body;
+        const match = await ZombiesService.closeMatch(matchId);
+        if (match instanceof Error) {
+          res.status(400).json({ message: match.message });
+        } else {
+          res.status(200).json(match);
+        }
+      });
+    } catch (error) {
+      console.error('Error in closeMatch controller:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
   },
 };
