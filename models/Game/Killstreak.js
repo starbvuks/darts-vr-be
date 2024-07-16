@@ -1,30 +1,33 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 // Killstreak Model
 const KillstreakSchema = new mongoose.Schema({
-  matchId: { type: String, required: true, unique: true },
+  matchId: { type: String, unique: true },
   matchType: {
     type: String,
     enum: ["solo", "multiplayer"],
-    required: true,
   },
-  player1Id: { type: mongoose.Schema.Types.ObjectId, ref: 'Player', required: true },
-  player2Id: { type: mongoose.Schema.Types.ObjectId, ref: 'Player'},
+  status: {
+    type: String,
+    enum: ["open", "closed"],
+  },
+  player1Id: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
+  player2Id: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
   roundsPlayed: [
     {
       roundNumber: { type: Number, min: 0 },
       winner: {
         type: String,
-        enum: ["player1", "player2", "tie"],
+        enum: ["player1", "player2"],
       },
     },
   ],
   player1Stats: [
     {
-      currentStreak: { type: Number, required: true, min: 0 },
-      bestStreak: { type: Number, required: true, min: 0 },
-      totalPoints: { type: Number, required: true, min: 0 },
-      totalDarts: { type: Number, required: true, min: 0 },
+      currentStreak: { type: Number, min: 0 },
+      bestStreak: { type: Number, min: 0 },
+      totalPoints: { type: Number, min: 0 },
+      totalDarts: { type: Number, min: 0 },
     },
   ],
   player2Stats: [
@@ -35,12 +38,9 @@ const KillstreakSchema = new mongoose.Schema({
       totalDarts: { type: Number, min: 0 },
     },
   ],
-  winner: {
-    type: String,
-    enum: ["player1", "player2"],
-  },
+  duration: { type: Number, min: 0 }, // in seconds
+  winner: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
   createdAt: { type: Date, default: Date.now },
 });
 
-
-module.exports = mongoose.model('Killstreak', KillstreakSchema);
+module.exports = mongoose.model("Killstreak", KillstreakSchema);

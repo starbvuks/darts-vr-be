@@ -12,10 +12,15 @@ const ZombiesController = {
       const { matchType, playerId } = req.body;
       authService.validateJwt(req, res, async () => {
         if (matchType === "solo") {
-          const match = await MatchmakingService.createSoloMatch(playerId);
+          const match = await MatchmakingService.createSoloMatchZombies(
+            playerId
+          );
           res.status(200).json(match);
         } else {
-          const match = await MatchmakingService.joinQueue("zombies", playerId);
+          const match = await MatchmakingService.joinZombiesQueue(
+            "zombies",
+            playerId
+          );
           if (match) {
             res.status(200).json(match);
           } else {
@@ -130,8 +135,8 @@ const ZombiesController = {
         }
       });
     } catch (error) {
-      console.error('Error in closeMatch controller:', error);
-      res.status(500).json({ message: 'Internal server error' });
+      console.error("Error in closeMatch controller:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   },
 };

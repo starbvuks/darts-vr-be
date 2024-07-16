@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const ZombiesSchema = new mongoose.Schema({
   player1Id: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
   player2Id: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
-  matchId: String,
+  matchId: { type: String, unique: true },
   matchType: {
     type: String,
     enum: ["solo", "multiplayer", "private-2p"],
