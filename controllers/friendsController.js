@@ -12,7 +12,7 @@ exports.sendFriendRequest = async (req, res, wss) => {
         receiverId
       );
       if (result.error) {
-        res.json({ error: result.error });
+        res.status(400).json({ error: result.error });
       } else {
         const { sender, receiver } = result;
         webSocketHandler.broadcastFriendRequestNotification(
@@ -53,7 +53,7 @@ exports.unsendFriendRequest = async (req, res, wss) => {
           },
           wss
         );
-        res.json({ error: result.error });
+        res.status(400).json({ error: result.error });
       } else {
         const { sender, receiver } = result;
         webSocketHandler.broadcastFriendRequestUnsentNotification(
@@ -85,7 +85,7 @@ exports.acceptFriendRequest = async (req, res, wss) => {
         receiverId
       );
       if (result.error) {
-        res.json({ error: result.error });
+        res.status(400).json({ error: result.error });
       } else {
         const { sender, receiver } = result;
         webSocketHandler.broadcastFriendRequestAcceptedNotification(
@@ -116,7 +116,7 @@ exports.declineFriendRequest = async (req, res, wss) => {
         receiverId
       );
       if (result.error) {
-        res.json({ error: result.error });
+        res.status(400).json({ error: result.error });
       } else {
         const { sender, receiver } = result;
         webSocketHandler.broadcastFriendRequestDeclinedNotification(
@@ -153,7 +153,7 @@ exports.removeFriend = async (req, res, wss) => {
           },
           wss
         );
-        res.json({ error: result.error });
+        res.status(400).json({ error: result.error });
       } else {
         const { sender, receiver } = result;
         webSocketHandler.broadcastFriendRemovedNotification(
@@ -190,7 +190,7 @@ exports.blockPlayer = async (req, res, wss) => {
           },
           wss
         );
-        res.json({ error: result.error });
+        res.status(400).json({ error: result.error });
       } else {
         const { sender, receiver } = result;
         webSocketHandler.broadcastPlayerBlockedNotification(
@@ -227,7 +227,7 @@ exports.unblockPlayer = async (req, res, wss) => {
           },
           wss
         );
-        res.json({ error: result.error });
+        res.status(400).json({ error: result.error });
       } else {
         const { sender, receiver } = result;
         webSocketHandler.broadcastPlayerUnblockedNotification(

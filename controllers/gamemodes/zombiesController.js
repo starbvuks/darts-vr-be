@@ -3,20 +3,24 @@ const ZombiesService = require("../../services/gamemodes/zombiesService");
 const authService = require("../../services/auth/authService");
 const gameWebSocketHandler = require("../../sockets/gameSockets");
 
-const ZombiesController = {
+// 6666d32dead7f3bab9218bf8
+// 6673d54ca1af8512fb61c979
+
+const ZombiesController = {  
   joinOrCreateMatch: async (req, res) => {
     try {
-      const { playerIds } = req.body;
+      const { matchType, playerId } = req.body;
       authService.validateJwt(req, res, async () => {
-        const match = await MatchmakingService.joinMatch(
-          "zombies",
-          2,
-          playerIds
-        );
-        if (match) {
+        if (matchType === 'solo') {
+          const match = await MatchmakingService.createSoloMatch(playerId);
           res.status(200).json(match);
         } else {
-          res.status(202).json({ message: "Waiting for other players" });
+          const match = await MatchmakingService.joinQueue('zombies', playerId);
+          if (match) {
+            res.status(200).json(match);
+          } else {
+            res.status(202).json({ message: 'Waiting for other players' });
+          }
         }
       });
     } catch (error) {
