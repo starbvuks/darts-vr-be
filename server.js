@@ -98,6 +98,7 @@ wss.on("connection", (ws, req) => {
     const playerId = decoded.userID;
 
     ws.userId = playerId;
+    console.log(`user connected with ID: ${ws.userId} (or) ${playerId} - [console.log in wss init]`);
 
     // Clean up when the connection is closed
     ws.on("close", () => {
