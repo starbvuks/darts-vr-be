@@ -1,5 +1,7 @@
 const Player = require("../models/Player");
 
+// Minimize Mongoose Calls
+
 async function sendFriendRequest(senderId, receiverId) {
   try {
     // Check if the sender and receiver are already friends
