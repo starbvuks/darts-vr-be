@@ -26,7 +26,6 @@ const validateOculusSession = async (req, res) => {
               {
                 platform: "Oculus",
                 platformId: oculusId,
-                _id: false,
               },
             ],
             profile: {

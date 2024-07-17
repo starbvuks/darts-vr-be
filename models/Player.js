@@ -8,6 +8,7 @@ const playerSchema = new mongoose.Schema({
     {
       platform: String, 
       platformId: String, 
+      _id: false,
     },
   ],
   profile: {
