@@ -30,6 +30,7 @@ exports.steamAuth = async (req, res) => {
           {
             platform: "Steam",
             platformId: steamId,
+            _id: false
           },
         ],
         profile: {

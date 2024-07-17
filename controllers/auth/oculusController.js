@@ -1,6 +1,7 @@
 const oculusService = require("../../services/auth/oculusService");
 const authService = require("../../services/auth/authService");
 const Player = require("../../models/Player");
+const Cosmetics = require("../../models/Cosmetics");
 
 const validateOculusSession = async (req, res) => {
   try {
@@ -20,14 +21,43 @@ const validateOculusSession = async (req, res) => {
         let player = await Player.findOne({ "auth.platformId": oculusId });
 
         if (!player) {
+          const defaultCosmetics = await Cosmetics.find({
+            type: { $in: ["hat", "hands", "dartSkin", "glasses", "gender"] },
+            unityId: "0",
+          });
+
           // Create a new player document if it doesn't exist
           player = new Player({
             auth: [
               {
                 platform: "Oculus",
                 platformId: oculusId,
+                _id: false,
               },
             ],
+            profile: {
+              cosmetics: {
+                hat: {
+                  hatId: defaultCosmetics.find((c) => c.type === "hat")._id,
+                },
+                hands: {
+                  handsId: defaultCosmetics.find((c) => c.type === "hands")._id,
+                },
+                dartSkin: {
+                  dartSkinId: defaultCosmetics.find(
+                    (c) => c.type === "dartSkin"
+                  )._id,
+                },
+                glasses: {
+                  glassesId: defaultCosmetics.find((c) => c.type === "glasses")
+                    ._id,
+                },
+                gender: {
+                  genderId: defaultCosmetics.find((c) => c.type === "gender")
+                    ._id,
+                },
+              },
+            },
           });
           await player.save();
         }

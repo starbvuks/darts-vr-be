@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 exports.getUserProfile = (req, res) => {
   authService.validateJwt(req, res, async () => {
     const userId = req.userId;
+    console.log(userId)
     const user = await PlayerService.getUserProfile(userId);
     if (!user) {
       return res.status(404).send({ message: "User not found" });
