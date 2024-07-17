@@ -29,7 +29,6 @@ const ZombiesSchema = new mongoose.Schema({
     score: { type: Number, min: 0 },
   },
   duration: { type: Number, min: 0 }, // in seconds
-  winner: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
   createdAt: { type: Date, default: Date.now },
 });
 

@@ -15,13 +15,19 @@ const ZombiesController = {
           const match = await MatchmakingService.createSoloMatchZombies(
             playerId
           );
-          res.status(200).json(match);
+          if (match instanceof Error) {
+            res.status(400).json({ message: match.message });
+          } else {
+            res.status(200).json(match);
+          }
         } else {
           const match = await MatchmakingService.joinZombiesQueue(
             "zombies",
             playerId
           );
-          if (match) {
+          if (match instanceof Error) {
+            res.status(400).json({ message: match.message });
+          } else if (match) {
             res.status(200).json(match);
           } else {
             res.status(202).json({ message: "Waiting for other players" });
@@ -86,18 +92,17 @@ const ZombiesController = {
 
   updateMatchStats: async (req, res) => {
     try {
-      const { matchId, player1Stats, player2Stats, duration, winner } =
-        req.body;
+      const { matchId, playerId, stats, duration, winner } = req.body;
       authService.validateJwt(req, res, async () => {
         const updatedMatch = await ZombiesService.updateMatchStats(
           matchId,
-          player1Stats,
-          player2Stats,
+          playerId,
+          stats,
           duration,
           winner
         );
-        if (match instanceof Error) {
-          res.status(400).json({ message: match.message });
+        if (updatedMatch instanceof Error) {
+          res.status(400).json({ message: updatedMatch.message });
         } else {
           res.status(200).json(updatedMatch);
         }
@@ -113,7 +118,7 @@ const ZombiesController = {
       authService.validateJwt(req, res, async () => {
         const match = await ZombiesService.getMatch(matchId);
         if (match instanceof Error) {
-          res.status(400).json({ message: match.message });
+          res.status(404).json({ message: match.message });
         } else {
           res.status(200).json(match);
         }
@@ -126,7 +131,7 @@ const ZombiesController = {
   closeMatch: async (req, res) => {
     try {
       authService.validateJwt(req, res, async () => {
-        const { matchId } = req.body;
+        const { matchId } = req.params;
         const match = await ZombiesService.closeMatch(matchId);
         if (match instanceof Error) {
           res.status(400).json({ message: match.message });

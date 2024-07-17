@@ -37,8 +37,8 @@ exports.sendFriendRequest = async (req, res, wss) => {
 
 exports.unsendFriendRequest = async (req, res, wss) => {
   authService.validateJwt(req, res, async () => {
-    const { receiverId } = req.body;
-    const senderId = req.userId;
+    const { senderId, receiverId } = req.body;
+    // const senderId = req.userId;
     try {
       const result = await friendsService.unsendFriendRequest(
         senderId,

@@ -10,16 +10,21 @@ const KillstreakController = {
       authService.validateJwt(req, res, async () => {
         if (matchType === "solo") {
           const match = await MatchmakingService.createSoloMatchKillstreak(
-            matchType,
             playerId
           );
-          res.status(200).json(match);
+          if (match instanceof Error) {
+            res.status(400).json({ message: match.message });
+          } else {
+            res.status(200).json(match);
+          }
         } else {
           const match = await MatchmakingService.joinKillstreakQueue(
-            matchType,
+            "killstreak",
             playerId
           );
-          if (match) {
+          if (match instanceof Error) {
+            res.status(400).json({ message: match.message });
+          } else if (match) {
             res.status(200).json(match);
           } else {
             res.status(202).json({ message: "Waiting for other players" });

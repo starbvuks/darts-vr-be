@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require("uuid");
 const RedisService = require("./redisService");
 const Zombies = require("../models/Game/Zombies");
+const Killstreak = require("../models/Game/Killstreak");
 
 const MatchmakingService = {
   joinZombiesQueue: async (gameType, playerId) => {
@@ -23,7 +24,9 @@ const MatchmakingService = {
         if (player1Id === player2Id) {
           // Remove the duplicate player from the queue
           await RedisService.removePlayersFromQueue(queueName, 1);
-          throw new Error("Cannot match the same player twice");
+          const error = new Error("Cannot match the same player twice");
+          console.error("Error in joinZombiesQueue:", error);
+          return error;
         }
 
         const newMatch = new Zombies({
@@ -96,7 +99,9 @@ const MatchmakingService = {
         if (player1Id === player2Id) {
           // Remove the duplicate player from the queue
           await RedisService.removePlayersFromQueue(queueName, 1);
-          throw new Error("Cannot match the same player twice");
+          const error = new Error("Cannot match the same player twice");
+          console.error("Error in joinKillstreakQueue:", error);
+          return error;
         }
 
         const newMatch = new Killstreak({
@@ -128,7 +133,7 @@ const MatchmakingService = {
         return null;
       }
     } catch (error) {
-      console.error("Error in joinKillstreakQueue:", error);
+      console.error("Error in joinbKillstreakQueue:", error);
       throw error;
     }
   },

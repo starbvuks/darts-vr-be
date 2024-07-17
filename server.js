@@ -97,9 +97,6 @@ wss.on("connection", (ws, req) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
     const playerId = decoded.userID;
 
-    console.log(`WebSocket connection established for player: ${playerId}`);
-
-    // Add the userId property to the WebSocket client
     ws.userId = playerId;
 
     // Clean up when the connection is closed
