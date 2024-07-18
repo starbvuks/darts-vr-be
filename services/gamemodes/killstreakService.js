@@ -1,5 +1,7 @@
 const { v4: uuidv4 } = require("uuid");
 const Killstreak = require("../../models/Game/Killstreak");
+const Player = require("../../models/Player");
+const mongoose = require("mongoose");
 
 const KillstreakService = {
   createMatch: async (playerId) => {
@@ -51,23 +53,32 @@ const KillstreakService = {
 
   updateMatchStats: async (matchId, playerId, playerStats) => {
     try {
-      const match = await Killstreak.findOne({ matchId, status: "ongoing" });
+      const match = await Killstreak.findOne({ matchId });
       if (!match) {
-        const error = new Error("Match not found or is not ongoing");
+        const error = new Error("Match not found");
         console.error("Error updating match stats:", error);
         return error;
       }
+  
+      const playerIdObj = new mongoose.Types.ObjectId(playerId);
+      const player = await Player.findById(playerIdObj);
 
-      if (match.player1Id.equals(playerId)) {
+      if (!player) {
+        const error = new Error("Player not found");
+        console.error("Error updating match stats:", error);
+        return error;
+      }
+      
+      if (match.player1Id.equals(player._id)) {
         match.player1Stats.push(playerStats);
-      } else if (match.player2Id.equals(playerId)) {
+      } else if (match.player2Id.equals(player._id)) {
         match.player2Stats.push(playerStats);
       } else {
-        const error = new Error("Player ID does not match any player in the match");
+        const error = new Error("Player is not part of this match");
         console.error("Error updating match stats:", error);
         return error;
       }
-
+  
       await match.save();
       return match;
     } catch (error) {
@@ -87,23 +98,6 @@ const KillstreakService = {
 
       match.roundsPlayed.push({ winner: roundWinner });
 
-      // Check if a player has won 2 consecutive rounds
-      let player1Wins = 0;
-      let player2Wins = 0;
-      for (let i = 0; i < match.roundsPlayed.length; i++) {
-        if (match.roundsPlayed[i].winner === "player1") {
-          player1Wins++;
-        } else {
-          player2Wins++;
-        }
-
-        if (player1Wins === 2 || player2Wins === 2) {
-          match.winner = player1Wins === 2 ? match.player1Id : match.player2Id;
-          match.status = "closed";
-          break;
-        }
-      }
-
       await match.save();
       return match;
     } catch (error) {
@@ -112,7 +106,7 @@ const KillstreakService = {
     }
   },
 
-  endMatch: async (matchId) => {
+  endMatch: async (matchId, winner) => {
     try {
       const match = await Killstreak.findOne({ matchId, status: "ongoing" });
       if (!match) {
@@ -121,12 +115,7 @@ const KillstreakService = {
         return error;
       }
 
-      // If the match is tied, set the winner to null
-      if (match.roundsPlayed.filter((round) => round.winner === "player1").length === 
-          match.roundsPlayed.filter((round) => round.winner === "player2").length) {
-        match.winner = null;
-      }
-
+      match.winner = winner;
       match.status = "closed";
       await match.save();
       return match;

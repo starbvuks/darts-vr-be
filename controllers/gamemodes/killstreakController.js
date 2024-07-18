@@ -125,7 +125,7 @@ const KillstreakController = {
 
   endMatch: async (req, res) => {
     try {
-      const { matchId } = req.body;
+      const { matchId, winner } = req.body;
       authService.validateJwt(req, res, async () => {
         const match = await KillstreakService.endMatch(matchId);
         if (match instanceof Error) {

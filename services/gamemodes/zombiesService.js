@@ -52,7 +52,7 @@ const ZombiesService = {
     }
   },
 
-  updateMatchStats: async (matchId, playerId, stats, duration) => {
+  updateMatchStats: async (matchId, playerId, playerStats, duration) => {
     try {
       const match = await Zombies.findOne({ matchId });
       if (!match) {
@@ -64,9 +64,9 @@ const ZombiesService = {
       const playerIdObj = new mongoose.Types.ObjectId(playerId);
 
       if (match.player1Id.equals(playerIdObj)) {
-        match.player1Stats = stats;
+        match.player1Stats = playerStats;
       } else if (match.player2Id.equals(playerIdObj)) {
-        match.player2Stats = stats;
+        match.player2Stats = playerStats;
       } else {
         const error = new Error("Player is not part of this match");
         console.error("Error updating match stats:", error);

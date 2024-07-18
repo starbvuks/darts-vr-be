@@ -17,7 +17,7 @@ const KillstreakSchema = new mongoose.Schema({
     {
       winner: {
         type: String,
-        enum: ["player1", "player2", "tie"],
+        enum: ["player1", "player2"],
         _id: false, 
       },
       _id: false, 
@@ -26,7 +26,6 @@ const KillstreakSchema = new mongoose.Schema({
   player1Stats: [
     {
       currentStreak: { type: Number, min: 0 },
-      bestStreak: { type: Number, min: 0 },
       totalPoints: { type: Number, min: 0 },
       totalDarts: { type: Number, min: 0 },
       _id: false, 
@@ -35,7 +34,6 @@ const KillstreakSchema = new mongoose.Schema({
   player2Stats: [
     {
       currentStreak: { type: Number, min: 0 },
-      bestStreak: { type: Number, min: 0 },
       totalPoints: { type: Number, min: 0 },
       totalDarts: { type: Number, min: 0 },
       _id: false, 

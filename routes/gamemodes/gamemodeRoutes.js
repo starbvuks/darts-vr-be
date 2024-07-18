@@ -8,7 +8,7 @@ const KillstreakController = require('../../controllers/gamemodes/killstreakCont
 router.post('/api/zombies', ZombiesController.joinOrCreateMatch);
 router.post('/api/zombies/create-private', ZombiesController.createPrivateMatch);
 router.post('/api/zombies/join', ZombiesController.joinInvitedMatch);
-router.put('/api/zombies/update', ZombiesController.updateMatchStats);
+router.patch('/api/zombies/update', ZombiesController.updateMatchStats);
 router.get('/api/zombies/get-match/:matchId', ZombiesController.getMatch);
 router.post('/api/zombies/close-match', ZombiesController.closeMatch);
 
@@ -16,9 +16,9 @@ router.post('/api/zombies/close-match', ZombiesController.closeMatch);
 router.post('/api/killstreak', KillstreakController.joinOrCreateMatch);
 router.post('/api/killstreak/create-private', ZombiesController.createPrivateMatch);
 router.post('/api/killstreak/join', KillstreakController.joinInvitedMatch);
-router.patch("/killstreak/update", KillstreakController.updateMatchStats);
-router.post("/killstreak/end-round", KillstreakController.endRound);
-router.post("/killstreak/end-match", KillstreakController.endMatch);
+router.patch("/api/killstreak/update", KillstreakController.updateMatchStats);
+router.post("/api/killstreak/end-round", KillstreakController.endRound);
+router.post("/api/killstreak/end-match", KillstreakController.endMatch);
 router.get('/api/zombies/get-match/:matchId', KillstreakController.getMatch);
 router.post('/api/zombies/close-match', KillstreakController.closeMatch);
 
