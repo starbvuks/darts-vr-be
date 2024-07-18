@@ -95,7 +95,7 @@ wss.on("connection", (ws, req) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-    const playerId = decoded.userID;
+    const playerId = decoded.userId;
 
     ws.userId = playerId;
     console.log(`user connected with ID: ${ws.userId} (or) ${playerId} - [console.log in wss init]`);

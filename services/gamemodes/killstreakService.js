@@ -61,17 +61,10 @@ const KillstreakService = {
       }
   
       const playerIdObj = new mongoose.Types.ObjectId(playerId);
-      const player = await Player.findById(playerIdObj);
-
-      if (!player) {
-        const error = new Error("Player not found");
-        console.error("Error updating match stats:", error);
-        return error;
-      }
-      
-      if (match.player1Id.equals(player._id)) {
+  
+      if (match.player1Id.equals(playerIdObj)) {
         match.player1Stats.push(playerStats);
-      } else if (match.player2Id.equals(player._id)) {
+      } else if (match.player2Id.equals(playerIdObj)) {
         match.player2Stats.push(playerStats);
       } else {
         const error = new Error("Player is not part of this match");
