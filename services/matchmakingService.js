@@ -108,7 +108,7 @@ const MatchmakingService = {
           player1Id,
           player2Id,
           matchType: "multiplayer",
-          status: "closed",
+          status: "ongoing",
           matchId: uuidv4(),
         });
         await newMatch.save();

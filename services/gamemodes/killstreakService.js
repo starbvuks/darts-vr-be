@@ -49,22 +49,89 @@ const KillstreakService = {
     }
   },
 
-  updateMatchStats: async (matchId, player1Stats, player2Stats, duration, winner) => {
+  updateMatchStats: async (matchId, playerId, playerStats) => {
     try {
-      const match = await Killstreak.findOne({ matchId });
+      const match = await Killstreak.findOne({ matchId, status: "ongoing" });
       if (!match) {
-        const error = new Error("Match not found");
+        const error = new Error("Match not found or is not ongoing");
         console.error("Error updating match stats:", error);
         return error;
       }
-      match.player1Stats = player1Stats;
-      match.player2Stats = player2Stats;
-      match.duration = duration;
-      match.winner = winner;
+
+      if (match.player1Id.equals(playerId)) {
+        match.player1Stats.push(playerStats);
+      } else if (match.player2Id.equals(playerId)) {
+        match.player2Stats.push(playerStats);
+      } else {
+        const error = new Error("Player ID does not match any player in the match");
+        console.error("Error updating match stats:", error);
+        return error;
+      }
+
       await match.save();
       return match;
     } catch (error) {
       console.error("Error updating match stats:", error);
+      return error;
+    }
+  },
+
+  endRound: async (matchId, roundWinner) => {
+    try {
+      const match = await Killstreak.findOne({ matchId, status: "ongoing" });
+      if (!match) {
+        const error = new Error("Match not found or is not ongoing");
+        console.error("Error ending round:", error);
+        return error;
+      }
+
+      match.roundsPlayed.push({ winner: roundWinner });
+
+      // Check if a player has won 2 consecutive rounds
+      let player1Wins = 0;
+      let player2Wins = 0;
+      for (let i = 0; i < match.roundsPlayed.length; i++) {
+        if (match.roundsPlayed[i].winner === "player1") {
+          player1Wins++;
+        } else {
+          player2Wins++;
+        }
+
+        if (player1Wins === 2 || player2Wins === 2) {
+          match.winner = player1Wins === 2 ? match.player1Id : match.player2Id;
+          match.status = "closed";
+          break;
+        }
+      }
+
+      await match.save();
+      return match;
+    } catch (error) {
+      console.error("Error ending round:", error);
+      return error;
+    }
+  },
+
+  endMatch: async (matchId) => {
+    try {
+      const match = await Killstreak.findOne({ matchId, status: "ongoing" });
+      if (!match) {
+        const error = new Error("Match not found or is not ongoing");
+        console.error("Error ending match:", error);
+        return error;
+      }
+
+      // If the match is tied, set the winner to null
+      if (match.roundsPlayed.filter((round) => round.winner === "player1").length === 
+          match.roundsPlayed.filter((round) => round.winner === "player2").length) {
+        match.winner = null;
+      }
+
+      match.status = "closed";
+      await match.save();
+      return match;
+    } catch (error) {
+      console.error("Error ending match:", error);
       return error;
     }
   },

@@ -9,6 +9,7 @@ module.exports = {
     }
 
     wss.clients.forEach((client) => {
+      console.log(`client: ${client}`)
       console.log(`client userId: ${client.userId}, receiver: ${receiverId},sender ${notification.senderId} - [console.log in notification]`);
       if (
         client.readyState === WebSocket.OPEN &&

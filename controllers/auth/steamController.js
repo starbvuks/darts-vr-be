@@ -1,7 +1,6 @@
 const Player = require("../../models/Player");
 const steamService = require("../../services/auth/steamService");
 const authService = require("../../services/auth/authService");
-const Cosmetics = require("../../models/Cosmetics");
 
 exports.steamAuth = async (req, res) => {
   try {
@@ -15,10 +14,6 @@ exports.steamAuth = async (req, res) => {
 
     let player = await Player.findOne({ "auth.platformId": steamId });
     if (!player) {
-      const defaultCosmetics = await Cosmetics.find({
-        type: { $in: ["hat", "hands", "dartSkin", "glasses", "gender"] },
-        unityId: "0",
-      });
 
       // Fetch the player's username from the Steam API
       const playerSummary = await steamService.getPlayerSummaries(steamId);
@@ -36,20 +31,19 @@ exports.steamAuth = async (req, res) => {
         profile: {
           cosmetics: {
             hat: {
-              hatId: defaultCosmetics.find((c) => c.type === "hat")._id,
+              hatId: "667cfdf66b5fa5683c6eae99",
             },
             hands: {
-              handsId: defaultCosmetics.find((c) => c.type === "hands")._id,
+              handsId: "667cfdf66b5fa5683c6eae9a",
             },
             dartSkin: {
-              dartSkinId: defaultCosmetics.find((c) => c.type === "dartSkin")
-                ._id,
+              dartSkinId: "667cfdf66b5fa5683c6eae9b",
             },
             glasses: {
-              glassesId: defaultCosmetics.find((c) => c.type === "glasses")._id,
+              glassesId: "667cfdf66b5fa5683c6eae9c",
             },
             gender: {
-              genderId: defaultCosmetics.find((c) => c.type === "gender")._id,
+              genderId: "667cfdf66b5fa5683c6eae9d",
             },
           },
         },

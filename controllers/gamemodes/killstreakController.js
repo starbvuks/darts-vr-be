@@ -89,18 +89,49 @@ const KillstreakController = {
 
   updateMatchStats: async (req, res) => {
     try {
-      const { matchId, player1Stats, player2Stats, winner } = req.body;
+      const { matchId, playerId, playerStats } = req.body;
       authService.validateJwt(req, res, async () => {
-        const updatedKillstreak = await KillstreakService.updateMatchStats(
+        const match = await KillstreakService.updateMatchStats(
           matchId,
-          player1Stats,
-          player2Stats,
-          winner
+          playerId,
+          playerStats
         );
-        if (updatedKillstreak instanceof Error) {
-          res.status(400).json({ message: updatedKillstreak.message });
+        if (match instanceof Error) {
+          res.status(400).json({ message: match.message });
         } else {
-          res.status(200).json(updatedKillstreak);
+          res.status(200).json(match);
+        }
+      });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  },
+
+  endRound: async (req, res) => {
+    try {
+      const { matchId, roundWinner } = req.body;
+      authService.validateJwt(req, res, async () => {
+        const match = await KillstreakService.endRound(matchId, roundWinner);
+        if (match instanceof Error) {
+          res.status(400).json({ message: match.message });
+        } else {
+          res.status(200).json(match);
+        }
+      });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  },
+
+  endMatch: async (req, res) => {
+    try {
+      const { matchId } = req.body;
+      authService.validateJwt(req, res, async () => {
+        const match = await KillstreakService.endMatch(matchId);
+        if (match instanceof Error) {
+          res.status(400).json({ message: match.message });
+        } else {
+          res.status(200).json(match);
         }
       });
     } catch (error) {
