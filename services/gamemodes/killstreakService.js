@@ -88,9 +88,22 @@ const KillstreakService = {
         console.error("Error ending round:", error);
         return error;
       }
-
-      match.roundsPlayed.push({ winner: roundWinner });
-
+  
+      const roundWinnerObj = new mongoose.Types.ObjectId(roundWinner);
+  
+      let winner;
+      if (match.player1Id.equals(roundWinnerObj)) {
+        winner = "player1";
+      } else if (match.player2Id.equals(roundWinnerObj)) {
+        winner = "player2";
+      } else {
+        const error = new Error("Round winner is not part of this match");
+        console.error("Error ending round:", error);
+        return error;
+      }
+  
+      match.roundsPlayed.push({ winner });
+  
       await match.save();
       return match;
     } catch (error) {

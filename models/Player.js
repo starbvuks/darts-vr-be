@@ -91,12 +91,10 @@ const playerSchema = new mongoose.Schema({
         genderId: mongoose.Schema.Types.ObjectId, 
       },
     },
-    socketIds: [String], 
   },
   stats: {
     totalDartsThrown: Number,
     totalDartsHit: Number,
-    totalDartsAirtime: Number,
     total180s: Number,
     totalBullseyes: Number,
     totalWins: Number,
@@ -118,35 +116,27 @@ const playerSchema = new mongoose.Schema({
     atwStats: {
       totalAtwGamesPlayed: Number,
       totalAtwGamesWonStreak: Number,
+      leastDartsUsed: Number,
       highestStreak: Number,
       highestPoints: Number,
-      atwGames: [
-        mongoose.Schema.Types.ObjectId,
-      ]
     },
     zombiesStats: {
-      totalZombiesGamesPlayed: Number,
-      highestWave: Number,
-      zombiesKilled: Number,
-      highestPoints: Number,
-      headshots: Number,
-      legShots: Number,
+      totalZombiesGamesPlayed: { type: Number, default: 0 },
+      highestWave: { type: Number, default: 0 },
+      zombiesKilled: { type: Number, default: 0 },
+      highestPoints: { type: Number, default: 0 },
+      headshots: { type: Number, default: 0 },
+      legShots: { type: Number, default: 0 },
     },
     five0OneStats: {
       totalfive0OneGamesPlayed: Number,
       bullseyeHit: Number,
       total180s: Number,
-      five0OneGames: [
-        mongoose.Schema.Types.ObjectId,
-      ]
     },
     killstreakStats: {
       totalKillstreakGamesPlayed: Number,
       highestStreak: Number,
       minDartsUsed: Number,
-      killstreakGames: [
-        mongoose.Schema.Types.ObjectId,
-      ]
     },
   },
   createdAt: { type: Date, default: Date.now },

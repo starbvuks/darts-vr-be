@@ -42,9 +42,14 @@ app.use("/", playerInfo);
 // gamemodes
 const gamemodes = require("./routes/gamemodes/gamemodeRoutes.js");
 app.use("/", gamemodes);
+
+app.post("/api/zombies", (req, res) => {
+  zombiesController.joinOrCreateMatch(req, res, wss);
+});
 app.post("/api/zombies/invite", (req, res) => {
   zombiesController.inviteFriend(req, res, wss);
 });
+
 app.post("/api/killstreak/invite", (req, res) => {
   killstreakController.inviteFriend(req, res, wss);
 });
@@ -98,7 +103,6 @@ wss.on("connection", (ws, req) => {
     const playerId = decoded.userId;
 
     ws.userId = playerId;
-    console.log(`user connected with ID: ${ws.userId} (or) ${playerId} - [console.log in wss init]`);
 
     // Clean up when the connection is closed
     ws.on("close", () => {

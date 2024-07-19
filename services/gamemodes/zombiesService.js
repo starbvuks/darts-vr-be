@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const Zombies = require('../../models/Game/Zombies');
+const Player = require('../../models/Player');
 const mongoose = require("mongoose");
 
 const ZombiesService = {
@@ -75,6 +76,53 @@ const ZombiesService = {
 
       match.duration = duration;
       await match.save();
+
+      // Update the player's zombiesStats
+      const player = await Player.findById(playerIdObj);
+      if (!player) {
+        const error = new Error("Player not found");
+        console.error("Error updating player stats:", error);
+        return error;
+      }
+
+      if (!player.stats.zombiesStats) {
+        player.stats.zombiesStats = {
+          totalZombiesGamesPlayed: 1,
+          highestWave: playerStats.waveReached,
+          zombiesKilled: playerStats.kills,
+          highestPoints: playerStats.score,
+          headshots: playerStats.headshots,
+          legShots: playerStats.legshots,
+        };
+      } else {
+        player.stats.zombiesStats.totalZombiesGamesPlayed++;
+        player.stats.zombiesStats.zombiesKilled += playerStats.kills;
+        player.stats.zombiesStats.headshots += playerStats.headshots;
+        player.stats.zombiesStats.legShots += playerStats.legshots;
+  
+        if (playerStats.waveReached > player.stats.zombiesStats.highestWave) {
+          player.stats.zombiesStats.highestWave = playerStats.waveReached;
+        }
+  
+        if (playerStats.score > player.stats.zombiesStats.highestPoints) {
+          player.stats.zombiesStats.highestPoints = playerStats.score;
+        }
+      }
+
+      if(!player.stats.totalDartsThrown) {
+        player.stats.totalDartsThrown = playerStats.totalDartsThrown;
+      } else {
+        player.stats.totalDartsThrown += playerStats.totalDartsThrown;
+      }
+
+      if(!player.stats.totalMatchesPlayed) {
+        player.stats.totalMatchesPlayed = 1;
+      } else {
+        player.stats.totalMatchesPlayed++;
+      }
+
+      await player.save();
+
       return match;
     } catch (error) {
       console.error("Error updating match stats:", error);

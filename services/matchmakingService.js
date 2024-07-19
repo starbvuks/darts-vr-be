@@ -2,9 +2,10 @@ const { v4: uuidv4 } = require("uuid");
 const RedisService = require("./redisService");
 const Zombies = require("../models/Game/Zombies");
 const Killstreak = require("../models/Game/Killstreak");
+const gameSockets = require("../sockets/gameSockets");
 
 const MatchmakingService = {
-  joinZombiesQueue: async (gameType, playerId) => {
+  joinZombiesQueue: async (gameType, playerId, wss) => {
     const queueName = `${gameType}-2players`;
 
     try {
@@ -51,6 +52,8 @@ const MatchmakingService = {
           `${gameType}-2-match-created`,
           message
         );
+
+        gameSockets.handleMatchCreatedNotification(`${gameType}-2-match-created`, message, wss);
 
         return newMatch;
       } else {

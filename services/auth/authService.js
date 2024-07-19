@@ -54,7 +54,7 @@ exports.validateJwt = (req, res, next) => {
       console.error("JWT Verification Error:", err); 
       return res.sendStatus(403); 
     }
-    console.log("Payload:", payload);
+    // console.log("Payload:", payload);
     req.userId = payload.userId; 
     next();
   });

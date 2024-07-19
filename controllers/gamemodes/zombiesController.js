@@ -7,7 +7,7 @@ const gameWebSocketHandler = require("../../sockets/gameSockets");
 // 6673d54ca1af8512fb61c979
 
 const ZombiesController = {
-  joinOrCreateMatch: async (req, res) => {
+  joinOrCreateMatch: async (req, res, wss) => {
     try {
       const { matchType, playerId } = req.body;
       authService.validateJwt(req, res, async () => {
@@ -23,7 +23,8 @@ const ZombiesController = {
         } else {
           const match = await MatchmakingService.joinZombiesQueue(
             "zombies",
-            playerId
+            playerId,
+            wss
           );
           if (match instanceof Error) {
             res.status(400).json({ message: match.message });
@@ -92,12 +93,12 @@ const ZombiesController = {
 
   updateMatchStats: async (req, res) => {
     try {
-      const { matchId, playerId, stats, duration, winner } = req.body;
+      const { matchId, playerId, playerStats, duration, winner } = req.body;
       authService.validateJwt(req, res, async () => {
         const updatedMatch = await ZombiesService.updateMatchStats(
           matchId,
           playerId,
-          stats,
+          playerStats,
           duration,
           winner
         );
