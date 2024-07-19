@@ -126,10 +126,11 @@ const playerSchema = new mongoose.Schema({
       headshots: { type: Number, default: 0 },
       legShots: { type: Number, default: 0 },
     },
-    five0OneStats: {
-      totalfive0OneGamesPlayed: Number,
-      bullseyeHit: Number,
-      total180s: Number,
+    fiveOhOneStats: {
+      totalfive0OneGamesPlayed: { type: Number, default: 0 },
+      fiveOhOneGamesWon: { type: Number, default: 0 },
+      bullseyeHit: { type: Number, default: 0 },
+      total180s: { type: Number, default: 0 },
     },
     killstreakStats: {
       totalKillstreakGamesPlayed: { type: Number, default: 0 },

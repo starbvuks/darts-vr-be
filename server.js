@@ -10,6 +10,7 @@ const url = require("url");
 const friendsController = require("./controllers/friendsController");
 const zombiesController = require("./controllers/gamemodes/zombiesController");
 const killstreakController = require("./controllers/gamemodes/killstreakController");
+const fiveOhOneController = require("./controllers/gamemodes/fiveOhOneController");
 
 require("dotenv").config();
 
@@ -57,9 +58,12 @@ app.post("/api/killstreak/invite", (req, res) => {
   killstreakController.inviteFriend(req, res, wss);
 });
 
-// app.post("/api/fiveohone", (req, res) => {
-//   killstreakController.joinOrCreateMatch(req, res, wss);
-// });
+app.post("/api/501", (req, res) => {
+  fiveOhOneController.joinOrCreateMatch(req, res, wss);
+});
+app.post("/api/501/invite", (req, res) => {
+  fiveOhOneController.inviteFriend(req, res, wss);
+});
 
 // friend requests
 app.post("/api/friends/send-request", (req, res) => {

@@ -3,7 +3,7 @@ const { WebSocket } = require("ws");
 
 module.exports = {
   handleMatchCreatedNotification: (channel, message, wss) => {
-    const { matchId, players } = JSON.parse(message);
+    const { type, matchId, players } = JSON.parse(message);
     console.log(players);
 
     players.forEach((playerId) => {
@@ -12,7 +12,7 @@ module.exports = {
         if (client.userId === playerId && client.readyState === WebSocket.OPEN) {
           client.send(
             JSON.stringify({
-              type: "match_created",
+              type,
               matchId,
             })
           );

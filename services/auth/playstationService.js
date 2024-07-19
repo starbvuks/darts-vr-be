@@ -54,6 +54,8 @@ async function verifyIDToken(idToken) {
     const { data } = await axios.get('https://auth.api.sonyentertainmentnetwork.com/2.0/oauth/jwks');
     const publicKey = data.keys[0].n;
 
+    console.log(publicKey)
+
     // Verify the ID token
     const decoded = jwt.verify(idToken, publicKey);
 
