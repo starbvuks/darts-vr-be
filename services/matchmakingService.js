@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require("uuid");
 const RedisService = require("./redisService");
 const Zombies = require("../models/Game/Zombies");
 const Killstreak = require("../models/Game/Killstreak");
+const FiveOhOne = require("../models/Game/FiveOhOne");
 const gameSockets = require("../sockets/gameSockets");
 
 const MatchmakingService = {
@@ -44,9 +45,9 @@ const MatchmakingService = {
 
         // Publish a message to the corresponding Redis channel with the match details
         const message = JSON.stringify({
-          type: "match_created",
+          type: `${gameType}-2-match-created`,
           matchId: newMatch.matchId,
-          players: newMatch.playerIds,
+          players: playerIdsToMatch,
         });
         await RedisService.publishMatchCreated(
           `${gameType}-2-match-created`,
@@ -82,7 +83,7 @@ const MatchmakingService = {
     }
   },
 
-  joinKillstreakQueue: async (gameType, playerId) => {
+  joinKillstreakQueue: async (gameType, playerId, wss) => {
     const queueName = `${gameType}-2players`;
 
     try {
@@ -130,6 +131,8 @@ const MatchmakingService = {
           message
         );
 
+        gameSockets.handleMatchCreatedNotification(`${gameType}-2-match-created`, message, wss);
+
         return newMatch;
       } else {
         // Wait for more players to join the queue
@@ -146,13 +149,87 @@ const MatchmakingService = {
       const match = new Killstreak({
         player1Id: playerId,
         matchType: "solo",
-        status: "open",
+        status: "ongoing",
         matchId: uuidv4(),
       });
       await match.save();
       return match;
     } catch (error) {
       console.error("Error creating solo Killstreak match:", error);
+      throw error;
+    }
+  },
+
+  // 501
+  joinFiveOhOneQueue: async (gameType, playerId, numPlayers, wss) => {
+    const queueName = `${gameType}-${numPlayers}players`;
+
+    try {
+      // Add the player to the queue
+      await RedisService.addToQueue(queueName, playerId);
+
+      // Check if there are enough players in the queue to start a new match
+      const queueLength = await RedisService.getQueueLength(queueName);
+      if (queueLength >= numPlayers) {
+        const playerIdsToMatch = await RedisService.getPlayersFromQueue(queueName, numPlayers);
+        
+        // Create a new match
+        const newMatch = new FiveOhOne({
+          matchId: uuidv4(),
+          matchType: `multiplayer`,
+          status: "ongoing",
+          player1Id: playerIdsToMatch[0],
+          player2Id: numPlayers > 1 ? playerIdsToMatch[1] : null,
+          player3Id: numPlayers > 2 ? playerIdsToMatch[2] : null,
+          player4Id: numPlayers > 3 ? playerIdsToMatch[3] : null,
+          player1Stats: [],
+          player2Stats: [],
+          player3Stats: numPlayers > 2 ? [] : undefined,
+          player4Stats: numPlayers > 3 ? [] : undefined,
+        });
+
+        await newMatch.save();
+
+        // Remove the players from the queue
+        await RedisService.removePlayersFromQueue(queueName, numPlayers);
+
+        const message = JSON.stringify({
+          type: "match_created",
+          matchId: newMatch.matchId,
+          players: newMatch.playerIds,
+        });
+        await RedisService.publishMatchCreated(
+          `${gameType}-${numPlayers}-match-created`,
+          message
+        );
+
+        gameSockets.handleMatchCreatedNotification(`${gameType}-${numPlayers}-match-created`, message, wss);
+
+        return newMatch;
+      } else {
+        // Wait for more players to join the queue
+        return null;
+      }
+    } catch (error) {
+      console.error("Error in joinQueue:", error);
+      throw error;
+    }
+  },
+
+  createSoloMatchFiveOhOne: async (playerId) => {
+    try {
+      const newMatch = new FiveOhOne({
+        matchId: uuidv4(),
+        matchType: "solo",
+        status: "ongoing",
+        player1Id: playerId,
+        player1Stats: [],
+      });
+
+      await newMatch.save();
+      return newMatch;
+    } catch (error) {
+      console.error("Error creating solo match:", error);
       throw error;
     }
   },

@@ -13,16 +13,6 @@ const KillstreakSchema = new mongoose.Schema({
   },
   player1Id: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
   player2Id: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
-  roundsPlayed: [
-    {
-      winner: {
-        type: String,
-        enum: ["player1", "player2"],
-        _id: false, 
-      },
-      _id: false, 
-    },
-  ],
   player1Stats: [
     {
       currentStreak: { type: Number, min: 0 },

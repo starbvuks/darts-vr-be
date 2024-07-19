@@ -7,7 +7,7 @@ const gameWebSocketHandler = require("../../sockets/gameSockets");
 // 6673d54ca1af8512fb61c979
 
 const KillstreakController = {
-  joinOrCreateMatch: async (req, res) => {
+  joinOrCreateMatch: async (req, res, wss) => {
     try {
       const { matchType, playerId } = req.body;
       authService.validateJwt(req, res, async () => {
@@ -23,7 +23,8 @@ const KillstreakController = {
         } else {
           const match = await MatchmakingService.joinKillstreakQueue(
             "killstreak",
-            playerId
+            playerId,
+            wss
           );
           if (match instanceof Error) {
             res.status(400).json({ message: match.message });
@@ -99,22 +100,6 @@ const KillstreakController = {
           playerId,
           playerStats
         );
-        if (match instanceof Error) {
-          res.status(400).json({ message: match.message });
-        } else {
-          res.status(200).json(match);
-        }
-      });
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  },
-
-  endRound: async (req, res) => {
-    try {
-      const { matchId, roundWinner } = req.body;
-      authService.validateJwt(req, res, async () => {
-        const match = await KillstreakService.endRound(matchId, roundWinner);
         if (match instanceof Error) {
           res.status(400).json({ message: match.message });
         } else {

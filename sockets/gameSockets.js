@@ -4,7 +4,10 @@ const { WebSocket } = require("ws");
 module.exports = {
   handleMatchCreatedNotification: (channel, message, wss) => {
     const { matchId, players } = JSON.parse(message);
+    console.log(players);
+
     players.forEach((playerId) => {
+      console.log(playerId);  
       wss.clients.forEach((client) => {
         if (client.userId === playerId && client.readyState === WebSocket.OPEN) {
           client.send(

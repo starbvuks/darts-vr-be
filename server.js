@@ -50,9 +50,16 @@ app.post("/api/zombies/invite", (req, res) => {
   zombiesController.inviteFriend(req, res, wss);
 });
 
+app.post("/api/killstreak", (req, res) => {
+  killstreakController.joinOrCreateMatch(req, res, wss);
+});
 app.post("/api/killstreak/invite", (req, res) => {
   killstreakController.inviteFriend(req, res, wss);
 });
+
+// app.post("/api/fiveohone", (req, res) => {
+//   killstreakController.joinOrCreateMatch(req, res, wss);
+// });
 
 // friend requests
 app.post("/api/friends/send-request", (req, res) => {
@@ -103,6 +110,7 @@ wss.on("connection", (ws, req) => {
     const playerId = decoded.userId;
 
     ws.userId = playerId;
+    console.log(ws.userId)
 
     // Clean up when the connection is closed
     ws.on("close", () => {
@@ -123,7 +131,7 @@ app.post("/demo-login", (req, res) => {
 
   // Validate the provided user ID
   if (user == "6666d32dead7f3bab9218bf8") {
-    const token = jwt.sign({ userID: user }, process.env.JWT_SECRET_KEY, {
+    const token = jwt.sign({ userId: user }, process.env.JWT_SECRET_KEY, {
       expiresIn: "4h",
     });
     res.json({ token });

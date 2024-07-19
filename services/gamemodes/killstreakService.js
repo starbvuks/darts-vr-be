@@ -59,9 +59,9 @@ const KillstreakService = {
         console.error("Error updating match stats:", error);
         return error;
       }
-  
+
       const playerIdObj = new mongoose.Types.ObjectId(playerId);
-  
+
       if (match.player1Id.equals(playerIdObj)) {
         match.player1Stats.push(playerStats);
       } else if (match.player2Id.equals(playerIdObj)) {
@@ -71,43 +71,37 @@ const KillstreakService = {
         console.error("Error updating match stats:", error);
         return error;
       }
-  
+
       await match.save();
+
+      // Update the player's killstreakStats
+      const player = await Player.findById(playerIdObj);
+      if (!player) {
+        const error = new Error("Player not found");
+        console.error("Error updating player stats:", error);
+        return error;
+      }
+
+      if (!player.stats.killstreakStats) {
+        player.stats.killstreakStats = {
+          totalKillstreakGamesPlayed: 0,
+          totalKillstreakGamesWon: 0,
+          highestStreak: 0,
+        };
+      } else {
+        player.stats.killstreakStats.totalKillstreakGamesPlayed += 1;
+        player.stats.killstreakStats.highestStreak = Math.max(player.stats.killstreakStats.highestStreak, playerStats.currentStreak);
+      }
+
+      player.stats.totalDartsThrown += playerStats.totalDarts;
+      player.stats.totalDartsHit += playerStats.totalDarts;
+      player.stats.totalMatchesPlayed += 1;
+
+      await player.save();
+
       return match;
     } catch (error) {
       console.error("Error updating match stats:", error);
-      return error;
-    }
-  },
-
-  endRound: async (matchId, roundWinner) => {
-    try {
-      const match = await Killstreak.findOne({ matchId, status: "ongoing" });
-      if (!match) {
-        const error = new Error("Match not found or is not ongoing");
-        console.error("Error ending round:", error);
-        return error;
-      }
-  
-      const roundWinnerObj = new mongoose.Types.ObjectId(roundWinner);
-  
-      let winner;
-      if (match.player1Id.equals(roundWinnerObj)) {
-        winner = "player1";
-      } else if (match.player2Id.equals(roundWinnerObj)) {
-        winner = "player2";
-      } else {
-        const error = new Error("Round winner is not part of this match");
-        console.error("Error ending round:", error);
-        return error;
-      }
-  
-      match.roundsPlayed.push({ winner });
-  
-      await match.save();
-      return match;
-    } catch (error) {
-      console.error("Error ending round:", error);
       return error;
     }
   },
@@ -120,16 +114,57 @@ const KillstreakService = {
         console.error("Error ending match:", error);
         return error;
       }
-
+  
       match.winner = winner;
       match.status = "closed";
       await match.save();
+  
+      // Update the player's stats
+      const player1 = await Player.findById(match.player1Id);
+      if (!player1) {
+        const error = new Error("Player not found");
+        console.error("Error updating player stats:", error);
+        return error;
+      }
+  
+      // Increment total matches played and total killstreak games played
+      player1.stats.totalMatchesPlayed += 1;
+      player1.stats.killstreakStats.totalKillstreakGamesPlayed += 1;
+  
+      // If player1 is the winner, increment total wins and total killstreak games won
+      if (player1._id.toString() === winner) {
+        player1.stats.totalWins += 1;
+        player1.stats.killstreakStats.totalKillstreakGamesWon += 1;
+      }
+  
+      await player1.save();
+  
+      const player2 = await Player.findById(match.player2Id);
+      if (!player2) {
+        const error = new Error("Player not found");
+        console.error("Error updating player stats:", error);
+        return error;
+      }
+  
+      // Increment total matches played and total killstreak games played
+      player2.stats.totalMatchesPlayed += 1;
+      player2.stats.killstreakStats.totalKillstreakGamesPlayed += 1;
+  
+      // If player2 is the winner, increment total wins and total killstreak games won
+      if (player2._id.toString() === winner) {
+        player2.stats.totalWins += 1;
+        player2.stats.killstreakStats.totalKillstreakGamesWon += 1;
+      }
+  
+      await player2.save();
+  
       return match;
     } catch (error) {
       console.error("Error ending match:", error);
       return error;
     }
   },
+  
 
   getMatch: async (matchId) => {
     try {

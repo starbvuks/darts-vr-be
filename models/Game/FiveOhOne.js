@@ -17,41 +17,43 @@ const FiveOhOneSchema = new mongoose.Schema({
   player4Id: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
   player1Stats: [
     {
-      currentStreak: { type: Number, min: 0 },
-      bestStreak: { type: Number, min: 0 },
-      totalPoints: { type: Number, min: 0 },
-      totalDarts: { type: Number, min: 0 },
+      dart1: {type: Number, min: 0},
+      dart2: {type: Number, min: 0},
+      dart3: {type: Number, min: 0},
+      scoreLeft: {type: Number, min: 0},
       _id: false, 
     },
   ],
   player2Stats: [
     {
-      currentStreak: { type: Number, min: 0 },
-      bestStreak: { type: Number, min: 0 },
-      totalPoints: { type: Number, min: 0 },
-      totalDarts: { type: Number, min: 0 },
+      dart1: {type: Number, min: 0},
+      dart2: {type: Number, min: 0},
+      dart3: {type: Number, min: 0},
+      scoreLeft: {type: Number, min: 0},
       _id: false, 
     },
   ],
   player3Stats: [
     {
-      currentStreak: { type: Number, min: 0 },
-      bestStreak: { type: Number, min: 0 },
-      totalPoints: { type: Number, min: 0 },
-      totalDarts: { type: Number, min: 0 },
+      dart1: {type: Number, min: 0},
+      dart2: {type: Number, min: 0},
+      dart3: {type: Number, min: 0},
+      scoreLeft: {type: Number, min: 0},
       _id: false, 
     },
   ],
   player4Stats: [
     {
-      currentStreak: { type: Number, min: 0 },
-      bestStreak: { type: Number, min: 0 },
-      totalPoints: { type: Number, min: 0 },
-      totalDarts: { type: Number, min: 0 },
+      dart1: {type: Number, min: 0},
+      dart2: {type: Number, min: 0},
+      dart3: {type: Number, min: 0},
+      scoreLeft: {type: Number, min: 0},
       _id: false, 
     },
   ],
+  duration: { type: Number, min: 0 }, // in seconds
+  winner: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
   createdAt: { type: Date, default: Date.now }
 });
 
-const FiveOhOne = mongoose.model('FiveOhOne', FiveOhOneSchema);
+module.exports = mongoose.model('FiveOhOne', FiveOhOneSchema);
