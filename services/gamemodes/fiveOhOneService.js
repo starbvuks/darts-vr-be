@@ -14,8 +14,8 @@ const FiveOhOneService = {
         player2Id: null,
         player3Id: null,
         player4Id: null,
-        player1Stats: [],
-        player2Stats: [],
+        player1Stats: {},
+        player2Stats: {},
         player3Stats: undefined,
         player4Stats: undefined,
       });
@@ -90,7 +90,7 @@ const FiveOhOneService = {
       if (!match) {
         return { success: false, message: "Match not found." };
       }
-
+  
       let playerStatsField;
       if (match.player1Id.equals(playerId)) {
         playerStatsField = "player1Stats";
@@ -103,25 +103,36 @@ const FiveOhOneService = {
       } else {
         return { success: false, message: "Player not found in this match." };
       }
-
+  
+      // Ensure player stats are initialized
+      if (!match[playerStatsField] || Array.isArray(match[playerStatsField])) {
+        match[playerStatsField] = {
+          bullseyes: 0,
+          oneEighties: 0,
+          scoreLeft: 0,
+          dartsThrown: 0,
+          dartsHit: 0,
+        };
+      }
+  
       // Update the player's stats
       match[playerStatsField].scoreLeft = playerStats.scoreLeft; // Update scoreLeft
       match[playerStatsField].bullseyes += playerStats.bullseye; // Add bullseyes scored in this turn
       match[playerStatsField].oneEighties += playerStats.oneEighty ? 1 : 0; // Increment oneEighties if scored
       match[playerStatsField].dartsThrown += playerStats.dartsThrown; // Add darts thrown in this turn
       match[playerStatsField].dartsHit += playerStats.dartsHit; // Add darts hit in this turn
-
+  
       // Update overall player stats
       const player = await Player.findById(playerId); // Assuming you have a Player model
       if (!player) {
         return { success: false, message: "Player not found." };
       }
-
+  
       player.stats.totalDartsThrown += playerStats.dartsThrown; // Add to total darts thrown
       player.stats.totalDartsHit += playerStats.dartsHit; // Add to total darts hit
       player.stats.total180s += playerStats.oneEighty ? 1 : 0; // Increment total 180s if scored
       player.stats.totalBullseyes += playerStats.bullseye; // Add to total bullseyes
-
+  
       await player.save(); // Save the updated player stats
       await match.save(); // Save the updated match stats
       return { success: true, match };
@@ -130,7 +141,7 @@ const FiveOhOneService = {
       return { success: false, message: "Failed to update match stats." };
     }
   },
-
+  
   endMatch: async (matchId, winnerId) => {
     try {
       const match = await FiveOhOne.findOne({ matchId, status: "ongoing" });

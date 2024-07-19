@@ -45,7 +45,7 @@ const MatchmakingService = {
 
         // Publish a message to the corresponding Redis channel with the match details
         const message = JSON.stringify({
-          type: `${gameType}-2-match-created`,
+          matchType: `${gameType}-2-match-created`,
           matchId: newMatch.matchId,
           players: playerIdsToMatch,
         });
@@ -54,7 +54,10 @@ const MatchmakingService = {
           message
         );
 
-        gameSockets.handleMatchCreatedNotification(`${gameType}-2-match-created`, message, wss);
+        gameSockets.handleMatchCreatedNotification(
+          message,
+          wss
+        );
 
         return newMatch;
       } else {
@@ -122,7 +125,7 @@ const MatchmakingService = {
 
         // Publish a message to the corresponding Redis channel with the match details
         const message = JSON.stringify({
-          type: `${gameType}-2-match-created`,
+          matchType: `${gameType}-2-match-created`,
           matchId: newMatch.matchId,
           players: playerIdsToMatch,
         });
@@ -131,7 +134,10 @@ const MatchmakingService = {
           message
         );
 
-        gameSockets.handleMatchCreatedNotification(`${gameType}-2-match-created`, message, wss);
+        gameSockets.handleMatchCreatedNotification(
+          message,
+          wss
+        );
 
         return newMatch;
       } else {
@@ -171,8 +177,11 @@ const MatchmakingService = {
       // Check if there are enough players in the queue to start a new match
       const queueLength = await RedisService.getQueueLength(queueName);
       if (queueLength >= numPlayers) {
-        const playerIdsToMatch = await RedisService.getPlayersFromQueue(queueName, numPlayers);
-        
+        const playerIdsToMatch = await RedisService.getPlayersFromQueue(
+          queueName,
+          numPlayers
+        );
+
         // Create a new match
         const newMatch = new FiveOhOne({
           matchId: uuidv4(),
@@ -182,10 +191,43 @@ const MatchmakingService = {
           player2Id: numPlayers > 1 ? playerIdsToMatch[1] : null,
           player3Id: numPlayers > 2 ? playerIdsToMatch[2] : null,
           player4Id: numPlayers > 3 ? playerIdsToMatch[3] : null,
-          player1Stats: [],
-          player2Stats: [],
-          player3Stats: numPlayers > 2 ? [] : null,
-          player4Stats: numPlayers > 3 ? [] : null,
+          player1Stats: {
+            bullseyes: 0,
+            oneEighties: 0,
+            scoreLeft: 0,
+            dartsThrown: 0,
+            dartsHit: 0,
+          },
+          player2Stats:
+            numPlayers > 1
+              ? {
+                  bullseyes: 0,
+                  oneEighties: 0,
+                  scoreLeft: 0,
+                  dartsThrown: 0,
+                  dartsHit: 0,
+                }
+              : null,
+          player3Stats:
+            numPlayers > 2
+              ? {
+                  bullseyes: 0,
+                  oneEighties: 0,
+                  scoreLeft: 0,
+                  dartsThrown: 0,
+                  dartsHit: 0,
+                }
+              : null,
+          player4Stats:
+            numPlayers > 3
+              ? {
+                  bullseyes: 0,
+                  oneEighties: 0,
+                  scoreLeft: 0,
+                  dartsThrown: 0,
+                  dartsHit: 0,
+                }
+              : null,
         });
 
         await newMatch.save();
@@ -194,7 +236,7 @@ const MatchmakingService = {
         await RedisService.removePlayersFromQueue(queueName, numPlayers);
 
         const message = JSON.stringify({
-          type: `${gameType}-${numPlayers}-match-created`,
+          matchType: `${gameType}-${numPlayers}-match-created`,
           matchId: newMatch.matchId,
           players: playerIdsToMatch,
         });
@@ -203,7 +245,10 @@ const MatchmakingService = {
           message
         );
 
-        gameSockets.handleMatchCreatedNotification(`${gameType}-${numPlayers}-match-created`, message, wss);
+        gameSockets.handleMatchCreatedNotification(
+          message,
+          wss
+        );
 
         return newMatch;
       } else {

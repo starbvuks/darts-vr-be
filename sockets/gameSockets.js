@@ -2,17 +2,15 @@
 const { WebSocket } = require("ws");
 
 module.exports = {
-  handleMatchCreatedNotification: (channel, message, wss) => {
-    const { type, matchId, players } = JSON.parse(message);
-    console.log(players);
+  handleMatchCreatedNotification: (message, wss) => {
+    const { matchType, matchId, players } = JSON.parse(message);
 
     players.forEach((playerId) => {
-      console.log(playerId);  
       wss.clients.forEach((client) => {
         if (client.userId === playerId && client.readyState === WebSocket.OPEN) {
           client.send(
             JSON.stringify({
-              type,
+              type: matchType,
               matchId,
             })
           );
@@ -94,21 +92,5 @@ module.exports = {
     });
 
     // Add more subscriptions for other game types and player counts
-  },
-
-  handleMatchCreatedNotification: (channel, message, wss) => {
-    const { matchId, players } = JSON.parse(message);
-    players.forEach((playerId) => {
-      wss.clients.forEach((client) => {
-        if (client.userId === playerId && client.readyState === WebSocket.OPEN) {
-          client.send(
-            JSON.stringify({
-              type: "match_created",
-              matchId,
-            })
-          );
-        }
-      });
-    });
   },
 }
