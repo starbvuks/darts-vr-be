@@ -10,7 +10,8 @@ module.exports = {
         if (client.userId === playerId && client.readyState === WebSocket.OPEN) {
           client.send(
             JSON.stringify({
-              type: matchType,
+              type: "match_created",
+              gamemode: matchType,
               matchId,
             })
           );
