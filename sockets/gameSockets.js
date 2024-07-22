@@ -74,6 +74,40 @@ module.exports = {
     });
   },
 
+  sendLeagueInvitation: (receiverId, senderId, matchId, wss) => {
+    wss.clients.forEach((client) => {
+      if (
+        client.userId === receiverId &&
+        client.readyState === WebSocket.OPEN
+      ) {
+        client.send(
+          JSON.stringify({
+            type: "invitation",
+            gamemode: "league",
+            senderId,
+            matchId,
+          })
+        );
+      }
+    });
+  },
+
+  sendDartThrowNotification: (matchId, playerId, playerUsername, dartScore, wss) => {
+    const notification = {
+      type: "dart_throw",
+      matchId,
+      playerId,
+      playerUsername,
+      dartScore,
+    };
+
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(notification));
+      }
+    });
+  },
+
   init: (wss) => {
     RedisService.subscribeToChannel('501-2-match-created', (channel, message) => {
       this.handleMatchCreatedNotification(channel, message, wss);

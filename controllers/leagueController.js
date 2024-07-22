@@ -1,6 +1,6 @@
-const LeagueService = require("../../services/leagueService");
-const authService = require("../../services/auth/authService");
-const gameWebSocketHandler = require("../../sockets/gameSockets");
+const LeagueService = require("../services/leagueService");
+const authService = require("../services/auth/authService");
+const gameWebSocketHandler = require("../sockets/gameSockets");
 
 const LeagueController = {
   createLeague: async (req, res) => {
@@ -86,6 +86,38 @@ const LeagueController = {
     }
   },
 
+  addCommentary: async (req, res) => {
+    try {
+      const { matchId, playerId, commentary } = req.body;
+      authService.validateJwt(req, res, async () => {
+        const result = await LeagueService.addCommentary(matchId, playerId, commentary);
+        if (!result.success) {
+          return res.status(400).json({ message: result.message });
+        }
+        return res.status(200).json(result.matchup);
+      });
+    } catch (error) {
+      console.error("Error adding commentary:", error);
+      res.status(500).json({ message: "Internal server error." });
+    }
+  },
+
+  endMatch: async (req, res) => {
+    try {
+      const { matchId, winnerId } = req.body;
+      authService.validateJwt(req, res, async () => {
+        const result = await LeagueService.endMatch(matchId, winnerId);
+        if (!result.success) {
+          return res.status(400).json({ message: result.message });
+        }
+        return res.status(200).json(result.matchup);
+      });
+    } catch (error) {
+      console.error("Error ending match:", error);
+      res.status(500).json({ message: "Internal server error." });
+    }
+  },
+
   advanceRound: async (req, res) => {
     try {
       const { leagueId } = req.body; // Expecting leagueId in the request body
@@ -98,6 +130,40 @@ const LeagueController = {
       });
     } catch (error) {
       console.error("Error advancing round:", error);
+      res.status(500).json({ message: "Internal server error." });
+    }
+  },
+
+  endLeague: async (req, res) => {
+    try {
+      const { leagueId, leagueWinnerId } = req.body; // Expecting leagueId in the request body
+      authService.validateJwt(req, res, async () => {
+        const result = await LeagueService.endRound(leagueId);
+        if (!result.success) {
+          return res.status(400).json({ message: result.message });
+        }
+        return res.status(200).json(result);
+      });
+    } catch (error) {
+      console.error("Error ending round:", error);
+      res.status(500).json({ message: "Internal server error." });
+    }
+  },
+
+  handlePlayerDisconnect: async (req, res) => {
+    try {
+      const { matchId, playerId } = req.body;
+      authService.validateJwt(req, res, async () => {
+        await LeagueService.handlePlayerDisconnect(matchId, playerId);
+        return res.status(200).json({ message: "Player has been marked as disconnected and the winner has been determined." });
+      });
+    } catch (error) {
+      console.error("Error handling player disconnect:", error);
+      if (error.message === "Matchup not found.") {
+        return res.status(404).json({ message: error.message });
+      } else if (error.message === "Player not part of this matchup.") {
+        return res.status(400).json({ message: error.message });
+      }
       res.status(500).json({ message: "Internal server error." });
     }
   },

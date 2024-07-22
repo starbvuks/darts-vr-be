@@ -11,6 +11,7 @@ const friendsController = require("./controllers/friendsController");
 const zombiesController = require("./controllers/gamemodes/zombiesController");
 const killstreakController = require("./controllers/gamemodes/killstreakController");
 const fiveOhOneController = require("./controllers/gamemodes/fiveOhOneController");
+const leagueController = require("./controllers/leagueController");
 
 require("dotenv").config();
 
@@ -64,6 +65,15 @@ app.post("/api/501", (req, res) => {
 app.post("/api/501/invite", (req, res) => {
   fiveOhOneController.inviteFriend(req, res, wss);
 });
+
+// league
+const league = require("./routes/leagueRoutes.js");
+app.use("/", league);
+
+app.post("/api/league/update-stats", (req, res) => {
+  leagueController.dartThrow(req, res);
+})
+
 
 // friend requests
 app.post("/api/friends/send-request", (req, res) => {
