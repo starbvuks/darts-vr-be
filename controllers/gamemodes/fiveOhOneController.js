@@ -161,6 +161,23 @@ const FiveOneOneController = {
       res.status(500).json({ message: "Internal server error." });
     }
   },
+
+
+  removePlayerFromQueue: async (req, res) => {
+    try {
+      const { gameType, numPlayers, playerId } = req.body; // Expecting gameType and playerId in the request body
+      authService.validateJwt(req, res, async () => {
+        const result = await MatchmakingService.removePlayerFromQueue(gameType, numPlayers, playerId);
+        if (!result.success) {
+          return res.status(400).json({ message: result.message });
+        }
+        return res.status(200).json({ message: result.message });
+      });
+    } catch (error) {
+      console.error("Error removing player from queue:", error);
+      res.status(500).json({ message: "Internal server error." });
+    }
+  },
 };
 
 module.exports = FiveOneOneController;

@@ -28,7 +28,8 @@ module.exports = {
       ) {
         client.send(
           JSON.stringify({
-            type: "zombies_invitation",
+            type: "invitation",
+            gamemode: "zombies",
             senderId,
             matchId,
           })
@@ -45,7 +46,8 @@ module.exports = {
       ) {
         client.send(
           JSON.stringify({
-            type: "killstreak_invitation",
+            type: "invitation",
+            gamemode: "killstreak",
             senderId,
             matchId,
           })
@@ -62,7 +64,8 @@ module.exports = {
       ) {
         client.send(
           JSON.stringify({
-            type: "501_invitation",
+            type: "invitation",
+            gamemode: "501",
             senderId,
             matchId,
           })

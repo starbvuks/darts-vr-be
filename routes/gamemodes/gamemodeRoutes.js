@@ -29,6 +29,7 @@ router.post('/api/501/end-match', FiveOhOneController.endMatch);
 router.get('/api/501/get-match/:matchId', FiveOhOneController.getMatch);
 router.post('/api/501/close-match', FiveOhOneController.closeMatch);
 
+router.post('/api/exit-queue', FiveOhOneController.removePlayerFromQueue);
 
 // ATW Routes
 router.post('/api/atw/create-match', ATWController.createMatch);

@@ -14,6 +14,18 @@ const RedisService = {
     await redis.ltrim(queueName, count, -1);
   },
 
+  getPlayerFromQueue: async (queueName, index) => {
+    return new Promise((resolve, reject) => {
+      redis.lindex(queueName, index, (err, playerId) => {
+        if (err) {
+          console.error("Error getting player from queue:", err);
+          return reject(err);
+        }
+        resolve(playerId);
+      });
+    });
+  },
+
   getQueueLength: async (queueName) => {
     return await redis.llen(queueName);
   },

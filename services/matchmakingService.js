@@ -278,6 +278,30 @@ const MatchmakingService = {
       throw error;
     }
   },
+
+  // remove from queue
+  removePlayerFromQueue: async (gameType, numPlayers, playerId) => {
+    const queueName = `${gameType}-${numPlayers}players`; // Adjust the queue name as necessary
+    try {
+      // Get the current queue length
+      const queueLength = await RedisService.getQueueLength(queueName);
+
+      // Iterate through the queue and remove the player if found
+      for (let i = 0; i < queueLength; i++) {
+        const playerInQueue = await RedisService.getPlayerFromQueue(queueName, i);
+        if (playerInQueue === playerId) {
+          // Remove the player from the queue
+          await RedisService.removePlayersFromQueue(queueName, 1, i);
+          return { success: true, message: "Player removed from queue." };
+        }
+      }
+
+      return { success: false, message: "Player not found in queue." };
+    } catch (error) {
+      console.error("Error removing player from queue:", error);
+      throw new Error("Failed to remove player from queue.");
+    }
+  },
 };
 
 module.exports = MatchmakingService;
