@@ -8,8 +8,9 @@ router.post('/api/league/join', LeagueController.joinLeague);
 // router.post('/api/league/start', LeagueController.startLeague);
 // router.post('/api/league/update-stats', LeagueController.dartThrow);
 router.post('/api/league/commentary', LeagueController.addCommentary);
+router.post('/api/league/player-won-set', LeagueController.playerWonSet);
+router.post('/api/league/player-won-leg', LeagueController.playerWonLeg);
 router.post('/api/league/end-match', LeagueController.endMatch);
-router.post('/api/league/advance-round', LeagueController.advanceRound);
 router.post('/api/league/end-league', LeagueController.endLeague);
 router.post('/api/league/player-disconnect', LeagueController.handlePlayerDisconnect);
 

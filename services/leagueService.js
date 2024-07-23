@@ -32,6 +32,8 @@ const LeagueService = {
         numPlayers,
         totalRounds,
         matchesPerRound,
+        sets,
+        legs,
         status: "open",
       });
 
@@ -158,7 +160,7 @@ const LeagueService = {
             createdAt: new Date(),
           };
 
-          matchups.push(matchup);
+          league.matchups.push(matchup);
 
           const message = JSON.stringify({
             type: "league_match_created",
@@ -180,9 +182,55 @@ const LeagueService = {
         }
       }
 
-      league.matchups.push(...matchups);
-      await league.save();
+      let round = 2;
+      while (league.matchups.filter((m) => m.round === round - 1).length > 0) {
+        const previousRoundMatchups = league.matchups.filter(
+          (m) => m.round === round - 1
+        );
+        const nextRoundMatchups = [];
 
+        for (let i = 0; i < previousRoundMatchups.length; i += 2) {
+          if (i + 1 < previousRoundMatchups.length) {
+            const matchId = uuidv4(); // Generate a unique match ID
+            const prevMatchIds = [
+              previousRoundMatchups[i].matchId,
+              previousRoundMatchups[i + 1].matchId,
+            ];
+
+            nextRoundMatchups.push({
+              matchId,
+              round,
+              player1Id: null,
+              player2Id: null,
+              winnerId: null,
+              status: "ongoing",
+              createdAt: new Date(),
+              prevMatchIds,
+            });
+
+            // Send socket notification to players
+            const message = JSON.stringify({
+              type: "league_match_created",
+              leagueId: league.leagueId,
+              matchId,
+              players: [null, null],
+            });
+
+            league.players.forEach(async (pId) => {
+              gameWebSocketHandler.sendLeagueMatchCreatedNotification(
+                String(pId),
+                message,
+                wss
+              );
+            });
+          }
+        }
+
+        league.matchups.push(...nextRoundMatchups);
+        round++;
+      }
+
+      await league.save();
       return { success: true, matchups };
     } catch (error) {
       console.error("Error initializing matchups:", error);
@@ -333,66 +381,98 @@ const LeagueService = {
     }
   },
 
-  endMatch: async (matchId, winnerId) => {
+  playerWonSet: async (leagueId, matchId, playerId) => {
     try {
-      const matchup = await Matchup.findOne({ matchId });
+      const league = await League.findOne({ leagueId });
+      if (!league) {
+        return { success: false, message: "League not found." };
+      }
+
+      const matchup = league.matchups.find((m) => m.matchId === matchId);
+      if (!matchup) {
+        return { success: false, message: "Matchup not found." };
+      }
+
+      if (matchup.player1Id.equals(playerId)) {
+        matchup.player1Stats.setsWon += 1; 
+      } else if (matchup.player2Id.equals(playerId)) {
+        matchup.player2Stats.setsWon += 1; 
+      } else {
+        return { success: false, message: "Player not part of this matchup." };
+      }
+
+      await league.save(); 
+      return { success: true, matchup };
+    } catch (error) {
+      console.error("Error updating sets won:", error);
+      return { success: false, message: "Failed to update sets won." };
+    }
+  },
+
+  playerWonLeg: async (leagueId, matchId, playerId) => {
+    try {
+      const league = await League.findOne({ leagueId });
+      if (!league) {
+        return { success: false, message: "League not found." };
+      }
+
+      const matchup = league.matchups.find((m) => m.matchId === matchId);
+      if (!matchup) {
+        return { success: false, message: "Matchup not found." };
+      }
+
+      if (matchup.player1Id.equals(playerId)) {
+        matchup.player1Stats.legsWon += 1; 
+      } else if (matchup.player2Id.equals(playerId)) {
+        matchup.player2Stats.legsWon += 1; 
+      } else {
+        return { success: false, message: "Player not part of this matchup." };
+      }
+
+      await league.save(); 
+      return { success: true, matchup };
+    } catch (error) {
+      console.error("Error updating legs won:", error);
+      return { success: false, message: "Failed to update legs won." };
+    }
+  },
+
+  endMatch: async (leagueId, matchId, winnerId) => {
+    try {
+      const league = await League.findOne({ leagueId });
+      if (!league) {
+        return { success: false, message: "League not found." };
+      }
+
+      const matchup = league.matchups.find((m) => m.matchId === matchId);
       if (!matchup) {
         return { success: false, message: "Matchup not found." };
       }
 
       matchup.winnerId = winnerId;
       matchup.status = "completed";
+
+      // Find the next round matchup based on the prevMatchIds
+      const nextRoundMatchups = league.matchups.filter((m) =>
+        m.prevMatchIds.includes(matchup.matchId)
+      );
+
+      nextRoundMatchups.forEach((nextMatchup) => {
+        if (nextMatchup.player1Id === null) {
+          nextMatchup.player1Id = winnerId;
+        } else if (nextMatchup.player2Id === null) {
+          nextMatchup.player2Id = winnerId;
+        }
+      });
+
       await matchup.save();
+      await league.save();
 
       return { success: true, matchup };
     } catch (error) {
       console.error("Error ending match:", error);
       return { success: false, message: "Failed to end match." };
     }
-  },
-
-  advanceRound: async (leagueId) => {
-    const league = await League.findOne({ leagueId });
-    if (!league) {
-      return { success: false, message: "League not found." };
-    }
-
-    const completedMatches = league.matchups.filter(
-      (matchup) => matchup.status === "completed"
-    ).length;
-
-    if (completedMatches < league.matchesPerRound[league.currentRound - 1]) {
-      return {
-        success: false,
-        message: "Cannot advance to the next round yet.",
-      };
-    }
-
-    await LeagueService.createNextRoundMatchups(league);
-    league.currentRound += 1;
-    await league.save();
-
-    return { success: true, league };
-  },
-
-  createNextRoundMatchups: async (league) => {
-    const winners = league.matchups
-      .filter((matchup) => matchup.status === "completed")
-      .map((matchup) => matchup.winnerId);
-
-    const numMatches = Math.floor(winners.length / 2);
-    const matchups = [];
-
-    for (let i = 0; i < numMatches; i++) {
-      matchups.push({
-        matchId: uuidv4(),
-        round: league.currentRound + 1,
-        player1Id: winners[i * 2],
-        player2Id: winners[i * 2 + 1],
-      });
-    }
-
-    league.matchups = league.matchups.concat(matchups);
   },
 
   handlePlayerDisconnect: async (matchId, playerId) => {

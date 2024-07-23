@@ -8,16 +8,15 @@ const LeagueSchema = new mongoose.Schema({
   matchups: [
     {
       matchId: { type: String, required: true, unique: true },
+      prevMatchIds: [],
       round: { type: Number, default: 1 },
       player1Id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Player",
-        required: true,
       },
       player2Id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Player",
-        required: true,
       },
       player1Stats: {
         dartsThrown: { type: Number, default: 0 },
@@ -25,6 +24,8 @@ const LeagueSchema = new mongoose.Schema({
         bullseyes: { type: Number, default: 0 },
         oneEighties: { type: Number, default: 0 },
         score: { type: Number, default: 501 },
+        setsWon: { type: Number, default: 0 },
+        legsWon: { type: Number, default: 0 },
         throws: [
           {
             dart1: { type: Number, default: 0 },
@@ -42,6 +43,8 @@ const LeagueSchema = new mongoose.Schema({
         bullseyes: { type: Number, default: 0 },
         oneEighties: { type: Number, default: 0 },
         score: { type: Number, default: 501 },
+        setsWon: { type: Number, default: 0 },
+        legsWon: { type: Number, default: 0 },
         throws: [
           {
             dart1: { type: Number, default: 0 },
@@ -69,6 +72,8 @@ const LeagueSchema = new mongoose.Schema({
   numPlayers: { type: Number, default: 0 },
   currentRound: { type: Number, default: 1 },
   matchesPerRound: [],
+  sets: { type: Number, default: 0 },
+  legs: { type: Number, default: 0 },
   totalRounds: { type: Number, default: 0 },
   status: { type: String, enum: ["open", "ongoing", "completed"] },
   createdAt: { type: Date, default: Date.now },
