@@ -70,8 +70,11 @@ app.post("/api/501/invite", (req, res) => {
 const league = require("./routes/leagueRoutes.js");
 app.use("/", league);
 
+app.post("/api/league/start", (req, res) => {
+  leagueController.startLeague(req, res, wss);
+})
 app.post("/api/league/update-stats", (req, res) => {
-  leagueController.dartThrow(req, res);
+  leagueController.dartThrow(req, res, wss);
 })
 
 
@@ -124,7 +127,6 @@ wss.on("connection", (ws, req) => {
     const playerId = decoded.userId;
 
     ws.userId = playerId;
-    console.log(ws.userId)
 
     // Clean up when the connection is closed
     ws.on("close", () => {

@@ -1,6 +1,7 @@
 const LeagueService = require("../services/leagueService");
 const authService = require("../services/auth/authService");
 const gameWebSocketHandler = require("../sockets/gameSockets");
+const { Int32 } = require("mongodb");
 
 const LeagueController = {
   createLeague: async (req, res) => {
@@ -47,18 +48,16 @@ const LeagueController = {
     }
   },
 
-  startLeague: async (req, res) => {
+  startLeague: async (req, res, wss) => {
     try {
       const { leagueId } = req.body;
       authService.validateJwt(req, res, async () => {
-        const result = await LeagueService.startLeague(leagueId);
+        const result = await LeagueService.startLeague(leagueId, wss);
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }
         
-        // Create initial matchups after starting the league
-        const matchups = await LeagueService.createInitialMatchups(result.league.players);
-        return res.status(200).json({ league: result.league, matchups });
+        return res.status(200).json({ league: result.league });
       });
     } catch (error) {
       console.error("Error starting league:", error);
@@ -66,16 +65,17 @@ const LeagueController = {
     }
   },
 
-  dartThrow: async (req, res) => {
+  dartThrow: async (req, res, wss) => {
     try {
-      const { matchId, playerId, dartScore, scoreLeft } = req.body; 
+      const { leagueId, matchId, playerId, dartNumber, dartScore, scoreLeft } = req.body; 
       authService.validateJwt(req, res, async () => {
         if (typeof dartScore !== 'number' || typeof scoreLeft !== 'number') {
           return res.status(400).json({ message: "Invalid dart score or score left." });
         }
 
-        const result = await LeagueService.processDartThrow(matchId, playerId, dartScore, scoreLeft);
+        const result = await LeagueService.processDartThrow(leagueId, matchId, playerId, dartNumber, dartScore, scoreLeft, wss);
         if (!result.success) {
+          console.log(result.message);
           return res.status(400).json({ message: result.message });
         }
         return res.status(200).json(result.matchup);

@@ -92,18 +92,32 @@ module.exports = {
     });
   },
 
-  sendDartThrowNotification: (matchId, playerId, playerUsername, dartScore, wss) => {
-    const notification = {
-      type: "dart_throw",
-      matchId,
-      playerId,
-      playerUsername,
-      dartScore,
-    };
-
+  sendLeagueMatchCreatedNotification: (playerId, message, wss) => {
     wss.clients.forEach((client) => {
+      console.log(playerId, client.userId)
+      if (client.userId === playerId && client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  },
+
+  sendDartThrowNotification: (playerId, notificationMessage, wss) => {
+    const message = JSON.stringify({
+      type: "dart_throw",
+      leagueId: notificationMessage.leagueId,
+      playerId,
+      playerUsername: notificationMessage.playerUsername,
+      dartScore: notificationMessage.dartScore,
+      scoreLeft: notificationMessage.scoreLeft,
+      dartThrow: notificationMessage.dartThrow,
+    });
+
+    wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(notification));
+        console.log(playerId, client.userId)
+        if (client.userId === playerId) {
+          client.send(message);
+        }
       }
     });
   },
