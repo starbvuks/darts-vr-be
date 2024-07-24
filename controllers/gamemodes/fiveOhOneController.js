@@ -162,6 +162,40 @@ const FiveOneOneController = {
     }
   },
 
+  updateLastTurn: async (req, res) => {
+    const { matchId, playerId, dart1, dart2, dart3 } = req.body;
+
+    try {
+      authService.validateJwt(req, res, async () => {
+        const result = await FiveOhOneService.updateLastTurn(matchId, playerId, dart1, dart2, dart3);
+        if (!result.success) {
+          return res.status(400).json({ message: result.message });
+        }
+        return res.status(200).json({ message: "Last turn updated successfully", lastTurn: result.lastTurn });
+      });
+    } catch (error) {
+      console.error("Error updating last turn:", error);
+      res.status(500).json({ message: "Internal server error." });
+    }
+  },
+
+
+  getLastTurn: async (req, res) => {
+    const { matchId, playerId } = req.query;
+  
+    try {
+      authService.validateJwt(req, res, async () => {
+        const result = await FiveOhOneService.getLastTurn(matchId, playerId);
+        if (!result.success) {
+          return res.status(404).json({ message: result.message });
+        }
+        return res.status(200).json({ lastTurn: result.lastTurn });
+      });
+    } catch (error) {
+      console.error("Error fetching last turn:", error);
+      res.status(500).json({ message: "Internal server error." });
+    }
+  },
 
   removePlayerFromQueue: async (req, res) => {
     try {

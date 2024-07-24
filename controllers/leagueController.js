@@ -153,7 +153,7 @@ const LeagueController = {
     try {
       const { leagueId, leagueWinnerId } = req.body; // Expecting leagueId in the request body
       authService.validateJwt(req, res, async () => {
-        const result = await LeagueService.endRound(leagueId);
+        const result = await LeagueService.endRound(leagueId, leagueWinnerId);
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }

@@ -9,7 +9,7 @@ const FiveOhOneService = {
       const newMatch = new FiveOhOne({
         matchId: uuidv4(),
         matchType: "private",
-        status: "open", 
+        status: "open",
         player1Id: creatorId,
         player2Id: null,
         player3Id: null,
@@ -90,7 +90,7 @@ const FiveOhOneService = {
       if (!match) {
         return { success: false, message: "Match not found." };
       }
-  
+
       let playerStatsField;
       if (match.player1Id.equals(playerId)) {
         playerStatsField = "player1Stats";
@@ -103,7 +103,7 @@ const FiveOhOneService = {
       } else {
         return { success: false, message: "Player not found in this match." };
       }
-  
+
       // Ensure player stats are initialized
       if (!match[playerStatsField] || Array.isArray(match[playerStatsField])) {
         match[playerStatsField] = {
@@ -114,25 +114,25 @@ const FiveOhOneService = {
           dartsHit: 0,
         };
       }
-  
+
       // Update the player's stats
       match[playerStatsField].scoreLeft = playerStats.scoreLeft; // Update scoreLeft
       match[playerStatsField].bullseyes += playerStats.bullseye; // Add bullseyes scored in this turn
       match[playerStatsField].oneEighties += playerStats.oneEighty ? 1 : 0; // Increment oneEighties if scored
       match[playerStatsField].dartsThrown += playerStats.dartsThrown; // Add darts thrown in this turn
       match[playerStatsField].dartsHit += playerStats.dartsHit; // Add darts hit in this turn
-  
+
       // Update overall player stats
       const player = await Player.findById(playerId); // Assuming you have a Player model
       if (!player) {
         return { success: false, message: "Player not found." };
       }
-  
+
       player.stats.totalDartsThrown += playerStats.dartsThrown; // Add to total darts thrown
       player.stats.totalDartsHit += playerStats.dartsHit; // Add to total darts hit
       player.stats.total180s += playerStats.oneEighty ? 1 : 0; // Increment total 180s if scored
       player.stats.totalBullseyes += playerStats.bullseye; // Add to total bullseyes
-  
+
       await player.save(); // Save the updated player stats
       await match.save(); // Save the updated match stats
       return { success: true, match };
@@ -141,12 +141,15 @@ const FiveOhOneService = {
       return { success: false, message: "Failed to update match stats." };
     }
   },
-  
+
   endMatch: async (matchId, winnerId) => {
     try {
       const match = await FiveOhOne.findOne({ matchId, status: "ongoing" });
       if (!match) {
-        return { success: false, message: "Match not found or is not ongoing." };
+        return {
+          success: false,
+          message: "Match not found or is not ongoing.",
+        };
       }
 
       // Update match status
@@ -154,7 +157,12 @@ const FiveOhOneService = {
       match.winner = winnerId; // Assign the winner
 
       // Update player statistics
-      const playerIds = [match.player1Id, match.player2Id, match.player3Id, match.player4Id].filter(Boolean);
+      const playerIds = [
+        match.player1Id,
+        match.player2Id,
+        match.player3Id,
+        match.player4Id,
+      ].filter(Boolean);
 
       for (const playerId of playerIds) {
         const player = await Player.findById(playerId);
@@ -200,7 +208,10 @@ const FiveOhOneService = {
     try {
       const match = await FiveOhOne.findOne({ matchId, status: "ongoing" });
       if (!match) {
-        return { success: false, message: "Match not found or is not ongoing." };
+        return {
+          success: false,
+          message: "Match not found or is not ongoing.",
+        };
       }
 
       match.status = "closed"; // Set the match status to closed
@@ -209,6 +220,68 @@ const FiveOhOneService = {
     } catch (error) {
       console.error("Error closing match:", error);
       return { success: false, message: "Failed to close match." };
+    }
+  },
+
+  updateLastTurn: async (matchId, playerId, dart1, dart2, dart3) => {
+    try {
+      const match = await FiveOhOne.findOne({ matchId });
+
+      if (!match) {
+        return res.status(404).json({ message: "Match not found" });
+      }
+
+      // Update the lastTurn for the specific player
+      if (match.player1Id.equals(playerId)) {
+        match.player1Stats.lastTurn = { dart1, dart2, dart3 };
+      } else if (match.player2Id.equals(playerId)) {
+        match.player2Stats.lastTurn = { dart1, dart2, dart3 };
+      } else if (match.player3Id.equals(playerId)) {
+        match.player3Stats.lastTurn = { dart1, dart2, dart3 };
+      } else if (match.player4Id.equals(playerId)) {
+        match.player4Stats.lastTurn = { dart1, dart2, dart3 };
+      } else {
+        return res
+          .status(404)
+          .json({ message: "Player not found in this match" });
+      }
+
+      await match.save();
+      res.status(200).json({ message: "Last turn updated successfully" });
+    } catch (error) {
+      console.error("Error updating last turn:", error);
+      res.status(500).json({ message: "Error updating last turn", error });
+    }
+  },
+
+  getLastTurn: async (matchId, playerId) => {
+    try {
+      const match = await FiveOhOne.findOne({ matchId });
+
+      if (!match) {
+        return res.status(404).json({ message: "Match not found" });
+      }
+
+      let lastTurn;
+
+      if (match.player1Id.equals(playerId)) {
+        lastTurn = match.player1Stats.lastTurn;
+      } else if (match.player2Id.equals(playerId)) {
+        lastTurn = match.player2Stats.lastTurn;
+      } else if (match.player3Id.equals(playerId)) {
+        lastTurn = match.player3Stats.lastTurn;
+      } else if (match.player4Id.equals(playerId)) {
+        lastTurn = match.player4Stats.lastTurn;
+      } else {
+        return res
+          .status(404)
+          .json({ message: "Player not found in this match" });
+      }
+
+      res.status(200).json({ lastTurn });
+    } catch (error) {
+      console.error("Error fetching last turn:", error);
+      res.status(500).json({ message: "Error fetching last turn", error });
     }
   },
 };

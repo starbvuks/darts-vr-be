@@ -15,20 +15,34 @@ const FiveOhOneSchema = new mongoose.Schema({
   player2Id: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
   player3Id: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
   player4Id: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
+
   player1Stats: {
     bullseyes: { type: Number, min: 0 },
     oneEighties: { type: Number, min: 0 },
     scoreLeft: { type: Number, min: 0 },
     dartsThrown: { type: Number, min: 0 },
     dartsHit: { type: Number, min: 0 },
+    lastTurn: {
+      dart1: { type: Number, min: 0 },
+      dart2: { type: Number, min: 0 },
+      dart3: { type: Number, min: 0 },
+      _id: false,
+    },
     _id: false,
   },
+
   player2Stats: {
     bullseyes: { type: Number, min: 0 },
     oneEighties: { type: Number, min: 0 },
     scoreLeft: { type: Number, min: 0 },
     dartsThrown: { type: Number, min: 0 },
     dartsHit: { type: Number, min: 0 },
+    lastTurn: {
+      dart1: { type: Number, min: 0 },
+      dart2: { type: Number, min: 0 },
+      dart3: { type: Number, min: 0 },
+      _id: false,
+    },
     _id: false,
   },
 
@@ -38,6 +52,12 @@ const FiveOhOneSchema = new mongoose.Schema({
     scoreLeft: { type: Number, min: 0 },
     dartsThrown: { type: Number, min: 0 },
     dartsHit: { type: Number, min: 0 },
+    lastTurn: {
+      dart1: { type: Number, min: 0 },
+      dart2: { type: Number, min: 0 },
+      dart3: { type: Number, min: 0 },
+      _id: false,
+    },
     _id: false,
   },
 
@@ -47,6 +67,12 @@ const FiveOhOneSchema = new mongoose.Schema({
     scoreLeft: { type: Number, min: 0 },
     dartsThrown: { type: Number, min: 0 },
     dartsHit: { type: Number, min: 0 },
+    lastTurn: {
+      dart1: { type: Number, min: 0 },
+      dart2: { type: Number, min: 0 },
+      dart3: { type: Number, min: 0 },
+      _id: false,
+    },
     _id: false,
   },
 
