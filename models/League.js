@@ -76,6 +76,7 @@ const LeagueSchema = new mongoose.Schema({
   legs: { type: Number, default: 0 },
   totalRounds: { type: Number, default: 0 },
   status: { type: String, enum: ["open", "ongoing", "completed"] },
+  leagueType: { type: String, enum: ["tournament", "private"] },
   createdAt: { type: Date, default: Date.now },
 });
 

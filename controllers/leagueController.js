@@ -87,9 +87,9 @@ const LeagueController = {
 
   addCommentary: async (req, res) => {
     try {
-      const { matchId, playerId, commentary } = req.body;
+      const { leagueId, matchId, playerId, commentary } = req.body;
       authService.validateJwt(req, res, async () => {
-        const result = await LeagueService.addCommentary(matchId, playerId, commentary);
+        const result = await LeagueService.addCommentary(leagueId, matchId, playerId, commentary);
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }

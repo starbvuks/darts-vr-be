@@ -5,8 +5,6 @@ const LeagueController = require('../controllers/leagueController');
 router.post('/api/league/create', LeagueController.createLeague);
 router.post('/api/league/invite', LeagueController.invitePlayer);
 router.post('/api/league/join', LeagueController.joinLeague);
-// router.post('/api/league/start', LeagueController.startLeague);
-// router.post('/api/league/update-stats', LeagueController.dartThrow);
 router.post('/api/league/commentary', LeagueController.addCommentary);
 router.post('/api/league/player-won-set', LeagueController.playerWonSet);
 router.post('/api/league/player-won-leg', LeagueController.playerWonLeg);

@@ -356,21 +356,33 @@ const LeagueService = {
     }
   },
 
-  addCommentary: async (matchId, playerId, commentary) => {
+  addCommentary: async (leagueId, matchId, playerId, commentary) => {
     try {
-      const matchup = await Matchup.findOne({ matchId });
+      const league = await League.findOne({ leagueId} );
+      if (!league) {
+        return { success: false, message: "League not found." };
+      }
+  
+      const matchup = league.matchups.find((m) => m.matchId === matchId);
       if (!matchup) {
         return { success: false, message: "Matchup not found." };
       }
-
-      const playerStats = matchup.player1Id.equals(playerId)
-        ? matchup.player1Stats
-        : matchup.player2Stats;
+  
+      let playerStats;
+      if (matchup.player1Id.equals(playerId)) {
+        playerStats = matchup.player1Stats;
+      } else if (matchup.player2Id.equals(playerId)) {
+        playerStats = matchup.player2Stats;
+      } else {
+        return { success: false, message: "Player not part of this matchup." };
+      }
+  
       const lastThrow = playerStats.throws[playerStats.throws.length - 1];
-
-      if (lastThrow && lastThrow.darts.length === 3) {
-        lastThrow.darts[lastThrow.darts.length - 1].commentary = commentary;
-        await matchup.save();
+      console.log(lastThrow)
+  
+      if (lastThrow) {
+        lastThrow.commentary = commentary;
+        await league.save();
         return { success: true, matchup };
       } else {
         return { success: false, message: "Last throw not completed." };
@@ -443,20 +455,23 @@ const LeagueService = {
       if (!league) {
         return { success: false, message: "League not found." };
       }
-
+  
       const matchup = league.matchups.find((m) => m.matchId === matchId);
       if (!matchup) {
         return { success: false, message: "Matchup not found." };
       }
-
+  
+      if (matchup.player1Id !== winnerId && matchup.player2Id !== winnerId) {
+        return { success: false, message: "Winner must be one of the players in the matchup." };
+      }
+  
       matchup.winnerId = winnerId;
       matchup.status = "completed";
-
-      // Find the next round matchup based on the prevMatchIds
+  
       const nextRoundMatchups = league.matchups.filter((m) =>
         m.prevMatchIds.includes(matchup.matchId)
       );
-
+  
       nextRoundMatchups.forEach((nextMatchup) => {
         if (nextMatchup.player1Id === null) {
           nextMatchup.player1Id = winnerId;
@@ -464,11 +479,17 @@ const LeagueService = {
           nextMatchup.player2Id = winnerId;
         }
       });
-
-      await matchup.save();
+  
       await league.save();
-
-      return { success: true, matchup };
+  
+      const nextMatchup = nextRoundMatchups.find((m) => 
+        m.player1Id === winnerId || m.player2Id === winnerId
+      );
+  
+      return {
+        success: true,
+        nextMatchup, 
+      };
     } catch (error) {
       console.error("Error ending match:", error);
       return { success: false, message: "Failed to end match." };
