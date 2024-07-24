@@ -28,8 +28,8 @@ router.patch('/api/501/update', FiveOhOneController.updateMatchStats);
 router.post('/api/501/end-match', FiveOhOneController.endMatch);
 router.get('/api/501/get-match/:matchId', FiveOhOneController.getMatch);
 router.post('/api/501/close-match', FiveOhOneController.closeMatch);
-router.post('/api/501/last-turn', FiveOneOneController.updateLastTurn);
-router.get('/api/501/last-turn', FiveOneOneController.getLastTurn);
+router.post('/api/501/last-turn', FiveOhOneController.updateLastTurn);
+router.get('/api/501/last-turn', FiveOhOneController.getLastTurn);
 
 
 router.post('/api/exit-queue', FiveOhOneController.removePlayerFromQueue);
