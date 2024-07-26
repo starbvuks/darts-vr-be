@@ -26,14 +26,13 @@ const MatchmakingService = {
         if (player1Id === player2Id) {
           // Remove the duplicate player from the queue
           await RedisService.removePlayersFromQueue(queueName, 1);
-          const error = new Error("Cannot match the same player twice");
-          console.error("Error in joinZombiesQueue:", error);
-          return error;
+          console.error("Error in joinZombiesQueue: same player canot be added twice");
+          return {error: "Cannot match the same player twice"};
         }
 
         const newMatch = new Zombies({
           player1Id,
-          player2Id,
+          player2Id: player2Id || null,
           matchType: "multiplayer",
           status: "closed", // Update the status to 'closed' since the match is now complete
           matchId: uuidv4(),
@@ -66,7 +65,7 @@ const MatchmakingService = {
       }
     } catch (error) {
       console.error("Error in joinZombiesQueue:", error);
-      throw error;
+      return error;
     }
   },
 
@@ -82,7 +81,7 @@ const MatchmakingService = {
       return match;
     } catch (error) {
       console.error("Error creating solo Zombies match:", error);
-      throw error;
+      return error;
     }
   },
 
@@ -106,9 +105,8 @@ const MatchmakingService = {
         if (player1Id === player2Id) {
           // Remove the duplicate player from the queue
           await RedisService.removePlayersFromQueue(queueName, 1);
-          const error = new Error("Cannot match the same player twice");
-          console.error("Error in joinKillstreakQueue:", error);
-          return error;
+          console.error("Error in joinZombiesQueue: same player canot be added twice");
+          return {error: "Cannot match the same player twice"};
         }
 
         const newMatch = new Killstreak({
@@ -146,7 +144,7 @@ const MatchmakingService = {
       }
     } catch (error) {
       console.error("Error in joinbKillstreakQueue:", error);
-      throw error;
+      return error;
     }
   },
 
@@ -162,7 +160,7 @@ const MatchmakingService = {
       return match;
     } catch (error) {
       console.error("Error creating solo Killstreak match:", error);
-      throw error;
+      return error;
     }
   },
 
@@ -257,7 +255,7 @@ const MatchmakingService = {
       }
     } catch (error) {
       console.error("Error in joinQueue:", error);
-      throw error;
+      return error;
     }
   },
 
@@ -275,7 +273,7 @@ const MatchmakingService = {
       return newMatch;
     } catch (error) {
       console.error("Error creating solo match:", error);
-      throw error;
+      return error;
     }
   },
 
@@ -299,7 +297,7 @@ const MatchmakingService = {
       return { success: false, message: "Player not found in queue." };
     } catch (error) {
       console.error("Error removing player from queue:", error);
-      throw new Error("Failed to remove player from queue.");
+      return error;
     }
   },
 };
