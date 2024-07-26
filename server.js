@@ -77,6 +77,10 @@ app.post("/api/league/update-stats", (req, res) => {
   leagueController.dartThrow(req, res, wss);
 })
 
+// tournaments
+// const tourney = require("./routes/tournament/tournamentRoutes.js");
+// app.use("/", tourney);
+
 
 // friend requests
 app.post("/api/friends/send-request", (req, res) => {

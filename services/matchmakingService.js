@@ -113,7 +113,7 @@ const MatchmakingService = {
 
         const newMatch = new Killstreak({
           player1Id,
-          player2Id,
+          player2Id: player2Id || null,
           matchType: "multiplayer",
           status: "ongoing",
           matchId: uuidv4(),

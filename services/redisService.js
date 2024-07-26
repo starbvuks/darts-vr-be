@@ -39,6 +39,20 @@ const RedisService = {
     await subscriber.subscribe(channel);
     subscriber.on("message", callback);
   },
+
+  // Tournament
+  setTourneyQueueOpenTime: async (queueName, openTime) => {
+    await redis.set(`${queueName}:open_time`, openTime);
+  },
+
+  getTourneyQueueOpenTime: async (queueName) => {
+    return await redis.get(`${queueName}:open_time`);
+  },
+
+  isTourneyQueueOpen: async (queueName) => {
+    const openTime = await this.getQueueOpenTime(queueName);
+    return openTime && Date.now() >= parseInt(openTime);
+  },
 };
 
 module.exports = RedisService;
