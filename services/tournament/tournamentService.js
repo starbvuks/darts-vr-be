@@ -13,12 +13,21 @@ const TournamentService = {
     const [day, month, year] = startDate.split("/");
     const [hours, minutes] = startTime.split(":");
 
-    // Create the start time in IST (UTC+5:30)
+    // Create the start time in UTC
     const startTimeISO = new Date(
       Date.UTC(year, month - 1, day, hours, minutes)
     );
     const tournamentId = uuidv4();
     const queueName = `tournament-${tournamentId}`;
+
+    // Calculate the open time (5 minutes before the start time)
+    const openTime = new Date(startTimeISO.getTime() - 5 * 60 * 1000); // Open 5 minutes before start time
+    const closeTime = new Date(openTime.getTime() + openDuration * 60 * 1000); // Close after openDuration
+
+    // Log the start, open, and close times
+    console.log(`Tournament Start Time: ${startTimeISO}`);
+    console.log(`Tournament Open Time: ${openTime}`);
+    console.log(`Tournament Close Time: ${closeTime}`);
 
     const expiryTimeInSeconds = openDuration * 60; // Convert minutes to seconds
 
@@ -40,16 +49,23 @@ const TournamentService = {
           // Store the open time in Redis
           await RedisService.setTourneyQueueOpenTime(
             queueName,
-            startTimeISO.getTime()
+            openTime.getTime()
           );
-          console.log(`Open time set for ${queueName}: ${startTimeISO}`);
+          console.log(`Open time set for ${queueName}: ${openTime}`);
 
-          // Schedule the closing of the tournament queue
-          setTimeout(() => {
-            RedisService.closeTournamentQueue(tournamentId);
-          }, expiryTimeInSeconds * 1000); // Convert seconds to milliseconds
+          // Schedule the closing of the tournament queue using a separate cron job
+          const closeCronTime = `${closeTime.getMinutes()} ${closeTime.getHours()} ${closeTime.getDate()} ${
+            closeTime.getMonth() + 1
+          } *`;
+          const closeTask = cron.schedule(closeCronTime, async () => {
+            await TournamentService.closeTournamentQueue(tournamentId);
+            console.log(
+              `Tournament queue closed for tournament ID: ${tournamentId}`
+            );
+            closeTask.stop(); // Stop the close task after execution
+          });
 
-          // Stop the cron job after execution
+          // Stop the creation cron job after execution
           task.stop();
         } catch (cronError) {
           console.error("Error executing scheduled task:", cronError);
@@ -71,6 +87,7 @@ const TournamentService = {
       return { success: false, message: "Failed to create tournament queue." };
     }
   },
+
   closeTournamentQueue: async (tournamentId) => {
     const queueName = `tournament-${tournamentId}`;
     await RedisService.deleteQueue(queueName); // Close the queue by deleting it
@@ -107,7 +124,7 @@ const TournamentService = {
         const newMatch = new League({
           leagueId: uuidv4(),
           players: playerIdsToMatch,
-          matchups: [], // Initialize matchups
+          matchups: [],
           numPlayers: requiredPlayers,
           sets: sets,
           legs: legs,
