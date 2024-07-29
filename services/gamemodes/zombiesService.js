@@ -92,12 +92,14 @@ const ZombiesService = {
           zombiesKilled: playerStats.kills,
           highestPoints: playerStats.score,
           headshots: playerStats.headshots,
+          bodyshots: playerStats.bodyshots,
           legShots: playerStats.legshots,
         };
       } else {
         player.stats.zombiesStats.totalZombiesGamesPlayed++;
         player.stats.zombiesStats.zombiesKilled += playerStats.kills;
         player.stats.zombiesStats.headshots += playerStats.headshots;
+        player.stats.zombiesStats.bodyshots += playerStats.bodyshots;
         player.stats.zombiesStats.legShots += playerStats.legshots;
   
         if (playerStats.waveReached > player.stats.zombiesStats.highestWave) {

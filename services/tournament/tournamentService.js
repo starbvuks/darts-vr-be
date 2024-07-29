@@ -1,50 +1,90 @@
 const { v4: uuidv4 } = require("uuid");
 const RedisService = require("../redisService");
-const League = require("../models/League"); // Assuming you have a League model
+const League = require("../../models/League"); // Assuming you have a League model
 const gameSockets = require("../../sockets/gameSockets");
+const cron = require("node-cron");
 
 const TournamentService = {
+  scheduledTournaments: {}, // Ensure this is initialized
+
   createTournament: async (tournamentDetails) => {
-    const { startTime, openDuration } = tournamentDetails;
+    const { startDate, startTime, openDuration } = tournamentDetails;
+
+    const [day, month, year] = startDate.split("/");
+    const [hours, minutes] = startTime.split(":");
+
+    // Create the start time in IST (UTC+5:30)
+    const startTimeISO = new Date(
+      Date.UTC(year, month - 1, day, hours, minutes)
+    );
     const tournamentId = uuidv4();
     const queueName = `tournament-${tournamentId}`;
-    
-    // Calculate the open time (5 minutes before the start time)
-    const openTime = new Date(startTime.getTime() - (5 * 60 * 1000)); // Open 5 minutes before start time
-    const closeTime = new Date(startTime.getTime() + (openDuration * 60 * 60 * 1000)); // Duration in hours
 
-    await tournament.save();
+    const expiryTimeInSeconds = openDuration * 60; // Convert minutes to seconds
 
-    // Set the queue open time in Redis
-    await RedisService.setTourneyQueueOpenTime(queueName, openTime.getTime());
-    await RedisService.setTourneyQueueCloseTime(queueName, closeTime.getTime());
+    try {
+      // Schedule the creation of the queue using cron
+      const cronTime = `${minutes} ${hours} ${day} ${month} *`; // Cron format for scheduling
+      const task = cron.schedule(cronTime, async () => {
+        console.log(
+          `Creating tournament queue for ${queueName} at ${new Date()}`
+        );
+        try {
+          // Initialize the queue and set the expiry time
+          await RedisService.addToQueueWithExpiry(
+            queueName,
+            expiryTimeInSeconds
+          );
+          console.log(`Queue ${queueName} created successfully.`);
 
-    // Schedule the queue opening
-    setTimeout(() => {
-      TournamentService.openTournamentQueue(tournamentId);
-    }, openTime.getTime() - Date.now());
+          // Store the open time in Redis
+          await RedisService.setTourneyQueueOpenTime(
+            queueName,
+            startTimeISO.getTime()
+          );
+          console.log(`Open time set for ${queueName}: ${startTimeISO}`);
 
-    // Schedule the queue closing
-    setTimeout(() => {
-      TournamentService.closeTournamentQueue(tournamentId);
-    }, closeTime.getTime() - Date.now());
+          // Schedule the closing of the tournament queue
+          setTimeout(() => {
+            RedisService.closeTournamentQueue(tournamentId);
+          }, expiryTimeInSeconds * 1000); // Convert seconds to milliseconds
 
-    return tournament;
+          // Stop the cron job after execution
+          task.stop();
+        } catch (cronError) {
+          console.error("Error executing scheduled task:", cronError);
+        }
+      });
+
+      // Store the scheduled tournament to manage it later if needed
+      TournamentService.scheduledTournaments[tournamentId] = {
+        task,
+        queueName,
+      };
+
+      return {
+        success: true,
+        tournament: { tournamentId, queueName, startTime: startTimeISO },
+      };
+    } catch (error) {
+      console.error("Error creating tournament queue:", error);
+      return { success: false, message: "Failed to create tournament queue." };
+    }
   },
-
-  openTournamentQueue: async (tournamentId) => {
-    const queueName = `tournament-${tournamentId}`;
-    await RedisService.openQueue(queueName); // Open the queue for players to join
-    console.log(`Tournament queue opened for tournament ID: ${tournamentId}`);
-  },
-
   closeTournamentQueue: async (tournamentId) => {
     const queueName = `tournament-${tournamentId}`;
-    await RedisService.deleteQueue(queueName); // Close the queue for players
+    await RedisService.deleteQueue(queueName); // Close the queue by deleting it
     console.log(`Tournament queue closed for tournament ID: ${tournamentId}`);
   },
 
-  joinTournamentQueue: async (tournamentId, playerId, requiredPlayers, sets, legs, wss) => {
+  joinTournamentQueue: async (
+    tournamentId,
+    playerId,
+    requiredPlayers,
+    sets,
+    legs,
+    wss
+  ) => {
     const queueName = `tournament-${tournamentId}`;
 
     // Check if the queue is open for this tournament
@@ -58,7 +98,10 @@ const TournamentService = {
       const queueLength = await RedisService.getQueueLength(queueName);
 
       if (queueLength >= requiredPlayers) {
-        const playerIdsToMatch = await RedisService.getPlayersFromQueue(queueName, requiredPlayers);
+        const playerIdsToMatch = await RedisService.getPlayersFromQueue(
+          queueName,
+          requiredPlayers
+        );
 
         // Create a new match with the players
         const newMatch = new League({
@@ -85,19 +128,40 @@ const TournamentService = {
           legs: legs,
         });
 
-        await RedisService.publishMatchCreated(`tournament:${tournamentId}-match-created`, message);
+        await RedisService.publishMatchCreated(
+          `tournament:${tournamentId}-match-created`,
+          message
+        );
 
         // Notify players about the match creation
         gameSockets.handleMatchCreatedNotification(message, wss);
 
         return newMatch;
       } else {
-        // Wait for more players to join the queue
         return null;
       }
     } else {
-      // Return an error or a response indicating that the queue is not open yet
-      return { success: false, message: "Tournament queue is not open yet." };
+      // Retrieve the open time and expiry time
+      const openTime = await RedisService.getTourneyQueueOpenTime(queueName);
+      const expiryTimeInSeconds = await RedisService.getTourneyQueueExpiry(
+        queueName
+      );
+
+      // Log the retrieved values
+      console.log(
+        `Open Time: ${openTime}, Expiry Time: ${expiryTimeInSeconds}`
+      );
+
+      const closeTime = openTime
+        ? new Date(parseInt(openTime) + expiryTimeInSeconds * 1000)
+        : null;
+
+      return {
+        success: false,
+        message: "Tournament queue is not open yet.",
+        openTime: openTime ? new Date(parseInt(openTime)) : null,
+        closeTime: closeTime,
+      };
     }
   },
 };

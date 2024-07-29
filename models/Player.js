@@ -124,6 +124,7 @@ const playerSchema = new mongoose.Schema({
       zombiesKilled: { type: Number, default: 0 },
       highestPoints: { type: Number, default: 0 },
       headshots: { type: Number, default: 0 },
+      bodyshots: { type: Number, default: 0 },
       legShots: { type: Number, default: 0 },
     },
     fiveOhOneStats: {

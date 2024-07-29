@@ -34,7 +34,8 @@ const MatchmakingService = {
           player1Id,
           player2Id: player2Id || null,
           matchType: "multiplayer",
-          status: "closed", // Update the status to 'closed' since the match is now complete
+          status: "closed", 
+          numPlayers: 2,
           matchId: uuidv4(),
         });
         await newMatch.save();
@@ -75,6 +76,7 @@ const MatchmakingService = {
         player1Id: playerId,
         matchType: "solo",
         status: "closed",
+        numPlayers: 1,
         matchId: uuidv4(),
       });
       await match.save();
@@ -113,6 +115,7 @@ const MatchmakingService = {
           player1Id,
           player2Id: player2Id || null,
           matchType: "multiplayer",
+          numPlayers: 2,
           status: "ongoing",
           matchId: uuidv4(),
         });
@@ -155,6 +158,7 @@ const MatchmakingService = {
         matchType: "solo",
         status: "ongoing",
         matchId: uuidv4(),
+        numPlayers: 1,
       });
       await match.save();
       return match;

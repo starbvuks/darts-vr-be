@@ -22,6 +22,7 @@
     "jwk-to-pem": "^2.0.5",
     "mongodb": "^6.6.2",
     "mongoose": "^8.4.1",
+    "node-cron": "^3.0.3",
     "psn-api": "^2.10.1",
     "socket.io": "^4.7.5",
     "uuid": "^10.0.0",

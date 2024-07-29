@@ -78,8 +78,8 @@ app.post("/api/league/update-stats", (req, res) => {
 })
 
 // tournaments
-// const tourney = require("./routes/tournament/tournamentRoutes.js");
-// app.use("/", tourney);
+const tourney = require("./routes/tournament/tournamentRoutes.js");
+app.use("/", tourney);
 
 
 // friend requests

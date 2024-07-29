@@ -31,6 +31,7 @@ const KillstreakSchema = new mongoose.Schema({
   ],
   duration: { type: Number, min: 0 }, // in seconds
   winner: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
+  numPlayers: { type: Number, min: 1 },
   createdAt: { type: Date, default: Date.now },
 });
 

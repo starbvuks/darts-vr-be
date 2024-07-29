@@ -15,6 +15,7 @@ const ZombiesSchema = new mongoose.Schema({
   player1Stats: {
     waveReached: { type: Number, min: 0 },
     headshots: { type: Number, min: 0 },
+    bodyshots: { type: Number, min: 0 },
     kills: { type: Number, min: 0 },
     legshots: { type: Number, min: 0 },
     dartsThrown: { type: Number, min: 0 },
@@ -29,6 +30,7 @@ const ZombiesSchema = new mongoose.Schema({
     score: { type: Number, min: 0 },
   },
   duration: { type: Number, min: 0 }, // in seconds
+  numPlayers: { type: Number, min: 1 },
   createdAt: { type: Date, default: Date.now },
 });
 
