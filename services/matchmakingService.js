@@ -48,6 +48,7 @@ const MatchmakingService = {
           matchType: `${gameType}_2`,
           matchId: newMatch.matchId,
           players: playerIdsToMatch,
+          numPlayers: newMatch.numPlayers
         });
         await RedisService.publishMatchCreated(
           `${gameType}-2-match-created`,
@@ -129,6 +130,7 @@ const MatchmakingService = {
           matchType: `${gameType}_2`,
           matchId: newMatch.matchId,
           players: playerIdsToMatch,
+          numPlayers: newMatch.numPlayers
         });
         await RedisService.publishMatchCreated(
           `${gameType}-2-match-created`,

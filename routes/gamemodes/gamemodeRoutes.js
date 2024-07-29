@@ -30,8 +30,6 @@ router.get('/api/501/get-match/:matchId', FiveOhOneController.getMatch);
 router.post('/api/501/close-match', FiveOhOneController.closeMatch);
 router.post('/api/501/last-turn', FiveOhOneController.updateLastTurn);
 router.get('/api/501/last-turn', FiveOhOneController.getLastTurn);
-
-
 router.post('/api/exit-queue', FiveOhOneController.removePlayerFromQueue);
 
 // ATW Routes
