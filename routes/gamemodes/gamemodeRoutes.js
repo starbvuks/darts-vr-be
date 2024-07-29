@@ -13,7 +13,7 @@ router.get('/api/zombies/get-match/:matchId', ZombiesController.getMatch);
 router.post('/api/zombies/close-match', ZombiesController.closeMatch);
 
 // Killstreak Routes
-router.post('/api/killstreak/create-private', ZombiesController.createPrivateMatch);
+router.post('/api/killstreak/create-private', KillstreakController.createPrivateMatch);
 router.post('/api/killstreak/join', KillstreakController.joinInvitedMatch);
 router.patch("/api/killstreak/update", KillstreakController.updateMatchStats);
 router.post("/api/killstreak/end-match", KillstreakController.endMatch);

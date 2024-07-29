@@ -8,7 +8,7 @@ const KillstreakService = {
     try {
       const match = new Killstreak({
         player1Id: playerId,
-        matchType: "solo",
+        matchType: "private-2p",
         status: "open",
         matchId: uuidv4(),
       });
@@ -42,6 +42,7 @@ const KillstreakService = {
       }
 
       match.player2Id = playerId;
+      match.numPlayers = 2;
       match.status = "closed";
       await match.save();
       return match;
