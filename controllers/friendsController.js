@@ -273,3 +273,19 @@ exports.updatePlayerStatus = async (req, res, wss) => {
     }
   });
 };
+
+exports.searchFriends = async (req, res) => {
+  authService.validateJwt(req, res, async () => {
+    const { searchParam } = req.body; 
+
+    try {
+      const results = await friendsService.searchUsers(searchParam);
+      return res.status(200).json({ success: true, users: results });
+    } catch (error) {
+      console.error("Error in searchFriends controller:", error);
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to search for friends." });
+    }
+  });
+};

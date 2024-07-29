@@ -107,6 +107,9 @@ app.post("/api/friends/unblock-player", (req, res) => {
 app.post("/api/friends/update-status", (req, res) => {
   friendsController.updatePlayerStatus(req, res, wss);
 });
+app.post("/api/friends/search", (req, res) => {
+  friendsController.searchFriends(req, res, wss);
+});
 
 
 

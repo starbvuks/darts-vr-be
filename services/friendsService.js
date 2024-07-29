@@ -373,9 +373,7 @@ async function updatePlayerStatus(senderId, newStatus, wss) {
         }
       });
       wss.clients.forEach((client) => {
-        if (
-          client.readyState === WebSocket.OPEN
-        ) {
+        if (client.readyState === WebSocket.OPEN) {
           client.send(
             JSON.stringify({
               type: "friendStatusUpdate",
@@ -394,6 +392,25 @@ async function updatePlayerStatus(senderId, newStatus, wss) {
   }
 }
 
+async function searchUsers(searchParam) {
+  try {
+    // Ensure searchParam is a string
+    if (typeof searchParam !== 'string') {
+      throw new Error("Search parameter must be a string");
+    }
+
+    const users = await Player.find({
+      username: { $regex: searchParam, $options: 'i' }, // Case-insensitive search
+    }).limit(10);
+
+    return users;
+  } catch (error) {
+    console.error("Error searching for users:", error);
+    throw error; // Propagate the error for handling in the controller
+  }
+}
+
+
 
 module.exports = {
   sendFriendRequest,
@@ -404,4 +421,5 @@ module.exports = {
   blockPlayer,
   unblockPlayer,
   updatePlayerStatus,
+  searchUsers,
 };
