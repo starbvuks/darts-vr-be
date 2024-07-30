@@ -3,11 +3,26 @@ const redis = new Redis("redis://localhost:6379");
 
 const RedisService = {
   addToQueue: async (queueName, playerId) => {
-    await redis.lpush(queueName, playerId);
+    const dummyValue = "dummy";
+    
+    const queueLength = await redis.llen(queueName);
+    if (queueLength > 0) {
+      const queueItems = await redis.lrange(queueName, 0, -1);
+      if (queueItems.includes(dummyValue)) {
+        await redis.lrem(queueName, 0, dummyValue);
+      }
+    }
+  
+    await redis.rpush(queueName, playerId);
   },
 
   getPlayersFromQueue: async (queueName, count) => {
     return await redis.lrange(queueName, 0, count - 1);
+  },
+
+  isPlayerInQueue: async (queueName, playerId) => {
+    const queueItems = await redis.lrange(queueName, 0, -1);
+    return queueItems.includes(playerId);
   },
 
   removePlayersFromQueue: async (queueName, count) => {
@@ -41,32 +56,33 @@ const RedisService = {
   },
 
   // Tournament
-  getTourneyQueueOpenTime: async (queueName) => {
-    const openTime = await redis.get(`${queueName}:open_time`);
-    console.log(`Retrieved Open Time for ${queueName}: ${openTime}`); // Log the retrieved open time
-    return openTime; // This will return the open time as a string
+  createQueue: async (queueName) => {
+    await redis.lpush(queueName, "dummy");
+    await redis.ltrim(queueName, 0, 0); 
   },
 
-  getTourneyQueueExpiry: async (queueName) => {
-    const ttl = await redis.ttl(queueName);
-    return ttl;
+  queueExists: async (queueName) => {
+    return await redis.exists(queueName);
+  },
+
+  addToQueueWithExpiry: async (queueName, expiryTimeInSeconds) => {
+    await redis.expire(queueName, expiryTimeInSeconds);
+  },
+
+  setTourneyQueueOpenTime: async (queueName, openTime) => {
+    await redis.set(`${queueName}:open_time`, openTime.toString());
+  },
+
+  getTourneyQueueOpenTime: async (queueName) => {
+    const openTime = await redis.get(`${queueName}:open_time`);
+    console.log(`Retrieved Open Time for ${queueName}: ${openTime}`);
+    return openTime;
   },
 
   isTourneyQueueOpen: async (queueName) => {
     const openTime = await RedisService.getTourneyQueueOpenTime(queueName);
     return openTime && Date.now() >= parseInt(openTime);
   },
-
-  addToQueueWithExpiry: async (queueName, expiryTimeInSeconds) => {
-    // await redis.rpush(queueName); 
-    await redis.expire(queueName, expiryTimeInSeconds); 
-  },
-
-  // Store the open time for the tournament queue
-  setTourneyQueueOpenTime: async (queueName, openTime) => {
-    await redis.set(`${queueName}:open_time`, openTime);
-  },
-
   // Close the tournament queue by deleting it
   closeTournamentQueue: async (tournamentId) => {
     const queueName = `tournament-${tournamentId}`;

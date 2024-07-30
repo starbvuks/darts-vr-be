@@ -77,6 +77,7 @@ const FiveOhOneSchema = new mongoose.Schema({
   },
 
   duration: { type: Number, min: 0 }, // in seconds
+  numPlayers: { type: Number, min: 1 },
   winner: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
   createdAt: { type: Date, default: Date.now },
 });

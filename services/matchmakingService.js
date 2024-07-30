@@ -191,6 +191,7 @@ const MatchmakingService = {
           matchId: uuidv4(),
           matchType: `multiplayer`,
           status: "ongoing",
+          numPlayers: numPlayers,
           player1Id: playerIdsToMatch[0],
           player2Id: numPlayers > 1 ? playerIdsToMatch[1] : null,
           player3Id: numPlayers > 2 ? playerIdsToMatch[2] : null,
@@ -243,6 +244,7 @@ const MatchmakingService = {
           matchType: `${gameType}_${numPlayers}`,
           matchId: newMatch.matchId,
           players: playerIdsToMatch,
+          numPlayers: numPlayers,
         });
         await RedisService.publishMatchCreated(
           `${gameType}-${numPlayers}-match-created`,
@@ -272,6 +274,7 @@ const MatchmakingService = {
         matchType: "solo",
         status: "ongoing",
         player1Id: playerId,
+        numPlayers: 1,
         player1Stats: [],
       });
 
