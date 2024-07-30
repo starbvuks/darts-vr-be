@@ -4,7 +4,7 @@ const authService = require("../../services/auth/authService");
 
 exports.steamAuth = async (req, res) => {
   try {
-    const { authTicket } = req.body;
+    const { authTicket, username } = req.body;
 
     if (!authTicket) {
       return res.status(400).json({ error: "Auth ticket is required" });
@@ -16,11 +16,11 @@ exports.steamAuth = async (req, res) => {
     if (!player) {
 
       // Fetch the player's username from the Steam API
-      const playerSummary = await steamService.getPlayerSummaries(steamId);
-      const username = playerSummary.personaname;
+      // const playerSummary = await steamService.getPlayerSummaries(steamId);
+      // const username = playerSummary.personaname;
 
       player = new Player({
-        username,
+        username: username ? username : "steam player",
         auth: [
           {
             platform: "Steam",

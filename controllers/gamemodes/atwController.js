@@ -14,6 +14,7 @@ const ATWController = {
       }
     });
   },
+
   updateMatch: async (req, res) => {
     authService.validateJwt(req, res, async () => {
       const { matchId, stats } = req.body;
@@ -26,6 +27,7 @@ const ATWController = {
       }
     });
   },
+  
   getMatch: async (req, res) => {
     authService.validateJwt(req, res, async () => {
       const { matchId } = req.params;

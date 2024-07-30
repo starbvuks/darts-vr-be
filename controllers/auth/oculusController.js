@@ -4,7 +4,7 @@ const Player = require("../../models/Player");
 
 const validateOculusSession = async (req, res) => {
   try {
-    const { nonce, oculusId } = req.body;
+    const { nonce, oculusId, username } = req.body;
 
     // Check if the received parameters are 'nonce' and 'oculusId'
     if (!nonce || !oculusId) {
@@ -22,6 +22,7 @@ const validateOculusSession = async (req, res) => {
         if (!player) {
           // Create a new player document if it doesn't exist
           player = new Player({
+            username: username ? username : "oculus player",
             auth: [
               {
                 platform: "Oculus",

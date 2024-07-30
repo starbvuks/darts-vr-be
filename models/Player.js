@@ -113,7 +113,7 @@ const playerSchema = new mongoose.Schema({
     },
     atwStats: {
       totalAtwGamesPlayed: { type: Number, default: 0 },
-      totalAtwGamesWonStreak: { type: Number, default: 0 },
+      totalAtwGamesWon: { type: Number, default: 0 },
       leastDartsUsed: { type: Number, default: 0 },
       highestStreak: { type: Number, default: 0 },
       highestPoints: { type: Number, default: 0 },
