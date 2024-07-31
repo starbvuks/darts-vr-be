@@ -13,6 +13,8 @@ const killstreakController = require("./controllers/gamemodes/killstreakControll
 const fiveOhOneController = require("./controllers/gamemodes/fiveOhOneController");
 const leagueController = require("./controllers/leagueController");
 
+const { startCronJobs } = require("./cronJobs");
+
 require("dotenv").config();
 
 // Initialize express
@@ -25,7 +27,10 @@ const mongoUri =
   "mongodb+srv://starbvuks:zbzij5p0oU4i4ABw@playground.xrmczcu.mongodb.net/DARTS?retryWrites=true&w=majority&appName=playground";
 mongoose
   .connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("MongoDB connected"))
+  .then(() => {
+    console.log("MongoDB connected");
+    startCronJobs();
+  })
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // Routes
@@ -70,17 +75,19 @@ app.post("/api/501/invite", (req, res) => {
 const league = require("./routes/leagueRoutes.js");
 app.use("/", league);
 
+app.post("/api/league/invite", (req, res) => {
+  leagueController.invitePlayer(req, res, wss);
+});
 app.post("/api/league/start", (req, res) => {
   leagueController.startLeague(req, res, wss);
-})
+});
 app.post("/api/league/update-stats", (req, res) => {
   leagueController.dartThrow(req, res, wss);
-})
+});
 
 // tournaments
 const tourney = require("./routes/tournament/tournamentRoutes.js");
 app.use("/", tourney);
-
 
 // friend requests
 app.post("/api/friends/send-request", (req, res) => {
@@ -110,8 +117,6 @@ app.post("/api/friends/update-status", (req, res) => {
 app.post("/api/friends/search", (req, res) => {
   friendsController.searchFriends(req, res, wss);
 });
-
-
 
 const port = 3000;
 const server = http.createServer(app);

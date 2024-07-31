@@ -19,11 +19,11 @@ const LeagueController = {
     }
   },
 
-  invitePlayer: async (req, res) => {
+  invitePlayer: async (req, res, wss) => {
     try {
       const { leagueId, playerId, friendId } = req.body;
       authService.validateJwt(req, res, async () => {
-        gameWebSocketHandler.sendLeagueInvitation(friendId, playerId, leagueId);
+        gameWebSocketHandler.sendLeagueInvitation(friendId, playerId, leagueId, wss);
         res.status(200).json({ message: "Invitation sent" });
       });
     } catch (error) {

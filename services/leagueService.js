@@ -1,13 +1,34 @@
 const { v4: uuidv4 } = require("uuid");
+const cron = require("node-cron");
+
 const Player = require("../models/Player");
 const League = require("../models/League");
 const gameWebSocketHandler = require("../sockets/gameSockets");
 
 const LeagueService = {
-  createLeague: async (playerId, numPlayers) => {
+  updateIndexes: async () => {
+    try {
+      await League.collection.dropIndex("matchups.matchId_1");
+    } catch (error) {
+      if (error.code !== 27) {
+      } else {
+      }
+    }
+
+    try {
+      await League.collection.createIndex(
+        { "matchups.matchId": 1 },
+        { unique: false, sparse: true }
+      );
+    } catch (error) {}
+  },
+
+  createLeague: async (playerId, numPlayers, sets, legs) => {
     try {
       let totalRounds;
       let matchesPerRound;
+
+      LeagueService.updateIndexes();
 
       switch (numPlayers) {
         case 4:
@@ -35,12 +56,14 @@ const LeagueService = {
         sets,
         legs,
         status: "open",
+        matchups: [],
       });
-
       await league.save();
+
       return { success: true, league };
     } catch (error) {
       console.error("Error creating league:", error);
+
       return { success: false, message: "Failed to create league." };
     }
   },
@@ -82,8 +105,6 @@ const LeagueService = {
       return { success: false, message: "Failed to join league." };
     }
   },
-
-  // leave league
 
   startLeague: async (leagueId, wss) => {
     try {
@@ -229,6 +250,7 @@ const LeagueService = {
         league.matchups.push(...nextRoundMatchups);
         round++;
       }
+      LeagueService.startMonitoringInactivePlayers();
 
       await league.save();
       return { success: true, matchups };
@@ -264,6 +286,12 @@ const LeagueService = {
       const playerStats = currentMatchup.player1Id.equals(playerId)
         ? currentMatchup.player1Stats
         : currentMatchup.player2Stats;
+
+      if (currentMatchup.player1Id.equals(playerId)) {
+        currentMatchup.lastActivity.player1LastActivity = new Date();
+      } else if (currentMatchup.player2Id.equals(playerId)) {
+        currentMatchup.lastActivity.player2LastActivity = new Date();
+      }
 
       // Ensure that playerStats.throws is initialized
       if (!playerStats.throws) {
@@ -358,16 +386,16 @@ const LeagueService = {
 
   addCommentary: async (leagueId, matchId, playerId, commentary) => {
     try {
-      const league = await League.findOne({ leagueId} );
+      const league = await League.findOne({ leagueId });
       if (!league) {
         return { success: false, message: "League not found." };
       }
-  
+
       const matchup = league.matchups.find((m) => m.matchId === matchId);
       if (!matchup) {
         return { success: false, message: "Matchup not found." };
       }
-  
+
       let playerStats;
       if (matchup.player1Id.equals(playerId)) {
         playerStats = matchup.player1Stats;
@@ -376,10 +404,10 @@ const LeagueService = {
       } else {
         return { success: false, message: "Player not part of this matchup." };
       }
-  
+
       const lastThrow = playerStats.throws[playerStats.throws.length - 1];
-      console.log(lastThrow)
-  
+      console.log(lastThrow);
+
       if (lastThrow) {
         lastThrow.commentary = commentary;
         await league.save();
@@ -406,14 +434,14 @@ const LeagueService = {
       }
 
       if (matchup.player1Id.equals(playerId)) {
-        matchup.player1Stats.setsWon += 1; 
+        matchup.player1Stats.setsWon += 1;
       } else if (matchup.player2Id.equals(playerId)) {
-        matchup.player2Stats.setsWon += 1; 
+        matchup.player2Stats.setsWon += 1;
       } else {
         return { success: false, message: "Player not part of this matchup." };
       }
 
-      await league.save(); 
+      await league.save();
       return { success: true, matchup };
     } catch (error) {
       console.error("Error updating sets won:", error);
@@ -434,14 +462,14 @@ const LeagueService = {
       }
 
       if (matchup.player1Id.equals(playerId)) {
-        matchup.player1Stats.legsWon += 1; 
+        matchup.player1Stats.legsWon += 1;
       } else if (matchup.player2Id.equals(playerId)) {
-        matchup.player2Stats.legsWon += 1; 
+        matchup.player2Stats.legsWon += 1;
       } else {
         return { success: false, message: "Player not part of this matchup." };
       }
 
-      await league.save(); 
+      await league.save();
       return { success: true, matchup };
     } catch (error) {
       console.error("Error updating legs won:", error);
@@ -455,23 +483,26 @@ const LeagueService = {
       if (!league) {
         return { success: false, message: "League not found." };
       }
-  
+
       const matchup = league.matchups.find((m) => m.matchId === matchId);
       if (!matchup) {
         return { success: false, message: "Matchup not found." };
       }
-  
+
       if (matchup.player1Id !== winnerId && matchup.player2Id !== winnerId) {
-        return { success: false, message: "Winner must be one of the players in the matchup." };
+        return {
+          success: false,
+          message: "Winner must be one of the players in the matchup.",
+        };
       }
-  
+
       matchup.winnerId = winnerId;
       matchup.status = "completed";
-  
+
       const nextRoundMatchups = league.matchups.filter((m) =>
         m.prevMatchIds.includes(matchup.matchId)
       );
-  
+
       nextRoundMatchups.forEach((nextMatchup) => {
         if (nextMatchup.player1Id === null) {
           nextMatchup.player1Id = winnerId;
@@ -479,40 +510,82 @@ const LeagueService = {
           nextMatchup.player2Id = winnerId;
         }
       });
-  
+
       await league.save();
-  
-      const nextMatchup = nextRoundMatchups.find((m) => 
-        m.player1Id === winnerId || m.player2Id === winnerId
+
+      const nextMatchup = nextRoundMatchups.find(
+        (m) => m.player1Id === winnerId || m.player2Id === winnerId
       );
-  
+
       return {
         success: true,
-        nextMatchup, 
+        nextMatchup,
       };
     } catch (error) {
       console.error("Error ending match:", error);
       return { success: false, message: "Failed to end match." };
     }
   },
+  monitorInactivePlayers: async () => {
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000); // 1 hour ago
+    const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000); // 2 minutes ago
 
-  handlePlayerDisconnect: async (matchId, playerId) => {
-    const matchup = await Matchup.findOne({ matchId });
-    if (!matchup) {
-      throw new Error("Matchup not found.");
+    try {
+      const leagues = await League.find({
+        createdAt: { $gte: oneHourAgo },
+        status: "ongoing"
+      });
+
+      for (const league of leagues) {
+        for (const matchup of league.matchups) {
+          if (matchup.status === "ongoing") {
+            if (matchup.lastActivity.player1LastActivity < twoMinutesAgo) {
+              await LeagueService.endMatch(league.leagueId, matchup.matchId, matchup.player2Id);
+            } else if (matchup.lastActivity.player2LastActivity < twoMinutesAgo) {
+              await LeagueService.endMatch(league.leagueId, matchup.matchId, matchup.player1Id);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error monitoring inactive players:", error);
     }
-
-    if (matchup.player1Id.equals(playerId)) {
-      matchup.winnerId = matchup.player2Id;
-    } else if (matchup.player2Id.equals(playerId)) {
-      matchup.winnerId = matchup.player1Id;
-    } else {
-      throw new Error("Player not part of this matchup.");
-    }
-
-    matchup.status = "completed";
-    await matchup.save();
   },
+
+  // a problem here is all the required matchups for a game are created at the start itself, meaning that alot of matches are empty until the winner of the 2 previous matches are promoted and added to this one. the problem here is we set the player1LastActivity and same for player2 to be set when initialize matchups is hut meaning that all the empty future matchups are closing as a part of the cron jobs task as they are considered inactive. we need it so that only the matchups with player1 and player2 in them should be closed for inactivity the lastActivity should be added to each matchup when both players are added to the matchup and it begins not the original time of when the league started
+
+  // handlePlayerDisconnect: async (leagueId, matchId, disconnectedPlayerId) => {
+  //   try {
+  //     const league = await League.findOne({ leagueId });
+  //     if (!league) {
+  //       throw new Error("League not found.");
+  //     }
+
+  //     const matchup = league.matchups.find(m => m.matchId === matchId);
+  //     if (!matchup) {
+  //       throw new Error("Matchup not found.");
+  //     }
+
+  //     if (matchup.player1Id.equals(disconnectedPlayerId)) {
+  //       matchup.winnerId = matchup.player2Id;
+  //     } else if (matchup.player2Id.equals(disconnectedPlayerId)) {
+  //       matchup.winnerId = matchup.player1Id;
+  //     } else {
+  //       throw new Error("Player not part of this matchup.");
+  //     }
+
+  //     matchup.status = "completed";
+  //     await league.save();
+
+  //     console.log(`Player ${disconnectedPlayerId} disconnected from matchup ${matchId}. Winner set to ${matchup.winnerId}`);
+
+  //     // Here you can add any additional logic, such as notifying the winning player
+  //     // or updating the tournament bracket
+  //   } catch (error) {
+  //     console.error("Error handling player disconnect:", error);
+  //   }
+  // },
 
   endLeague: async (leagueId, leagueWinnerId) => {
     const league = await League.findOne({ leagueId });
@@ -525,6 +598,12 @@ const LeagueService = {
     await league.save();
 
     return { success: true };
+  },
+
+  startMonitoringInactivePlayers: () => {
+    cron.schedule("* * * * *", async () => {
+      await LeagueService.monitorInactivePlayers();
+    });
   },
 };
 

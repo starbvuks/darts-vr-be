@@ -7,7 +7,7 @@ const LeagueSchema = new mongoose.Schema({
   ],
   matchups: [
     {
-      matchId: { type: String, required: true, unique: true },
+      matchId: { type: String, unique: true },
       prevMatchIds: [],
       round: { type: Number, default: 1 },
       player1Id: {
@@ -66,6 +66,10 @@ const LeagueSchema = new mongoose.Schema({
         enum: ["ongoing", "completed"],
         default: "ongoing",
       },
+      lastActivity: {
+        player1LastActivity: { type: Date, default: Date.now },
+        player2LastActivity: { type: Date, default: Date.now },
+      },
       createdAt: { type: Date, default: Date.now },
     },
   ],
@@ -80,6 +84,7 @@ const LeagueSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+LeagueSchema.index({ "matchups.matchId": 1 }, { unique: false, sparse: true });
 const League = mongoose.model("League", LeagueSchema);
 
 module.exports = League;
