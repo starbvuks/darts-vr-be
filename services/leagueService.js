@@ -6,6 +6,7 @@ const League = require("../models/League");
 const gameWebSocketHandler = require("../sockets/gameSockets");
 
 const LeagueService = {
+  // to fix match id unique error, also added to League model
   updateIndexes: async () => {
     try {
       await League.collection.dropIndex("matchups.matchId_1");
@@ -227,6 +228,10 @@ const LeagueService = {
               status: "ongoing",
               createdAt: new Date(),
               prevMatchIds,
+              lastActivity: {
+                player1LastActivity: null,
+                player2LastActivity: null,
+              },
             });
 
             // Send socket notification to players
@@ -250,8 +255,6 @@ const LeagueService = {
         league.matchups.push(...nextRoundMatchups);
         round++;
       }
-      LeagueService.startMonitoringInactivePlayers();
-
       await league.save();
       return { success: true, matchups };
     } catch (error) {
@@ -481,21 +484,28 @@ const LeagueService = {
     try {
       const league = await League.findOne({ leagueId });
       if (!league) {
+        console.log(`League not found: ${leagueId}`);
         return { success: false, message: "League not found." };
       }
 
       const matchup = league.matchups.find((m) => m.matchId === matchId);
       if (!matchup) {
+        console.log(`Matchup not found: ${matchId}`);
         return { success: false, message: "Matchup not found." };
       }
 
-      if (matchup.player1Id !== winnerId && matchup.player2Id !== winnerId) {
+      if (
+        !matchup.player1Id.equals(winnerId) &&
+        !matchup.player2Id.equals(winnerId)
+      ) {
+        console.log(`Invalid winner ID: ${winnerId}`);
         return {
           success: false,
           message: "Winner must be one of the players in the matchup.",
         };
       }
 
+      console.log(`Ending match ${matchId} with winner ${winnerId}`);
       matchup.winnerId = winnerId;
       matchup.status = "completed";
 
@@ -506,15 +516,22 @@ const LeagueService = {
       nextRoundMatchups.forEach((nextMatchup) => {
         if (nextMatchup.player1Id === null) {
           nextMatchup.player1Id = winnerId;
+          nextMatchup.lastActivity.player1LastActivity = new Date();
         } else if (nextMatchup.player2Id === null) {
           nextMatchup.player2Id = winnerId;
+          nextMatchup.lastActivity.player2LastActivity = new Date();
+        }
+
+        if (nextMatchup.player1Id && nextMatchup.player2Id) {
+          nextMatchup.status = "ongoing";
         }
       });
 
       await league.save();
+      console.log(`Match ${matchId} ended successfully`);
 
       const nextMatchup = nextRoundMatchups.find(
-        (m) => m.player1Id === winnerId || m.player2Id === winnerId
+        (m) => m.player1Id.equals(winnerId) || m.player2Id.equals(winnerId)
       );
 
       return {
@@ -534,16 +551,34 @@ const LeagueService = {
     try {
       const leagues = await League.find({
         createdAt: { $gte: oneHourAgo },
-        status: "ongoing"
+        status: "ongoing",
       });
 
       for (const league of leagues) {
         for (const matchup of league.matchups) {
-          if (matchup.status === "ongoing") {
-            if (matchup.lastActivity.player1LastActivity < twoMinutesAgo) {
-              await LeagueService.endMatch(league.leagueId, matchup.matchId, matchup.player2Id);
-            } else if (matchup.lastActivity.player2LastActivity < twoMinutesAgo) {
-              await LeagueService.endMatch(league.leagueId, matchup.matchId, matchup.player1Id);
+          if (
+            matchup.status === "ongoing" &&
+            matchup.player1Id &&
+            matchup.player2Id
+          ) {
+            if (
+              matchup.lastActivity.player1LastActivity &&
+              matchup.lastActivity.player1LastActivity < twoMinutesAgo
+            ) {
+              await LeagueService.endMatch(
+                league.leagueId,
+                matchup.matchId,
+                matchup.player2Id
+              );
+            } else if (
+              matchup.lastActivity.player2LastActivity &&
+              matchup.lastActivity.player2LastActivity < twoMinutesAgo
+            ) {
+              await LeagueService.endMatch(
+                league.leagueId,
+                matchup.matchId,
+                matchup.player1Id
+              );
             }
           }
         }
@@ -552,40 +587,6 @@ const LeagueService = {
       console.error("Error monitoring inactive players:", error);
     }
   },
-
-  // a problem here is all the required matchups for a game are created at the start itself, meaning that alot of matches are empty until the winner of the 2 previous matches are promoted and added to this one. the problem here is we set the player1LastActivity and same for player2 to be set when initialize matchups is hut meaning that all the empty future matchups are closing as a part of the cron jobs task as they are considered inactive. we need it so that only the matchups with player1 and player2 in them should be closed for inactivity the lastActivity should be added to each matchup when both players are added to the matchup and it begins not the original time of when the league started
-
-  // handlePlayerDisconnect: async (leagueId, matchId, disconnectedPlayerId) => {
-  //   try {
-  //     const league = await League.findOne({ leagueId });
-  //     if (!league) {
-  //       throw new Error("League not found.");
-  //     }
-
-  //     const matchup = league.matchups.find(m => m.matchId === matchId);
-  //     if (!matchup) {
-  //       throw new Error("Matchup not found.");
-  //     }
-
-  //     if (matchup.player1Id.equals(disconnectedPlayerId)) {
-  //       matchup.winnerId = matchup.player2Id;
-  //     } else if (matchup.player2Id.equals(disconnectedPlayerId)) {
-  //       matchup.winnerId = matchup.player1Id;
-  //     } else {
-  //       throw new Error("Player not part of this matchup.");
-  //     }
-
-  //     matchup.status = "completed";
-  //     await league.save();
-
-  //     console.log(`Player ${disconnectedPlayerId} disconnected from matchup ${matchId}. Winner set to ${matchup.winnerId}`);
-
-  //     // Here you can add any additional logic, such as notifying the winning player
-  //     // or updating the tournament bracket
-  //   } catch (error) {
-  //     console.error("Error handling player disconnect:", error);
-  //   }
-  // },
 
   endLeague: async (leagueId, leagueWinnerId) => {
     const league = await League.findOne({ leagueId });
@@ -599,12 +600,8 @@ const LeagueService = {
 
     return { success: true };
   },
-
-  startMonitoringInactivePlayers: () => {
-    cron.schedule("* * * * *", async () => {
-      await LeagueService.monitorInactivePlayers();
-    });
-  },
 };
 
 module.exports = LeagueService;
+
+// a problem here is all the required matchups for a game are created at the start itself, meaning that alot of matches are empty until the winner of the 2 previous matches are promoted and added to this one. the problem here is we set the player1LastActivity and same for player2 to be set when initialize matchups is hut meaning that all the empty future matchups are closing as a part of the cron jobs task as they are considered inactive. we need it so that only the matchups with player1 and player2 in them should be closed for inactivity the lastActivity should be added to each matchup when both players are added to the matchup and it begins not the original time of when the league started

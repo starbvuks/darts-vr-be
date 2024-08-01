@@ -14,10 +14,10 @@ const TournamentController = {
   },
 
   joinTournament: async (req, res, wss) => {
-    const { tournamentId, playerId, requiredPlayers, sets, legs } = req.body;
+    const { tournamentId, playerId } = req.body;
 
     try {
-      const result = await TournamentService.joinTournamentQueue(tournamentId, playerId, requiredPlayers, sets, legs, wss);
+      const result = await TournamentService.joinTournamentQueue(tournamentId, playerId, wss);
       
       if (result && result.success === false) {
         return res.status(400).json(result); 

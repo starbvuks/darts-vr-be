@@ -1,16 +1,19 @@
 const { v4: uuidv4 } = require("uuid");
 const RedisService = require("../redisService");
 const League = require("../../models/League"); // Assuming you have a League model
+const Tournament = require("../../models/Tournament"); // Assuming you have a League model
 const Player = require("../../models/Player"); // Assuming you have a League model
 const gameSockets = require("../../sockets/gameSockets");
-const cron = require("node-cron");
 const moment = require("moment-timezone");
+
+const cron = require("node-cron");
 
 const TournamentService = {
   scheduledTournaments: {},
 
   createTournament: async (tournamentDetails) => {
-    const { startDate, startTime, openDuration } = tournamentDetails;
+    const { name, startDate, startTime, numPlayers, openDuration, sets, legs } =
+      tournamentDetails;
 
     const [day, month, year] = startDate.split("/");
     const [hours, minutes] = startTime.split(":");
@@ -20,62 +23,72 @@ const TournamentService = {
       "YYYY-MM-DD HH:mm",
       "Asia/Kolkata"
     );
+
     const tournamentId = uuidv4();
     const queueName = `tournament-${tournamentId}`;
 
     const openTimeIST = startTimeIST.clone().subtract(5, "minutes");
-    const closeTimeIST = startTimeIST.clone().add(openDuration, "minutes");
-
-    console.log(`Tournament Start Time (IST): ${startTimeIST.format()}`);
-    console.log(`Tournament Open Time (IST): ${openTimeIST.format()}`);
-    console.log(`Tournament Close Time (IST): ${closeTimeIST.format()}`);
-
-    const expiryTimeInSeconds =
-      (closeTimeIST.valueOf() - openTimeIST.valueOf()) / 1000;
+    const closeTimeIST = startTimeIST.clone().add(openDuration, "hours");
 
     try {
-      // Immediately create the queue and set the open time
-      await RedisService.createQueue(queueName);
-      await RedisService.setTourneyQueueOpenTime(
-        queueName,
-        openTimeIST.valueOf()
-      );
-      await RedisService.addToQueueWithExpiry(queueName, expiryTimeInSeconds);
+      // Create tournament in MongoDB
+      const tournament = new Tournament({
+        tournamentId,
+        name,
+        startDate: startTimeIST.toDate(),
+        openTime: openTimeIST.toDate(),
+        closeTime: closeTimeIST.toDate(),
+        openDuration,
+        numPlayers,
+        sets,
+        legs,
+      });
+      await tournament.save();
 
-      console.log(`Queue ${queueName} created successfully.`);
-      console.log(`Open time set for ${queueName}: ${openTimeIST.format()}`);
+      // Schedule queue creation
+      const scheduleQueueCreation = async () => {
+        console.log(`Creating queue for tournament ID: ${tournamentId}`);
+        await RedisService.createQueue(queueName);
+        await RedisService.setTourneyQueueOpenTime(
+          queueName,
+          openTimeIST.valueOf()
+        );
 
-      const openTask = cron.schedule(
-        openTimeIST.format("m H D M *"),
-        async () => {
-          console.log(
-            `Tournament queue ${queueName} is now open at ${moment().format()}`
-          );
-        },
-        {
-          timezone: "Asia/Kolkata",
-        }
-      );
+        const expiryTimeInSeconds = openDuration * 3600; // Convert hours to seconds
+        await RedisService.addToQueueWithExpiry(queueName, expiryTimeInSeconds);
 
-      const closeTask = cron.schedule(
-        closeTimeIST.format("m H D M *"),
-        async () => {
-          await TournamentService.closeTournamentQueue(tournamentId);
-          console.log(
-            `Tournament queue closed for tournament ID: ${tournamentId}`
-          );
-          closeTask.stop();
-        },
-        {
-          timezone: "Asia/Kolkata",
-        }
-      );
+        console.log(
+          `Queue ${queueName} created and scheduled for expiration in ${expiryTimeInSeconds} seconds.`
+        );
 
-      TournamentService.scheduledTournaments[tournamentId] = {
-        openTask,
-        closeTask,
-        queueName,
+        // Update tournament status to 'open'
+        await Tournament.findOneAndUpdate({ tournamentId }, { status: "open" });
       };
+
+      // Schedule queue closing
+      const scheduleQueueClosing = async () => {
+        console.log(`Closing queue for tournament ID: ${tournamentId}`);
+        await TournamentService.closeTournamentQueue(tournamentId);
+
+        // Update tournament status to 'closed'
+        await Tournament.findOneAndUpdate(
+          { tournamentId },
+          { status: "closed" }
+        );
+      };
+
+      // Calculate delays
+      const nowIST = moment().tz("Asia/Kolkata");
+      const openDelay = Math.max(0, openTimeIST.valueOf() - nowIST.valueOf());
+      const closeDelay = Math.max(0, closeTimeIST.valueOf() - nowIST.valueOf());
+
+      // Schedule the queue creation and closing
+      setTimeout(scheduleQueueCreation, openDelay);
+      setTimeout(scheduleQueueClosing, closeDelay);
+
+      console.log(
+        `Tournament ${tournamentId} scheduled. Queue will open in ${openDelay}ms and close in ${closeDelay}ms.`
+      );
 
       return {
         success: true,
@@ -88,62 +101,28 @@ const TournamentService = {
         },
       };
     } catch (error) {
-      console.error("Error creating tournament queue:", error);
-      return { success: false, message: "Failed to create tournament queue." };
+      console.error("Error creating tournament:", error);
+      return { success: false, message: "Failed to create tournament." };
     }
   },
 
   closeTournamentQueue: async (tournamentId) => {
     const queueName = `tournament-${tournamentId}`;
-    await RedisService.closeTournamentQueue(queueName);
+    await RedisService.closeTournamentQueue(tournamentId); // Note: changed to use tournamentId directly
     console.log(`Tournament queue closed for tournament ID: ${tournamentId}`);
 
-    if (TournamentService.scheduledTournaments[tournamentId]) {
-      TournamentService.scheduledTournaments[tournamentId].openTask.stop();
-      delete TournamentService.scheduledTournaments[tournamentId];
-    }
+    // Update tournament status in MongoDB
+    await Tournament.findOneAndUpdate({ tournamentId }, { status: "closed" });
   },
 
-  // closeTournamentQueue: async (tournamentId) => {
-  //   const queueName = `tournament-${tournamentId}`;
-  //   await RedisService.deleteQueue(queueName); // Close the queue by deleting it
-  //   console.log(`Tournament queue closed for tournament ID: ${tournamentId}`);
-  // },
+  getTournamentById: async (tournamentId) => {
+    return await Tournament.findOne({ tournamentId });
+  },
 
-  // closeTournamentQueue: async (tournamentId) => {
-  //   const queueName = `tournament-${tournamentId}`;
-  //   const queueLength = await RedisService.getQueueLength(queueName);
-
-  //   console.log(`Closing tournament queue for ${queueName}`);
-
-  //   if (queueLength === 0) {
-  //     await RedisService.deleteQueue(queueName);
-  //     await RedisService.deleteKey(`${queueName}:open_time`);
-  //     console.log(`Tournament queue closed and deleted for tournament ID: ${tournamentId}`);
-  //   } else {
-  //     await RedisService.setQueueStatus(queueName, "closed");
-  //     console.log(`Tournament queue closed for tournament ID: ${tournamentId}`);
-
-  //     const interval = setInterval(async () => {
-  //       const currentQueueLength = await RedisService.getQueueLength(queueName);
-  //       if (currentQueueLength === 0) {
-  //         clearInterval(interval);
-  //         await RedisService.deleteQueue(queueName);
-  //         await RedisService.deleteKey(`${queueName}:open_time`);
-  //         console.log(`Tournament queue deleted for tournament ID: ${tournamentId}`);
-  //       }
-  //     }, 10000);
-  //   }
-  // },
-
-  joinTournamentQueue: async (
-    tournamentId,
-    playerId,
-    requiredPlayers,
-    sets,
-    legs,
-    wss
-  ) => {
+  listActiveTournaments: async () => {
+    return await Tournament.find({ status: { $in: ["scheduled", "open"] } });
+  },
+  joinTournamentQueue: async (tournamentId, playerId, wss) => {
     const queueName = `tournament-${tournamentId}`;
 
     try {
@@ -151,28 +130,46 @@ const TournamentService = {
       const exists = await RedisService.queueExists(queueName);
       if (!exists) {
         console.error(`Queue ${queueName} does not exist`);
-        return { success: false, message: "Tournament queue does not exist." };
-      }
 
-      // Check if the queue is open for this tournament
-      const isQueueOpen = await RedisService.isTourneyQueueOpen(queueName);
+        // Check if the tournament exists and if it's time to create the queue
+        const tournament = await Tournament.findOne({ tournamentId });
+        if (tournament) {
+          const nowIST = moment().tz("Asia/Kolkata");
+          const openTimeIST = moment(tournament.openTime).tz("Asia/Kolkata");
 
-      if (isQueueOpen) {
-        // Check if the player is already in the queue
-        const isPlayerInQueue = await RedisService.isPlayerInQueue(
-          queueName,
-          playerId
-        );
+          if (nowIST.isAfter(openTimeIST)) {
+            // It's time to create the queue
+            console.log(`Creating queue for tournament ID: ${tournamentId}`);
+            await RedisService.createQueue(queueName);
+            await RedisService.setTourneyQueueOpenTime(
+              queueName,
+              openTimeIST.valueOf()
+            );
 
-        if (isPlayerInQueue) {
-          console.error(
-            `Player ${playerId} is already in the queue ${queueName}`
-          );
-          return {
-            success: false,
-            message: "You are already in the tournament queue.",
-          };
+            const expiryTimeInSeconds = tournament.openDuration * 3600;
+            await RedisService.addToQueueWithExpiry(
+              queueName,
+              expiryTimeInSeconds
+            );
+
+            console.log(
+              `Queue ${queueName} created and scheduled for expiration in ${expiryTimeInSeconds} seconds.`
+            );
+          } else {
+            return {
+              success: false,
+              message: "Tournament queue is not open yet.",
+              openTime: openTimeIST.toDate(),
+              closeTime: moment(tournament.closeTime)
+                .tz("Asia/Kolkata")
+                .toDate(),
+            };
+          }
+        } else {
+          return { success: false, message: "Tournament not found." };
         }
+
+        const { numPlayers, sets, legs } = tournament;
 
         // Add the player to the queue
         await RedisService.addToQueue(queueName, playerId);
@@ -180,10 +177,10 @@ const TournamentService = {
         // Check if there are enough players in the queue to start a new match
         const queueLength = await RedisService.getQueueLength(queueName);
 
-        if (queueLength >= requiredPlayers) {
+        if (queueLength >= numPlayers) {
           const allPlayersInQueue = await RedisService.getPlayersFromQueue(
             queueName,
-            queueLength
+            numPlayers
           );
 
           // Validate player IDs using the Player model
@@ -191,11 +188,11 @@ const TournamentService = {
             _id: { $in: allPlayersInQueue },
           })
             .select("_id")
-            .limit(requiredPlayers);
+            .limit(numPlayers);
 
-          if (validPlayerIds.length < requiredPlayers) {
+          if (validPlayerIds.length < numPlayers) {
             console.error(
-              `Not enough valid player IDs in queue. Found ${validPlayerIds.length}, need ${requiredPlayers}`
+              `Not enough valid player IDs in queue. Found ${validPlayerIds.length}, need ${numPlayers}`
             );
             return {
               success: false,
@@ -208,9 +205,9 @@ const TournamentService = {
             leagueId: uuidv4(),
             players: validPlayerIds.map((player) => player._id),
             matchups: [],
-            numPlayers: requiredPlayers,
-            sets: sets,
-            legs: legs,
+            numPlayers,
+            sets,
+            legs,
             leagueType: "tournament",
             status: "ongoing",
           });
@@ -218,15 +215,15 @@ const TournamentService = {
           await newMatch.save();
 
           // Remove the players from the queue
-          await RedisService.removePlayersFromQueue(queueName, requiredPlayers);
+          await RedisService.removePlayersFromQueue(queueName, numPlayers);
 
           // Publish a message to the corresponding Redis channel with the match details
           const message = JSON.stringify({
             matchType: "tournament",
             leagueId: newMatch.leagueId,
             players: validPlayerIds.map((player) => player._id),
-            sets: sets,
-            legs: legs,
+            sets,
+            legs,
           });
 
           await RedisService.publishMatchCreated(
