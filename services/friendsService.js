@@ -153,11 +153,13 @@ async function acceptFriendRequest(senderId, receiverId) {
 
     receiver.profile.friends.push({
       friendId: senderId,
+      username: senderId.username ? senderId.username : "unknown",
       status: "online",
       since: new Date(),
     });
     sender.profile.friends.push({
       friendId: receiverId,
+      username: receiverId.username ? receiverId.username : "unknown",
       status: "online",
       since: new Date(),
     });
