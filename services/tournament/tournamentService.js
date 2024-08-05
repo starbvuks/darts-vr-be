@@ -91,14 +91,7 @@ const TournamentService = {
       );
 
       return {
-        success: true,
-        tournament: {
-          tournamentId,
-          queueName,
-          startTime: startTimeIST.toDate(),
-          openTime: openTimeIST.toDate(),
-          closeTime: closeTimeIST.toDate(),
-        },
+        tournament,
       };
     } catch (error) {
       console.error("Error creating tournament:", error);
@@ -126,142 +119,126 @@ const TournamentService = {
     const queueName = `tournament-${tournamentId}`;
 
     try {
-      // Check if the queue exists
-      const exists = await RedisService.queueExists(queueName);
-      if (!exists) {
-        console.error(`Queue ${queueName} does not exist`);
+      // Fetch the tournament details from the database
+      const tournament = await Tournament.findOne({ tournamentId });
 
-        // Check if the tournament exists and if it's time to create the queue
-        const tournament = await Tournament.findOne({ tournamentId });
-        if (tournament) {
-          const nowIST = moment().tz("Asia/Kolkata");
-          const openTimeIST = moment(tournament.openTime).tz("Asia/Kolkata");
+      if (!tournament) {
+        return { success: false, message: "Tournament not found." };
+      }
 
-          if (nowIST.isAfter(openTimeIST)) {
-            // It's time to create the queue
-            console.log(`Creating queue for tournament ID: ${tournamentId}`);
-            await RedisService.createQueue(queueName);
-            await RedisService.setTourneyQueueOpenTime(
-              queueName,
-              openTimeIST.valueOf()
-            );
+      const nowIST = moment().tz("Asia/Kolkata");
+      const openTimeIST = moment(tournament.openTime).tz("Asia/Kolkata");
+      const closeTimeIST = moment(tournament.closeTime).tz("Asia/Kolkata");
 
-            const expiryTimeInSeconds = tournament.openDuration * 3600;
-            await RedisService.addToQueueWithExpiry(
-              queueName,
-              expiryTimeInSeconds
-            );
-
-            console.log(
-              `Queue ${queueName} created and scheduled for expiration in ${expiryTimeInSeconds} seconds.`
-            );
-          } else {
-            return {
-              success: false,
-              message: "Tournament queue is not open yet.",
-              openTime: openTimeIST.toDate(),
-              closeTime: moment(tournament.closeTime)
-                .tz("Asia/Kolkata")
-                .toDate(),
-            };
-          }
-        } else {
-          return { success: false, message: "Tournament not found." };
-        }
-
-        const { numPlayers, sets, legs } = tournament;
-
-        // Add the player to the queue
-        await RedisService.addToQueue(queueName, playerId);
-
-        // Check if there are enough players in the queue to start a new match
-        const queueLength = await RedisService.getQueueLength(queueName);
-
-        if (queueLength >= numPlayers) {
-          const allPlayersInQueue = await RedisService.getPlayersFromQueue(
-            queueName,
-            numPlayers
-          );
-
-          // Validate player IDs using the Player model
-          const validPlayerIds = await Player.find({
-            _id: { $in: allPlayersInQueue },
-          })
-            .select("_id")
-            .limit(numPlayers);
-
-          if (validPlayerIds.length < numPlayers) {
-            console.error(
-              `Not enough valid player IDs in queue. Found ${validPlayerIds.length}, need ${numPlayers}`
-            );
-            return {
-              success: false,
-              message: "Not enough valid players in queue.",
-            };
-          }
-
-          // Create a new match with the players
-          const newMatch = new League({
-            leagueId: uuidv4(),
-            players: validPlayerIds.map((player) => player._id),
-            matchups: [],
-            numPlayers,
-            sets,
-            legs,
-            leagueType: "tournament",
-            status: "ongoing",
-          });
-
-          await newMatch.save();
-
-          // Remove the players from the queue
-          await RedisService.removePlayersFromQueue(queueName, numPlayers);
-
-          // Publish a message to the corresponding Redis channel with the match details
-          const message = JSON.stringify({
-            matchType: "tournament",
-            leagueId: newMatch.leagueId,
-            players: validPlayerIds.map((player) => player._id),
-            sets,
-            legs,
-          });
-
-          await RedisService.publishMatchCreated(
-            `tournament:${tournamentId}-match-created`,
-            message
-          );
-
-          // Notify players about the match creation
-          gameSockets.handleMatchCreatedNotification(message, wss);
-
-          return { success: true, match: newMatch };
-        } else {
-          return {
-            success: true,
-            message: "Added to queue. Waiting for more players.",
-          };
-        }
-      } else {
-        // Retrieve the open time and expiry time
-        const openTime = await RedisService.getTourneyQueueOpenTime(queueName);
-        const expiryTimeInSeconds = await RedisService.getTourneyQueueExpiry(
-          queueName
-        );
-
-        // Log the retrieved values
-        console.log(
-          `Open Time: ${openTime}, Expiry Time: ${expiryTimeInSeconds}`
-        );
-
-        const closeTime = openTime
-          ? new Date(parseInt(openTime) + expiryTimeInSeconds * 1000)
-          : null;
-
+      // Check if the current time is before the open time
+      if (nowIST.isBefore(openTimeIST)) {
         return {
           success: false,
           message: "Tournament queue is not open yet.",
-          openTime: openTime ? new Date(parseInt(openTime)) : null,
-          closeTime: closeTime,
+          openTime: openTimeIST.toDate(),
+          closeTime: closeTimeIST.toDate(),
+        };
+      }
+
+      // Check if the current time is after the close time
+      if (nowIST.isAfter(closeTimeIST)) {
+        return {
+          success: false,
+          message: "Tournament queue has already closed.",
+          openTime: openTimeIST.toDate(),
+          closeTime: closeTimeIST.toDate(),
+        };
+      }
+
+      const allPlayersInQueue = await RedisService.getPlayersFromQueue(
+        queueName,
+        tournament.numPlayers
+      );
+      if (allPlayersInQueue.includes(playerId)) {
+        return {
+          success: false,
+          message: "You are already in the tournament queue.",
+        };
+      }
+
+      await RedisService.addToQueue(queueName, playerId);
+
+      // Check if there are enough players in the queue to start a new match
+      const queueLength = await RedisService.getQueueLength(queueName);
+      if (queueLength >= tournament.numPlayers) {
+        const allPlayersInQueue = await RedisService.getPlayersFromQueue(
+          queueName,
+          tournament.numPlayers
+        );
+
+        // Log the players currently in the queue
+        console.log(
+          `Players in queue for tournament ${tournamentId}:`,
+          allPlayersInQueue
+        );
+
+        // Ensure unique player IDs
+        const uniquePlayerIds = [...new Set(allPlayersInQueue)];
+
+        // Validate player IDs using the Player model
+        const validPlayerIds = await Player.find({
+          _id: { $in: uniquePlayerIds },
+        })
+          .select("_id")
+          .limit(tournament.numPlayers);
+
+        if (validPlayerIds.length < tournament.numPlayers) {
+          console.error(
+            `Not enough valid player IDs in queue. Found ${validPlayerIds.length}, need ${tournament.numPlayers}`
+          );
+          return {
+            success: false,
+            message: "Not enough valid players in queue.",
+          };
+        }
+
+        // Create a new match with the players
+        const newMatch = new League({
+          leagueId: uuidv4(),
+          players: validPlayerIds.map((player) => player._id),
+          matchups: [],
+          numPlayers: tournament.numPlayers,
+          sets: tournament.sets,
+          legs: tournament.legs,
+          leagueType: "tournament",
+          status: "ongoing",
+        });
+
+        await newMatch.save();
+
+        // Remove the players from the queue
+        await RedisService.removePlayersFromQueue(
+          queueName,
+          tournament.numPlayers
+        );
+
+        // Publish a message to the corresponding Redis channel with the match details
+        const message = JSON.stringify({
+          matchType: "tournament",
+          leagueId: newMatch.leagueId,
+          players: validPlayerIds.map((player) => player._id),
+          sets: tournament.sets,
+          legs: tournament.legs,
+        });
+
+        await RedisService.publishMatchCreated(
+          `tournament:${tournamentId}-match-created`,
+          message
+        );
+
+        // Notify players about the match creation
+        gameSockets.handleMatchCreatedNotification(message, wss);
+
+        return { success: true, match: newMatch };
+      } else {
+        return {
+          success: true,
+          message: "Added to queue. Waiting for more players.",
         };
       }
     } catch (error) {

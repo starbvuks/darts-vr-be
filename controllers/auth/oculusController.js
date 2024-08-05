@@ -2,7 +2,7 @@ const oculusService = require("../../services/auth/oculusService");
 const authService = require("../../services/auth/authService");
 const Player = require("../../models/Player");
 
-const validateOculusSession = async (req, res) => {
+exports.validateOculusSession = async (req, res) => {
   try {
     const { nonce, oculusId, username } = req.body;
 
@@ -74,8 +74,4 @@ const validateOculusSession = async (req, res) => {
       error: error.message,
     });
   }
-};
-
-module.exports = {
-  validateOculusSession,
 };

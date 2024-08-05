@@ -75,7 +75,7 @@ module.exports = {
     });
   },
 
-  sendLeagueInvitation: (receiverId, senderId, matchId, wss) => {
+  sendLeagueInvitation: (receiverId, senderId, leagueId, wss) => {
     wss.clients.forEach((client) => {
       if (
         client.userId === receiverId &&
@@ -86,7 +86,7 @@ module.exports = {
             type: "invitation",
             gamemode: "league",
             senderId,
-            matchId,
+            matchId: leagueId,
           })
         );
       }
@@ -121,8 +121,17 @@ module.exports = {
         }
       }
     });
-  },
+  }
 
+  // sendTournamentStartingNotification: (playerId, message, wss) => {
+  //   const message = JSON.stringify
+
+  //   wss.client.forEach(client => {)
+  //     if (client.userId === playerId && client.readyState === Websocket.OPEN) {
+  //       client.send(message);
+  //     }
+  // }
+,
   init: (wss) => {
     RedisService.subscribeToChannel('501-2-match-created', (channel, message) => {
       this.handleMatchCreatedNotification(channel, message, wss);

@@ -36,7 +36,7 @@ function getKeyFromJWKs(jwks, kid) {
 
 async function verifyJWT(token) {
   const {data} = await axios.get('https://s2s.sp-int.playstation.net/api/authz/v3/oauth/jwks');
-  const decodedHeader = jwt.decode(token, { complete: true });
+  const decodedHeader = verifyIDToken(token, { complete: true });
 
   
   if (!decodedHeader) {

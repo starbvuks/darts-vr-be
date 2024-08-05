@@ -2,7 +2,7 @@ const axios = require('axios');
 
 const oculusAppToken = process.env.OCULUS_APP_TOKEN;
 
-const validateOculusNonce = async (nonce, oculusId) => {
+exports.validateOculusNonce = async (nonce, oculusId) => {
   try {
     const response = await axios.post('https://graph.oculus.com/user_nonce_validate', {
       nonce,
@@ -26,7 +26,3 @@ const validateOculusNonce = async (nonce, oculusId) => {
     }
   }
 };
-
-module.exports = {
-  validateOculusNonce
-}

@@ -12,6 +12,7 @@ const zombiesController = require("./controllers/gamemodes/zombiesController");
 const killstreakController = require("./controllers/gamemodes/killstreakController");
 const fiveOhOneController = require("./controllers/gamemodes/fiveOhOneController");
 const leagueController = require("./controllers/leagueController");
+const tournamentController = require("./controllers/tournament/tournamentController");
 
 const { startCronJobs } = require("./cronJobs");
 
@@ -88,6 +89,11 @@ app.post("/api/league/update-stats", (req, res) => {
 // tournaments
 const tourney = require("./routes/tournament/tournamentRoutes.js");
 app.use("/", tourney);
+
+app.post("/api/league/update-stats", (req, res) => {
+  tournamentController.joinTournament(req, res, wss);
+});
+
 
 // friend requests
 app.post("/api/friends/send-request", (req, res) => {

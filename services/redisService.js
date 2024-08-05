@@ -92,9 +92,21 @@ const RedisService = {
     return openTime;
   },
 
-  isTourneyQueueOpen: async (queueName) => {
-    const openTime = await RedisService.getTourneyQueueOpenTime(queueName);
-    return openTime && Date.now() >= parseInt(openTime);
+  getTourneyQueueExpiry: async (queueName) => {
+    try {
+      const ttl = await redis.ttl(queueName);
+
+      if (ttl === -1) {
+        return { success: true, message: "Queue exists but has no expiration.", expiry: null };
+      } else if (ttl === -2) {
+        return { success: false, message: "Queue does not exist.", expiry: null };
+      } else {
+        return { success: true, message: "Queue found.", expiry: ttl };
+      }
+    } catch (error) {
+      console.error("Error getting tourney queue expiry:", error);
+      return { success: false, message: "Failed to get queue expiry.", error };
+    }
   },
 };
 

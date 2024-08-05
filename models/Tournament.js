@@ -7,6 +7,7 @@ const TournamentSchema = new mongoose.Schema({
     openTime: { type: Date, required: true },
     closeTime: { type: Date, required: true },
     openDuration: { type: Number, required: true }, 
+    numPlayers: { type: Number, required: true },
     sets: { type: Number, required: true },
     legs: { type: Number, required: true },
     status: { type: String, enum: ['scheduled', 'open', 'completed'], default: 'scheduled' },
