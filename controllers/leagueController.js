@@ -182,6 +182,38 @@ const LeagueController = {
       res.status(500).json({ message: "Internal server error." });
     }
   },
+
+  getLeague: async (req, res) => {
+    try {
+      authService.validateJwt(req, res, async () => {
+        const {leagueId} = req.query;
+        const result = await LeagueService.getLeague(leagueId)
+        if (!result.success) {
+          return res.status(400).json({ message: result.message });
+        }
+        return res.status(200).json(result.league);
+      })
+    } catch (error) {
+      console.error("Error getting League", error);
+      res.status(500).json({ message: "Error getting League" });
+    }
+  },
+
+  getMatchup: async (req, res) => {
+    try {
+      authService.validateJwt(req, res, async () => {
+        const {leagueId, matchId} = req.query;
+        const result = await LeagueService.getMatchup(leagueId, matchId)
+        if (!result.success) {
+          return res.status(400).json({ message: result.message });
+        }
+        return res.status(200).json(result.match);
+      })
+    } catch (error) {
+      console.error("Error getting Matchup in League", error);
+      res.status(500).json({ message: "Error getting Matchup" });
+    }
+  }
 };
 
 module.exports = LeagueController;

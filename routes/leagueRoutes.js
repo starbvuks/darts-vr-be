@@ -10,5 +10,7 @@ router.post('/api/league/player-won-leg', LeagueController.playerWonLeg);
 router.post('/api/league/end-match', LeagueController.endMatch);
 router.post('/api/league/end-league', LeagueController.endLeague);
 router.post('/api/league/player-disconnect', LeagueController.handlePlayerDisconnect);
+router.get('/api/league/get-matchup', LeagueController.getMatchup);
+router.get('/api/league/get-league', LeagueController.getLeague);
 
 module.exports = router;
