@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 // 501 Model
 const FiveOhOneSchema = new mongoose.Schema({
   matchId: { type: String, unique: true },
+  gamemode: { type: String, default: "501" },  
   matchType: {
     type: String,
     enum: ["solo", "multiplayer", "private"],

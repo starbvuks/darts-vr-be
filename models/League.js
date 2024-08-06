@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const LeagueSchema = new mongoose.Schema({
   leagueId: { type: String, required: true, unique: true },
+  gamemode: { type: String, default: "League" },  
   players: [
     { type: mongoose.Schema.Types.ObjectId, ref: "Player", required: true },
   ],

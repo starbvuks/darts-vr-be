@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 // Around the World (ATW) Model
 const ATWSchema = new mongoose.Schema({
   matchId: { type: String, unique: true },
+  gamemode: { type: String, default: "ATW" },  
   playerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Player",

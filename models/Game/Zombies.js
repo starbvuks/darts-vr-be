@@ -4,6 +4,7 @@ const ZombiesSchema = new mongoose.Schema({
   player1Id: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
   player2Id: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
   matchId: { type: String, unique: true },
+  gamemode: { type: String, default: "Zombies" },  
   matchType: {
     type: String,
     enum: ["solo", "multiplayer", "private-2p"],

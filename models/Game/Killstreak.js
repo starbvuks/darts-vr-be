@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 // Killstreak Model
 const KillstreakSchema = new mongoose.Schema({
   matchId: { type: String, unique: true },
+  gamemode: { type: String, default: "Killstreak" },  
   matchType: {
     type: String,
     enum: ["solo", "multiplayer", "private-2p"],

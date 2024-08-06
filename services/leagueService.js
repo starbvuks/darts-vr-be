@@ -546,6 +546,7 @@ const LeagueService = {
       return { success: false, message: "Failed to end match." };
     }
   },
+
   monitorInactivePlayers: async () => {
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000); // 1 hour ago
@@ -603,8 +604,43 @@ const LeagueService = {
 
     return { success: true };
   },
+
+  getLeague: async (leagueId) => {
+    try {
+      const league = await League.findOne({ leagueId });
+      if (!league) {
+        const error = new Error({ success: false, message: "League not found." })
+        console.error("Error getting league:", error);
+        return error;
+      }
+
+      return {success: true, league}
+    } catch(error) {
+      return { success: false, message: "Failed to retrieve match.", error };
+    }
+  },
+
+  getMatchup: async (leagueId) => {
+    try {
+      const league = await League.findOne({ leagueId });
+      if (!league) {
+        const error = new Error({ success: false, message: "League not found." })
+        console.error("Error getting league:", error);
+        return error;
+      }
+
+      const matchup = league.matchups.find((m) => m.matchId === matchId);
+      if (!matchup) {
+        const error = new Error({ success: false, message: "Matchup in League not found." })
+        console.error("Error getting matchup:", error);
+        return error;
+      }
+
+      return {success: true, matchup}
+    } catch(error) {
+      return { success: false, message: "Failed to retrieve match.", error };
+    }
+  },
 };
 
 module.exports = LeagueService;
-
-// a problem here is all the required matchups for a game are created at the start itself, meaning that alot of matches are empty until the winner of the 2 previous matches are promoted and added to this one. the problem here is we set the player1LastActivity and same for player2 to be set when initialize matchups is hut meaning that all the empty future matchups are closing as a part of the cron jobs task as they are considered inactive. we need it so that only the matchups with player1 and player2 in them should be closed for inactivity the lastActivity should be added to each matchup when both players are added to the matchup and it begins not the original time of when the league started
