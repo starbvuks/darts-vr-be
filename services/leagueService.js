@@ -32,6 +32,9 @@ const LeagueService = {
       LeagueService.updateIndexes();
 
       switch (numPlayers) {
+        case 2:
+          totalRounds = 1;
+          matchesPerRound = [1];
         case 4:
           totalRounds = 2;
           matchesPerRound = [2, 1];
