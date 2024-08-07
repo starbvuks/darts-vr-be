@@ -133,11 +133,11 @@ const LeagueController = {
     }
   },
 
-  endMatch: async (req, res) => {
+  endMatch: async (req, res, wss) => {
     try {
       const { leagueId, matchId, winnerId } = req.body;
       authService.validateJwt(req, res, async () => {
-        const result = await LeagueService.endMatch(leagueId, matchId, winnerId);
+        const result = await LeagueService.endMatch(leagueId, matchId, winnerId, wss);
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }
@@ -149,11 +149,11 @@ const LeagueController = {
     }
   },
 
-  endLeague: async (req, res) => {
+  endLeague: async (req, res, wss) => {
     try {
       const { leagueId, leagueWinnerId } = req.body; // Expecting leagueId in the request body
       authService.validateJwt(req, res, async () => {
-        const result = await LeagueService.endRound(leagueId, leagueWinnerId);
+        const result = await LeagueService.endRound(leagueId, leagueWinnerId, wss);
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }

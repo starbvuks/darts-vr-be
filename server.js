@@ -82,6 +82,12 @@ app.post("/api/league/invite", (req, res) => {
 app.post("/api/league/start", (req, res) => {
   leagueController.startLeague(req, res, wss);
 });
+app.post("/api/league/end-match", (req, res) => {
+  leagueController.endMatch(req, res, wss);
+});
+app.post("/api/league/end-league", (req, res) => {
+  leagueController.endLeague(req, res, wss);
+});
 app.post("/api/league/update-stats", (req, res) => {
   leagueController.dartThrow(req, res, wss);
 });

@@ -237,22 +237,6 @@ const LeagueService = {
                 player2LastActivity: null,
               },
             });
-
-            // Send socket notification to players
-            const message = JSON.stringify({
-              type: "league_match_created",
-              leagueId: league.leagueId,
-              matchId,
-              players: [null, null],
-            });
-
-            league.players.forEach(async (pId) => {
-              gameWebSocketHandler.sendLeagueMatchCreatedNotification(
-                String(pId),
-                message,
-                wss
-              );
-            });
           }
         }
 
@@ -484,7 +468,7 @@ const LeagueService = {
     }
   },
 
-  endMatch: async (leagueId, matchId, winnerId) => {
+  endMatch: async (leagueId, matchId, winnerId, wss) => {
     try {
       const league = await League.findOne({ leagueId });
       if (!league) {
@@ -512,6 +496,17 @@ const LeagueService = {
       console.log(`Ending match ${matchId} with winner ${winnerId}`);
       matchup.winnerId = winnerId;
       matchup.status = "completed";
+  
+      const message = JSON.stringify({
+        type: "match_over",
+        gamemode: "league_match",
+        leagueId: league.leagueId,
+        matchId: matchId,
+        players: [matchup.player1Id, matchup.player2Id],
+      })
+  
+      gameWebSocketHandler.handleMatchOverNotification(players, message, wss);
+  
 
       const nextRoundMatchups = league.matchups.filter((m) =>
         m.prevMatchIds.includes(matchup.matchId)
@@ -593,14 +588,25 @@ const LeagueService = {
     }
   },
 
-  endLeague: async (leagueId, leagueWinnerId) => {
+  endLeague: async (leagueId, leagueWinnerId, wss) => {
     const league = await League.findOne({ leagueId });
     if (!league) {
-      return { success: false, message: "League not found." };
+      return Error({ success: false, message: "League not found." });
     }
 
     league.status = "completed";
     league.winnerId = leagueWinnerId;
+
+    const players = league.players
+    const message = JSON.stringify({
+      type: "match_over",
+      gamemode: "league",
+      leagueId: league.leagueId,
+      players,
+    })
+
+    gameWebSocketHandler.handleMatchOverNotification(players, message, wss);
+
     await league.save();
 
     return { success: true };
@@ -610,13 +616,16 @@ const LeagueService = {
     try {
       const league = await League.findOne({ leagueId });
       if (!league) {
-        const error = new Error({ success: false, message: "League not found." })
+        const error = new Error({
+          success: false,
+          message: "League not found.",
+        });
         console.error("Error getting league:", error);
         return error;
       }
 
-      return {success: true, league}
-    } catch(error) {
+      return { success: true, league };
+    } catch (error) {
       return { success: false, message: "Failed to retrieve match.", error };
     }
   },
@@ -625,20 +634,26 @@ const LeagueService = {
     try {
       const league = await League.findOne({ leagueId });
       if (!league) {
-        const error = new Error({ success: false, message: "League not found." })
+        const error = new Error({
+          success: false,
+          message: "League not found.",
+        });
         console.error("Error getting league:", error);
         return error;
       }
 
       const matchup = league.matchups.find((m) => m.matchId === matchId);
       if (!matchup) {
-        const error = new Error({ success: false, message: "Matchup in League not found." })
+        const error = new Error({
+          success: false,
+          message: "Matchup in League not found.",
+        });
         console.error("Error getting matchup:", error);
         return error;
       }
 
-      return {success: true, matchup}
-    } catch(error) {
+      return { success: true, matchup };
+    } catch (error) {
       return { success: false, message: "Failed to retrieve match.", error };
     }
   },

@@ -3,19 +3,48 @@ const { WebSocket } = require("ws");
 
 module.exports = {
   handleMatchCreatedNotification: (message, wss) => {
-    const { numPlayers ,matchType, matchId, players } = JSON.parse(message);
+    const { numPlayers, matchType, matchId, players } = JSON.parse(message);
 
     players.forEach((playerId) => {
       wss.clients.forEach((client) => {
-        if (client.userId === playerId && client.readyState === WebSocket.OPEN) {
+        if (
+          client.userId === playerId &&
+          client.readyState === WebSocket.OPEN
+        ) {
           client.send(
             JSON.stringify({
               type: "match_created",
               gamemode: matchType,
               matchId,
-              numPlayers
+              numPlayers,
             })
           );
+        }
+      });
+    });
+  },
+
+  handleMatchOverNotification: (players, message, wss) => {
+    players.forEach((playerId) => {
+      wss.clients.forEach((client) => {
+        if (
+          client.userId === playerId &&
+          client.readyState === WebSocket.OPEN
+        ) {
+          client.send(message);
+        }
+      });
+    });
+  },
+
+  handleLeagueOverNotification: (players, message, wss) => {
+    players.forEach((playerId) => {
+      wss.clients.forEach((client) => {
+        if (
+          client.userId === playerId &&
+          client.readyState === WebSocket.OPEN
+        ) {
+          client.send(message);
         }
       });
     });
@@ -95,7 +124,7 @@ module.exports = {
 
   sendLeagueMatchCreatedNotification: (playerId, message, wss) => {
     wss.clients.forEach((client) => {
-      console.log(playerId, client.userId)
+      console.log(playerId, client.userId);
       if (client.userId === playerId && client.readyState === WebSocket.OPEN) {
         client.send(message);
       }
@@ -113,15 +142,15 @@ module.exports = {
       dartThrow: notificationMessage.dartThrow,
     });
 
-    wss.clients.forEach(client => {
+    wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        console.log(playerId, client.userId)
+        console.log(playerId, client.userId);
         if (client.userId === playerId) {
           client.send(message);
         }
       }
     });
-  }
+  },
 
   // sendTournamentStartingNotification: (playerId, message, wss) => {
   //   const message = JSON.stringify
@@ -131,28 +160,42 @@ module.exports = {
   //       client.send(message);
   //     }
   // }
-,
   init: (wss) => {
-    RedisService.subscribeToChannel('501-2-match-created', (channel, message) => {
-      this.handleMatchCreatedNotification(channel, message, wss);
-    });
+    RedisService.subscribeToChannel(
+      "501-2-match-created",
+      (channel, message) => {
+        this.handleMatchCreatedNotification(channel, message, wss);
+      }
+    );
 
-    RedisService.subscribeToChannel('501-3-match-created', (channel, message) => {
-      this.handleMatchCreatedNotification(channel, message, wss);
-    });
+    RedisService.subscribeToChannel(
+      "501-3-match-created",
+      (channel, message) => {
+        this.handleMatchCreatedNotification(channel, message, wss);
+      }
+    );
 
-    RedisService.subscribeToChannel('501-4-match-created', (channel, message) => {
-      this.handleMatchCreatedNotification(channel, message, wss);
-    });
+    RedisService.subscribeToChannel(
+      "501-4-match-created",
+      (channel, message) => {
+        this.handleMatchCreatedNotification(channel, message, wss);
+      }
+    );
 
-    RedisService.subscribeToChannel('killstreak-2-match-created', (channel, message) => {
-      this.handleMatchCreatedNotification(channel, message, wss);
-    });
+    RedisService.subscribeToChannel(
+      "killstreak-2-match-created",
+      (channel, message) => {
+        this.handleMatchCreatedNotification(channel, message, wss);
+      }
+    );
 
-    RedisService.subscribeToChannel('zombies-2-match-created', (channel, message) => {
-      this.handleMatchCreatedNotification(channel, message, wss);
-    });
+    RedisService.subscribeToChannel(
+      "zombies-2-match-created",
+      (channel, message) => {
+        this.handleMatchCreatedNotification(channel, message, wss);
+      }
+    );
 
     // Add more subscriptions for other game types and player counts
   },
-}
+};
