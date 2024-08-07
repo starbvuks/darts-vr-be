@@ -14,7 +14,7 @@ class PlayStationAuthError extends Error {
 exports.validatePSNSession = async (idToken) => {
   try {
     // Verify the ID token using the public key obtained from GetJwks Auth Web API
-    const decoded = await verifyJWT(idToken);
+    const decoded = await verifyIDToken(idToken);
 
     // Extract user information from the verified ID token
     const { online_id, age, device_type } = decoded;

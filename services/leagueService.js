@@ -188,7 +188,8 @@ const LeagueService = {
           league.matchups.push(matchup);
 
           const message = JSON.stringify({
-            type: "league_match_created",
+            type: "match_created",
+            gamemode: "league",
             leagueId: league.leagueId,
             matchId: matchId,
             players: [players[i], players[i + 1]],
