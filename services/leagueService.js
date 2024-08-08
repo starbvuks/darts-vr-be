@@ -496,13 +496,14 @@ const LeagueService = {
       console.log(`Ending match ${matchId} with winner ${winnerId}`);
       matchup.winnerId = winnerId;
       matchup.status = "completed";
-  
+
+      const players = [matchup.player1Id, matchup.player2Id]
       const message = JSON.stringify({
         type: "match_over",
         gamemode: "league_match",
         leagueId: league.leagueId,
         matchId: matchId,
-        players: [matchup.player1Id, matchup.player2Id],
+        players: players,
       })
   
       gameWebSocketHandler.handleMatchOverNotification(players, message, wss);
