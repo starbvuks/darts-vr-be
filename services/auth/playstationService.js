@@ -14,7 +14,7 @@ class PlayStationAuthError extends Error {
 exports.validatePSNSession = async (idToken) => {
   try {
     // Verify the ID token using the public key obtained from GetJwks Auth Web API
-    const decoded = await verifyIDToken(idToken);
+    const decoded = await verifyJWT(idToken);
 
     // Extract user information from the verified ID token
     const { online_id, age, device_type } = decoded;
@@ -43,8 +43,8 @@ async function verifyJWT(token) {
     throw new Error('Invalid token');
   }
   
-  const { kid } = decodedHeader.header;
-  const jwk = getKeyFromJWKs(data.keys, kid);
+  // const { kid } = decodedHeader.header;
+  // const jwk = getKeyFromJWKs(data.keys, kid);
   
   if (!jwk) {
     throw new Error('JWK not found');
@@ -69,9 +69,9 @@ async function verifyIDToken(idToken) {
     const publicKey = data.keys[0].n;
 
     // Verify the ID token
-    const decoded = jwt.verify(idToken, publicKey);
+    const decoded = jwt.verify(idToken, publicKey, { algorithms: ['RS256'] });
 
-    // Validate the ID token
+    // Validate the ID token1 
     if (decoded.env_iss_id !== 'current_environment') {
       throw new Error('Invalid environment');
     }

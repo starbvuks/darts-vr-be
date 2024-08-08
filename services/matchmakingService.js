@@ -45,7 +45,7 @@ const MatchmakingService = {
 
         // Publish a message to the corresponding Redis channel with the match details
         const message = JSON.stringify({
-          matchType: `${gameType}_2`,
+          matchType: `${gameType}`,
           matchId: newMatch.matchId,
           players: playerIdsToMatch,
           numPlayers: 2,
@@ -127,7 +127,7 @@ const MatchmakingService = {
 
         // Publish a message to the corresponding Redis channel with the match details
         const message = JSON.stringify({
-          matchType: `${gameType}_2`,
+          matchType: `${gameType}`,
           matchId: newMatch.matchId,
           players: playerIdsToMatch,
           numPlayers: 2,
@@ -241,7 +241,7 @@ const MatchmakingService = {
         await RedisService.removePlayersFromQueue(queueName, numPlayers);
 
         const message = JSON.stringify({
-          matchType: `${gameType}_${numPlayers}`,
+          matchType: `${gameType}`,
           matchId: newMatch.matchId,
           players: playerIdsToMatch,
           numPlayers: numPlayers,
