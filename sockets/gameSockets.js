@@ -24,8 +24,7 @@ module.exports = {
     });
   },
 
-  handleMatchOverNotification: (players, message, wss) => {for
-    
+  handleMatchOverNotification: (players, message, wss) => {
     players.forEach((playerId) => {
       wss.clients.forEach((client) => {
         if (
