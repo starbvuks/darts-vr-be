@@ -207,7 +207,7 @@ const LeagueController = {
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }
-        return res.status(200).json(result.match);
+        return res.status(200).json(result.matchup);
       })
     } catch (error) {
       console.error("Error getting Matchup in League", error);

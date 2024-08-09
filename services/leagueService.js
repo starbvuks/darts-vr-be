@@ -631,9 +631,10 @@ const LeagueService = {
     }
   },
 
-  getMatchup: async (leagueId) => {
+  getMatchup: async (leagueId, matchId) => {
     try {
       const league = await League.findOne({ leagueId });
+      console.log(leagueId, matchId)
       if (!league) {
         const error = new Error({
           success: false,
