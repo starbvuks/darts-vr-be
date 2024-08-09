@@ -109,7 +109,7 @@ const LeagueController = {
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }
-        return res.status(200).json(result.matchup);
+        return res.status(200).json(result);
       });
     } catch (error) {
       console.error("Error recording set win:", error);
@@ -125,7 +125,7 @@ const LeagueController = {
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }
-        return res.status(200).json(result.matchup);
+        return res.status(200).json(result);
       });
     } catch (error) {
       console.error("Error recording leg win:", error);

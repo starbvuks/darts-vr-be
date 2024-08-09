@@ -424,16 +424,31 @@ const LeagueService = {
         return { success: false, message: "Matchup not found." };
       }
 
+      let playerStats;
+
       if (matchup.player1Id.equals(playerId)) {
         matchup.player1Stats.setsWon += 1;
+        playerStats = matchup.player1Stats;
       } else if (matchup.player2Id.equals(playerId)) {
         matchup.player2Stats.setsWon += 1;
+        playerStats = matchup.player2Stats;
       } else {
         return { success: false, message: "Player not part of this matchup." };
       }
 
+      const playerSetsWon = playerStats.setsWon;
+      const playerLegsWon = playerStats.legsWon;
+      const leagueSets = league.sets;
+      const leagueLegs = league.legs;
+
       await league.save();
-      return { success: true, matchup };
+      return {
+        success: true,
+        playerSetsWon,
+        playerLegsWon,
+        leagueSets,
+        leagueLegs,
+      };
     } catch (error) {
       console.error("Error updating sets won:", error);
       return { success: false, message: "Failed to update sets won." };
@@ -452,16 +467,31 @@ const LeagueService = {
         return { success: false, message: "Matchup not found." };
       }
 
+      let playerStats;
+
       if (matchup.player1Id.equals(playerId)) {
         matchup.player1Stats.legsWon += 1;
+        playerStats = matchup.player1Stats;
       } else if (matchup.player2Id.equals(playerId)) {
         matchup.player2Stats.legsWon += 1;
+        playerStats = matchup.player2Stats;
       } else {
         return { success: false, message: "Player not part of this matchup." };
       }
 
+      const playerSetsWon = playerStats.setsWon;
+      const playerLegsWon = playerStats.legsWon;
+      const leagueSets = league.sets;
+      const leagueLegs = league.legs;
+
       await league.save();
-      return { success: true, matchup };
+      return {
+        success: true,
+        playerSetsWon,
+        playerLegsWon,
+        leagueSets,
+        leagueLegs,
+      };
     } catch (error) {
       console.error("Error updating legs won:", error);
       return { success: false, message: "Failed to update legs won." };
@@ -497,17 +527,16 @@ const LeagueService = {
       matchup.winnerId = winnerId;
       matchup.status = "completed";
 
-      const players = [matchup.player1Id, matchup.player2Id]
+      const players = [matchup.player1Id, matchup.player2Id];
       const message = JSON.stringify({
         type: "match_over",
         gamemode: "league_match",
         leagueId: league.leagueId,
         matchId: matchId,
         players: players,
-      })
-  
+      });
+
       gameWebSocketHandler.handleMatchOverNotification(players, message, wss);
-  
 
       const nextRoundMatchups = league.matchups.filter((m) =>
         m.prevMatchIds.includes(matchup.matchId)
@@ -598,13 +627,13 @@ const LeagueService = {
     league.status = "completed";
     league.winnerId = leagueWinnerId;
 
-    const players = league.players
+    const players = league.players;
     const message = JSON.stringify({
       type: "match_over",
       gamemode: "league",
       leagueId: league.leagueId,
       players,
-    })
+    });
 
     gameWebSocketHandler.handleMatchOverNotification(players, message, wss);
 
@@ -634,7 +663,6 @@ const LeagueService = {
   getMatchup: async (leagueId, matchId) => {
     try {
       const league = await League.findOne({ leagueId });
-      console.log(leagueId, matchId)
       if (!league) {
         const error = new Error({
           success: false,
