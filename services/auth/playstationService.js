@@ -1,84 +1,87 @@
-const axios = require('axios');
-const jwt = require('jsonwebtoken');
-const jwkToPem = require('jwk-to-pem');
+const jwt = require("jsonwebtoken");
+const axios = require("axios");
+const jwkToPem = require("jwk-to-pem");
+const crypto = require("crypto");
 
-class PlayStationAuthError extends Error {
-  constructor(message, type, originalError = null) {
-    super(message);
-    this.name = 'PlayStationAuthError';
-    this.type = type;
-    this.originalError = originalError;
-  }
-}
+const PLAYSTATION_PUBLIC_KEY_URL =
+  "https://s2s.sp-int.playstation.net/api/authz/v3/oauth/jwks";
 
-exports.validatePSNSession = async (idToken) => {
+async function validatePSNSession(idToken) {
   try {
-    // Verify the ID token using the public key obtained from GetJwks Auth Web API
-    const decoded = await verifyJWT(idToken);
+    const response = await axios.get(PLAYSTATION_PUBLIC_KEY_URL);
+    const keys = response.data.keys;
+    console.log("Fetched keys:", JSON.stringify(keys, null, 2));
 
-    // Extract user information from the verified ID token
-    const { online_id, age, device_type } = decoded;
+    const [headerb64, payloadb64, signatureb64] = idToken.split(".");
+    console.log("Token parts:", {
+      headerb64,
+      payloadb64,
+      signatureb64: signatureb64.substring(0, 10) + "...",
+    });
 
-    return { online_id, age, device_type };
-  } catch (error) {
-    console.error('Error validating PlayStation session:', error);
-    if (error instanceof PlayStationAuthError) {
-      throw error;
-    } else {
-      throw new PlayStationAuthError('Error validating PlayStation session', 'VALIDATION_ERROR', error);
+    const decodedHeader = JSON.parse(
+      Buffer.from(headerb64, "base64").toString(),
+    );
+    console.log("Decoded header:", JSON.stringify(decodedHeader, null, 2));
+
+    const decodedPayload = JSON.parse(
+      Buffer.from(payloadb64, "base64").toString(),
+    );
+    console.log("Decoded payload:", JSON.stringify(decodedPayload, null, 2));
+
+    const kid = decodedHeader.kid;
+    const key = keys.find((k) => k.kid === kid);
+    if (!key) {
+      throw new Error("Public key not found for the given kid.");
     }
-  }
-};
+    console.log("Matched key:", JSON.stringify(key, null, 2));
 
-function getKeyFromJWKs(jwks, kid) {
-  return jwks.find(jwk => jwk.kid === kid);
-}
+    const publicKey = jwkToPem(key);
+    console.log(
+      "Converted public key (first 100 chars):",
+      publicKey.substring(0, 100),
+    );
 
-async function verifyJWT(token) {
-  const {data} = await axios.get('https://s2s.sp-int.playstation.net/api/authz/v3/oauth/jwks');
-  const decodedHeader = verifyIDToken(token, { complete: true });
+    const algorithm =
+      decodedHeader.alg || (key.kty === "RSA" ? "RS256" : "ES256");
+    console.log("Using algorithm:", algorithm);
 
-  
-  if (!decodedHeader) {
-    throw new Error('Invalid token');
-  }
-  
-  // const { kid } = decodedHeader.header;
-  // const jwk = getKeyFromJWKs(data.keys, kid);
-  
-  if (!jwk) {
-    throw new Error('JWK not found');
-  }
-  
-  const pem = jwkToPem(jwk);
-  return new Promise((resolve, reject) => {
-    jwt.verify(token, pem, { algorithms: ['RS256'] }, (err, decoded) => {
-      console.log(decoded)
-      if (err) {
-        return reject(err);
-      }
-      resolve(decoded);
-    })
-  });
-}
+    // Try manual verification
+    const signatureBase64Url = signatureb64
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+    const signature = Buffer.from(signatureBase64Url, "base64");
+    const signedPart = `${headerb64}.${payloadb64}`;
+    const verifier = crypto.createVerify("RSA-SHA256");
+    verifier.update(signedPart);
+    const isValid = verifier.verify(publicKey, signature);
+    console.log("Manual verification result:", isValid);
 
-async function verifyIDToken(idToken) {
-  try {
-    // Obtain the public key from the GetJwks Auth Web API
-    const { data } = await axios.get('https://s2s.sp-int.playstation.net/api/authz/v3/oauth/jwks');
-    const publicKey = data.keys[0].n;
-
-    // Verify the ID token
-    const decoded = jwt.verify(idToken, publicKey, { algorithms: ['RS256'] });
-
-    // Validate the ID token1 
-    if (decoded.env_iss_id !== 'current_environment') {
-      throw new Error('Invalid environment');
+    // Try jwt.verify
+    try {
+      const decodedToken = jwt.verify(idToken, publicKey, {
+        algorithms: [algorithm],
+      });
+      console.log("Token verified successfully");
+      console.log("Decoded token:", JSON.stringify(decodedToken, null, 2));
+    } catch (jwtError) {
+      console.error("jwt.verify failed:", jwtError.message);
     }
 
-    return decoded;
+    if (!isValid) {
+      throw new Error("Invalid signature");
+    }
+
+    return {
+      online_id: decodedPayload.sub,
+      age: decodedPayload.age,
+      device_type: decodedPayload.device_type,
+      // Add any other relevant claims here
+    };
   } catch (error) {
-    console.error('Error verifying ID token:', error);
-    throw new PlayStationAuthError('Error verifying ID token', 'TOKEN_VERIFICATION_ERROR', error);
+    console.error("Error validating PSN token:", error);
+    throw new Error("Invalid token: " + error.message);
   }
 }
+
+module.exports = { validatePSNSession };
