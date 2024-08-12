@@ -8,18 +8,22 @@ exports.validatePSNSession = async (req, res) => {
     const { idToken } = req.body;
 
     // Validate the ID token
-    const { online_id, age, device_type } = await psnService.validatePSNSession(idToken);
+    const { decodedPayload } = await psnService.validatePSNSession(idToken);
+    console.log(decodedPayload);
 
     // Check if the user exists
-    let player = await Player.findOne({ "auth.platformId": online_id });
+    let player = await Player.findOne({
+      "auth.platformId": decodedPayload.online_id,
+    });
 
     if (!player) {
       // Create a new player document if it doesn't exist
       player = new Player({
+        username: decodedPayload.online_id,
         auth: [
           {
             platform: "PlayStation",
-            platformId: online_id,
+            platformId: decodedPayload.online_id,
           },
         ],
         profile: {
@@ -46,7 +50,7 @@ exports.validatePSNSession = async (req, res) => {
     }
 
     const { accessToken, refreshToken } = await authService.generateTokens(
-      player._id
+      player._id,
     );
 
     res.json({ accessToken, refreshToken });
