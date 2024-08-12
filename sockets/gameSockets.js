@@ -37,6 +37,19 @@ module.exports = {
     });
   },
 
+  handleMatchReadyNotification: (players, message, wss) => {
+    players.forEach((playerId) => {
+      wss.clients.forEach((client) => {
+        if (
+          client.userId === playerId &&
+          client.readyState === WebSocket.OPEN
+        ) {
+          client.send(message);
+        }
+      });
+    });
+  },
+
   handleLeagueOverNotification: (players, message, wss) => {
     players.forEach((playerId) => {
       wss.clients.forEach((client) => {

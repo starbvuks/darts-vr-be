@@ -553,8 +553,21 @@ const LeagueService = {
 
         if (nextMatchup.player1Id && nextMatchup.player2Id) {
           nextMatchup.status = "ongoing";
+          players = [nextMatchup.player1Id, nextMatchup.player2Id];
+
+          const message = JSON.stringify({
+            type: "match_ready",
+            gamemode: "league_match",
+            leagueId: league.leagueId,
+            matchId: nextMatchup.matchId,
+            players: players,
+          });
+
+          gameWebSocketHandler.handleMatchReadyNotification(players, message, wss);
         }
       });
+
+      // add socket notification for when 2 players are ready to play
 
       await league.save();
       console.log(`Match ${matchId} ended successfully`);
