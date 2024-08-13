@@ -342,6 +342,8 @@ const LeagueService = {
         }
       }
 
+      playerStats.score = scoreLeft;
+
       await league.save();
 
       // Retrieve the player's username
@@ -566,8 +568,6 @@ const LeagueService = {
           gameWebSocketHandler.handleMatchReadyNotification(players, message, wss);
         }
       });
-
-      // add socket notification for when 2 players are ready to play
 
       await league.save();
       console.log(`Match ${matchId} ended successfully`);
