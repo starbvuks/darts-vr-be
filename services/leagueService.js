@@ -532,7 +532,7 @@ const LeagueService = {
       const players = [matchup.player1Id, matchup.player2Id];
       const message = JSON.stringify({
         type: "match_over",
-        gamemode: "league_match",
+        gamemode: "league",
         leagueId: league.leagueId,
         matchId: matchId,
         players: players,
@@ -559,7 +559,7 @@ const LeagueService = {
 
           const message = JSON.stringify({
             type: "match_ready",
-            gamemode: "league_match",
+            gamemode: "league",
             leagueId: league.leagueId,
             matchId: nextMatchup.matchId,
             players: players,
