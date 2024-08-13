@@ -77,6 +77,11 @@ const LeagueSchema = new mongoose.Schema({
   numPlayers: { type: Number, default: 0 },
   currentRound: { type: Number, default: 1 },
   matchesPerRound: [],
+  winnerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Player",
+    default: null,
+  },
   sets: { type: Number, default: 0 },
   legs: { type: Number, default: 0 },
   totalRounds: { type: Number, default: 0 },

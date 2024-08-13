@@ -563,6 +563,7 @@ const LeagueService = {
             leagueId: league.leagueId,
             matchId: nextMatchup.matchId,
             players: players,
+            winner: winnerId
           });
 
           gameWebSocketHandler.handleMatchReadyNotification(players, message, wss);
@@ -645,6 +646,7 @@ const LeagueService = {
       type: "match_over",
       gamemode: "league",
       leagueId: league.leagueId,
+      winner: leagueWinnerId,
       players,
     });
 

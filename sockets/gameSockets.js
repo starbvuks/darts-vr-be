@@ -148,6 +148,7 @@ module.exports = {
     const message = JSON.stringify({
       type: "dart_throw",
       leagueId: notificationMessage.leagueId,
+      matchId: notificationMessage.matchId,
       playerId,
       playerUsername: notificationMessage.playerUsername,
       dartScore: notificationMessage.dartScore,
