@@ -50,10 +50,13 @@ exports.validateOculusSession = async (req, res) => {
             },
           });
           await player.save();
+        } else {
+          player.username = username;
+          await player.save();
         }
 
         const { accessToken, refreshToken } = await authService.generateTokens(
-          player._id
+          player._id,
         );
 
         res.json({ accessToken, refreshToken });

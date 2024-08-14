@@ -14,7 +14,6 @@ exports.steamAuth = async (req, res) => {
 
     let player = await Player.findOne({ "auth.platformId": steamId });
     if (!player) {
-
       // Fetch the player's username from the Steam API
       // const playerSummary = await steamService.getPlayerSummaries(steamId);
       // const username = playerSummary.personaname;
@@ -25,7 +24,7 @@ exports.steamAuth = async (req, res) => {
           {
             platform: "Steam",
             platformId: steamId,
-            _id: false
+            _id: false,
           },
         ],
         profile: {
@@ -49,10 +48,13 @@ exports.steamAuth = async (req, res) => {
         },
       });
       await player.save();
+    } else {
+      player.username = username;
+      await player.save();
     }
 
     const { accessToken, refreshToken } = await authService.generateTokens(
-      player._id
+      player._id,
     );
 
     await player.save();

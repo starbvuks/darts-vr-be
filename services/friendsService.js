@@ -104,11 +104,11 @@ async function unsendFriendRequest(senderId, receiverId) {
 
     receiver.profile.receivedRequests =
       receiver.profile.receivedRequests.filter(
-        (request) => !request.senderId.equals(senderId)
+        (request) => !request.senderId.equals(senderId),
       );
 
     sender.profile.sentRequests = sender.profile.sentRequests.filter(
-      (request) => !request.receiverId.equals(receiverId)
+      (request) => !request.receiverId.equals(receiverId),
     );
 
     await sender.save();
@@ -166,11 +166,11 @@ async function acceptFriendRequest(senderId, receiverId) {
 
     receiver.profile.receivedRequests =
       receiver.profile.receivedRequests.filter(
-        (request) => !request.senderId.equals(senderId)
+        (request) => !request.senderId.equals(senderId),
       );
 
     sender.profile.sentRequests = sender.profile.sentRequests.filter(
-      (request) => !request.receiverId.equals(receiverId)
+      (request) => !request.receiverId.equals(receiverId),
     );
 
     await sender.save();
@@ -215,11 +215,11 @@ async function declineFriendRequest(senderId, receiverId) {
 
     receiver.profile.receivedRequests =
       receiver.profile.receivedRequests.filter(
-        (request) => !request.senderId.equals(senderId)
+        (request) => !request.senderId.equals(senderId),
       );
 
     sender.profile.sentRequests = sender.profile.sentRequests.filter(
-      (request) => !request.receiverId.equals(receiverId)
+      (request) => !request.receiverId.equals(receiverId),
     );
 
     await sender.save();
@@ -248,11 +248,11 @@ async function removeFriend(senderId, receiverId) {
     const receiver = await Player.findById(receiverId);
 
     sender.profile.friends = sender.profile.friends.filter(
-      (friend) => !friend.friendId.equals(receiverId)
+      (friend) => !friend.friendId.equals(receiverId),
     );
 
     receiver.profile.friends = receiver.profile.friends.filter(
-      (friend) => !friend.friendId.equals(senderId)
+      (friend) => !friend.friendId.equals(senderId),
     );
 
     await sender.save();
@@ -282,19 +282,19 @@ async function blockPlayer(senderId, receiverId) {
 
     // Remove any existing friend requests between the sender and receiver
     sender.profile.sentRequests = sender.profile.sentRequests.filter(
-      (request) => !request.receiverId.equals(receiverId)
+      (request) => !request.receiverId.equals(receiverId),
     );
     receiver.profile.receivedRequests =
       receiver.profile.receivedRequests.filter(
-        (request) => !request.senderId.equals(senderId)
+        (request) => !request.senderId.equals(senderId),
       );
 
     // Remove the sender and receiver from each other's friend list
     sender.profile.friends = sender.profile.friends.filter(
-      (friend) => !friend.friendId.equals(receiverId)
+      (friend) => !friend.friendId.equals(receiverId),
     );
     receiver.profile.friends = receiver.profile.friends.filter(
-      (friend) => !friend.friendId.equals(senderId)
+      (friend) => !friend.friendId.equals(senderId),
     );
 
     // Add the receiver to the sender's blocked list
@@ -332,7 +332,7 @@ async function unblockPlayer(senderId, receiverId) {
 
     // Remove the receiver from the sender's blocked list
     sender.profile.blocked = sender.profile.blocked.filter(
-      (block) => !block.playerId.equals(receiverId)
+      (block) => !block.playerId.equals(receiverId),
     );
 
     // Save the updated player documents
@@ -381,7 +381,7 @@ async function updatePlayerStatus(senderId, newStatus, wss) {
               type: "friendStatusUpdate",
               friendId: senderId,
               newStatus,
-            })
+            }),
           );
         }
       });
@@ -397,12 +397,12 @@ async function updatePlayerStatus(senderId, newStatus, wss) {
 async function searchUsers(searchParam) {
   try {
     // Ensure searchParam is a string
-    if (typeof searchParam !== 'string') {
+    if (typeof searchParam !== "string") {
       throw new Error("Search parameter must be a string");
     }
 
     const users = await Player.find({
-      username: { $regex: searchParam, $options: 'i' }, // Case-insensitive search
+      username: { $regex: searchParam, $options: "i" }, // Case-insensitive search
     }).limit(10);
 
     return users;
@@ -411,8 +411,6 @@ async function searchUsers(searchParam) {
     throw error; // Propagate the error for handling in the controller
   }
 }
-
-
 
 module.exports = {
   sendFriendRequest,
