@@ -18,7 +18,7 @@ const MatchmakingService = {
       if (queueLength >= 2) {
         const playerIdsToMatch = await RedisService.getPlayersFromQueue(
           queueName,
-          2
+          2,
         );
         const [player1Id, player2Id] = playerIdsToMatch;
 
@@ -26,15 +26,17 @@ const MatchmakingService = {
         if (player1Id === player2Id) {
           // Remove the duplicate player from the queue
           await RedisService.removePlayersFromQueue(queueName, 1);
-          console.error("Error in joinZombiesQueue: same player canot be added twice");
-          return {error: "Cannot match the same player twice"};
+          console.error(
+            "Error in joinZombiesQueue: same player canot be added twice",
+          );
+          return { error: "Cannot match the same player twice" };
         }
 
         const newMatch = new Zombies({
           player1Id,
           player2Id: player2Id || null,
           matchType: "multiplayer",
-          status: "closed", 
+          status: "closed",
           numPlayers: 2,
           matchId: uuidv4(),
         });
@@ -45,20 +47,17 @@ const MatchmakingService = {
 
         // Publish a message to the corresponding Redis channel with the match details
         const message = JSON.stringify({
-          matchType: `${gameType}`,
+          matchType: `zmb`,
           matchId: newMatch.matchId,
           players: playerIdsToMatch,
           numPlayers: 2,
         });
         await RedisService.publishMatchCreated(
           `${gameType}-2-match-created`,
-          message
+          message,
         );
 
-        gameSockets.handleMatchCreatedNotification(
-          message,
-          wss
-        );
+        gameSockets.handleMatchCreatedNotification(message, wss);
 
         return newMatch;
       } else {
@@ -100,7 +99,7 @@ const MatchmakingService = {
       if (queueLength >= 2) {
         const playerIdsToMatch = await RedisService.getPlayersFromQueue(
           queueName,
-          2
+          2,
         );
         const [player1Id, player2Id] = playerIdsToMatch;
 
@@ -108,8 +107,10 @@ const MatchmakingService = {
         if (player1Id === player2Id) {
           // Remove the duplicate player from the queue
           await RedisService.removePlayersFromQueue(queueName, 1);
-          console.error("Error in joinZombiesQueue: same player canot be added twice");
-          return {error: "Cannot match the same player twice"};
+          console.error(
+            "Error in joinZombiesQueue: same player canot be added twice",
+          );
+          return { error: "Cannot match the same player twice" };
         }
 
         const newMatch = new Killstreak({
@@ -127,20 +128,17 @@ const MatchmakingService = {
 
         // Publish a message to the corresponding Redis channel with the match details
         const message = JSON.stringify({
-          matchType: `${gameType}`,
+          matchType: `ks`,
           matchId: newMatch.matchId,
           players: playerIdsToMatch,
           numPlayers: 2,
         });
         await RedisService.publishMatchCreated(
           `${gameType}-2-match-created`,
-          message
+          message,
         );
 
-        gameSockets.handleMatchCreatedNotification(
-          message,
-          wss
-        );
+        gameSockets.handleMatchCreatedNotification(message, wss);
 
         return newMatch;
       } else {
@@ -183,7 +181,7 @@ const MatchmakingService = {
       if (queueLength >= numPlayers) {
         const playerIdsToMatch = await RedisService.getPlayersFromQueue(
           queueName,
-          numPlayers
+          numPlayers,
         );
 
         // Create a new match
@@ -248,13 +246,10 @@ const MatchmakingService = {
         });
         await RedisService.publishMatchCreated(
           `${gameType}-${numPlayers}-match-created`,
-          message
+          message,
         );
 
-        gameSockets.handleMatchCreatedNotification(
-          message,
-          wss
-        );
+        gameSockets.handleMatchCreatedNotification(message, wss);
 
         return newMatch;
       } else {
@@ -295,7 +290,10 @@ const MatchmakingService = {
 
       // Iterate through the queue and remove the player if found
       for (let i = 0; i < queueLength; i++) {
-        const playerInQueue = await RedisService.getPlayerFromQueue(queueName, i);
+        const playerInQueue = await RedisService.getPlayerFromQueue(
+          queueName,
+          i,
+        );
         if (playerInQueue === playerId) {
           // Remove the player from the queue
           await RedisService.removePlayersFromQueue(queueName, 1, i);
