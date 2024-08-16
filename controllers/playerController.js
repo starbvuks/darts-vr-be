@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 exports.getUserProfile = (req, res) => {
   authService.validateJwt(req, res, async () => {
     const userId = req.userId;
-    console.log(userId)
+    console.log(userId);
     const user = await PlayerService.getUserProfile(userId);
     if (!user) {
       return res.status(404).send({ message: "User not found" });
@@ -106,4 +106,18 @@ exports.equipCosmetic = (req, res) => {
       res.status(400).json({ error: error.message });
     }
   });
-}
+};
+
+exports.unlockAchievement = (req, res) => {
+  authService.validateJwt(req, res, async () => {
+    const userId = req.userId;
+    const { achievement } = req.body;
+
+    try {
+      const result = await PlayerService.unlockAchievement(userId, achievement);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+};

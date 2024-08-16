@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
-const Player = require('../models/Player');
-const Cosmetics = require('../models/Cosmetics');
+const mongoose = require("mongoose");
+const Player = require("../models/Player");
+const Cosmetics = require("../models/Cosmetics");
 
 class PlayerService {
   async getUserProfile(userId) {
@@ -8,27 +8,29 @@ class PlayerService {
   }
 
   async getUserStats(userId) {
-    return await Player.findById(userId).select('stats').exec();
+    return await Player.findById(userId).select("stats").exec();
   }
 
   async getUserFriends(userId) {
-    return await Player.findById(userId).select('profile.friends').exec();
+    return await Player.findById(userId).select("profile.friends").exec();
   }
 
   async getUserRequests(userId) {
-    return await Player.findById(userId).select('profile.sentRequests profile.receivedRequests').exec();
+    return await Player.findById(userId)
+      .select("profile.sentRequests profile.receivedRequests")
+      .exec();
   }
 
   async getUserCosmetics(userId) {
-    return await Player.findById(userId).select('profile.cosmetics').exec();
+    return await Player.findById(userId).select("profile.cosmetics").exec();
   }
 
   async getUserPreferences(userId) {
-    return await Player.findById(userId).select('profile').exec();
+    return await Player.findById(userId).select("profile").exec();
   }
 
   async changeHandedness(userId, handedness) {
-    if (handedness !== 'right' && handedness !== 'left') {
+    if (handedness !== "right" && handedness !== "left") {
       throw new Error('Handedness can only be "right" or "left"');
     }
 
@@ -39,7 +41,7 @@ class PlayerService {
   }
 
   async changeGender(userId, gender) {
-    if (gender !== 'male' && gender !== 'female') {
+    if (gender !== "male" && gender !== "female") {
       throw new Error('Gender can only be "male" or "female"');
     }
 
@@ -54,20 +56,20 @@ class PlayerService {
     const cosmetic = await Cosmetics.findById(cosmeticId);
 
     if (!cosmetic) {
-      throw new Error('Invalid cosmetic ID');
+      throw new Error("Invalid cosmetic ID");
     }
 
     // Equip the new cosmetic
     switch (cosmetic.type) {
-      case 'hat':
+      case "hat":
         player.profile.cosmetics.hat.hatId = cosmetic._id;
         player.profile.cosmetics.hat.hatName = cosmetic.name;
         break;
-      case 'gloves':
+      case "gloves":
         player.profile.cosmetics.gloves.glovesId = cosmetic._id;
         player.profile.cosmetics.gloves.gloveName = cosmetic.name;
         break;
-      case 'dart':
+      case "dart":
         player.profile.cosmetics.dartSkin.dartSkinId = cosmetic._id;
         player.profile.cosmetics.dartSkin.dartSkinName = cosmetic.name;
         break;
@@ -76,7 +78,56 @@ class PlayerService {
     await player.save();
     return player;
   }
-}
 
+  async unlockAchievement(userId, achievement) {
+    const validAchievements = [
+      "Marksman",
+      "Perfectionist",
+      "OnaHigh",
+      "Hattrick",
+      "Unstoppable",
+      "Sniper",
+      "GlobeTrotter",
+      "Headshooter",
+      "MustBeDrunk",
+      "BringingOuttheMonster",
+      "SleepingDeads",
+      "TopOfTheWorld",
+      "QuiteAComeBack",
+      "NoMercy",
+      "GrandSalute",
+      "FirstBlood",
+      "Rampage",
+      "TheLegend",
+      "GrandSlam",
+      "MVP",
+      "Dynamite",
+      "TeamPlayer",
+    ];
+
+    if (!validAchievements.includes(achievement)) {
+      throw new Error("Invalid achievement name");
+    }
+
+    const player = await Player.findById(userId);
+    if (!player) {
+      throw new Error("Player not found");
+    }
+
+    // Check if the achievement is already unlocked
+    if (player.achievements[achievement]) {
+      throw new Error(`Achievement ${achievement} is already unlocked`);
+    }
+
+    // Unlock the achievement
+    player.achievements[achievement] = true;
+    await player.save();
+
+    return {
+      message: `Achievement ${achievement} unlocked for player ${player.username}`,
+      achievements: player.achievements,
+    };
+  }
+}
 
 module.exports = new PlayerService();
