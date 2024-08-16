@@ -4,7 +4,7 @@ const redis = new Redis("redis://localhost:6379");
 const RedisService = {
   addToQueue: async (queueName, playerId) => {
     const dummyValue = "dummy";
-    
+
     const queueLength = await redis.llen(queueName);
     if (queueLength > 0) {
       const queueItems = await redis.lrange(queueName, 0, -1);
@@ -12,12 +12,26 @@ const RedisService = {
         await redis.lrem(queueName, 0, dummyValue);
       }
     }
-  
+
     await redis.rpush(queueName, playerId);
   },
 
-  getPlayersFromQueue: async (queueName, count) => {
-    return await redis.lrange(queueName, 0, count - 1);
+  getPlayersFromQueue: async (queueName, numPlayers) => {
+    // Defensive programming to ensure numPlayers is valid
+    if (
+      typeof numPlayers !== "number" ||
+      isNaN(numPlayers) ||
+      numPlayers <= 0
+    ) {
+      throw new Error("numPlayers must be a valid positive integer.");
+    }
+
+    // Ensure numPlayers is properly converted to a valid integer
+    const numPlayersInt = parseInt(numPlayers, 10);
+
+    // Redis lrange command to get players from the queue
+    const players = await redis.lrange(queueName, 0, numPlayersInt - 1);
+    return players;
   },
 
   isPlayerInQueue: async (queueName, playerId) => {
@@ -58,7 +72,7 @@ const RedisService = {
   // Tournament
   createQueue: async (queueName) => {
     await redis.lpush(queueName, "dummy");
-    await redis.ltrim(queueName, 0, 0); 
+    await redis.ltrim(queueName, 0, 0);
     console.log(`Queue ${queueName} created.`);
   },
 
@@ -66,9 +80,10 @@ const RedisService = {
     const queueName = `tournament-${tournamentId}`;
     await redis.del(queueName);
     await redis.del(`${queueName}:open_time`);
-    console.log(`Tournament queue closed and deleted for tournament ID: ${tournamentId}`);
+    console.log(
+      `Tournament queue closed and deleted for tournament ID: ${tournamentId}`,
+    );
   },
-
 
   queueExists: async (queueName) => {
     const exists = await redis.exists(queueName);
@@ -97,9 +112,17 @@ const RedisService = {
       const ttl = await redis.ttl(queueName);
 
       if (ttl === -1) {
-        return { success: true, message: "Queue exists but has no expiration.", expiry: null };
+        return {
+          success: true,
+          message: "Queue exists but has no expiration.",
+          expiry: null,
+        };
       } else if (ttl === -2) {
-        return { success: false, message: "Queue does not exist.", expiry: null };
+        return {
+          success: false,
+          message: "Queue does not exist.",
+          expiry: null,
+        };
       } else {
         return { success: true, message: "Queue found.", expiry: ttl };
       }

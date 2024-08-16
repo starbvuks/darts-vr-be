@@ -17,7 +17,7 @@ module.exports = {
               gamemode: matchType,
               matchId,
               numPlayers,
-            })
+            }),
           );
         }
       });
@@ -75,7 +75,7 @@ module.exports = {
             gamemode: "zombies",
             senderId,
             matchId,
-          })
+          }),
         );
       }
     });
@@ -93,7 +93,7 @@ module.exports = {
             gamemode: "killstreak",
             senderId,
             matchId,
-          })
+          }),
         );
       }
     });
@@ -111,7 +111,7 @@ module.exports = {
             gamemode: "501",
             senderId,
             matchId,
-          })
+          }),
         );
       }
     });
@@ -129,7 +129,7 @@ module.exports = {
             gamemode: "league",
             senderId,
             matchId: leagueId,
-          })
+          }),
         );
       }
     });
@@ -166,6 +166,15 @@ module.exports = {
     });
   },
 
+  // tournament
+  handleQueueOpenNotification: (tournamentId, message, wss) => {
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  },
+
   // sendTournamentStartingNotification: (playerId, message, wss) => {
   //   const message = JSON.stringify
 
@@ -179,35 +188,35 @@ module.exports = {
       "501-2-match-created",
       (channel, message) => {
         this.handleMatchCreatedNotification(channel, message, wss);
-      }
+      },
     );
 
     RedisService.subscribeToChannel(
       "501-3-match-created",
       (channel, message) => {
         this.handleMatchCreatedNotification(channel, message, wss);
-      }
+      },
     );
 
     RedisService.subscribeToChannel(
       "501-4-match-created",
       (channel, message) => {
         this.handleMatchCreatedNotification(channel, message, wss);
-      }
+      },
     );
 
     RedisService.subscribeToChannel(
       "killstreak-2-match-created",
       (channel, message) => {
         this.handleMatchCreatedNotification(channel, message, wss);
-      }
+      },
     );
 
     RedisService.subscribeToChannel(
       "zombies-2-match-created",
       (channel, message) => {
         this.handleMatchCreatedNotification(channel, message, wss);
-      }
+      },
     );
 
     // Add more subscriptions for other game types and player counts

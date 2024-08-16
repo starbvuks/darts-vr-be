@@ -19,12 +19,19 @@ const LeagueService = {
     try {
       await League.collection.createIndex(
         { "matchups.matchId": 1 },
-        { unique: false, sparse: true }
+        { unique: false, sparse: true },
       );
     } catch (error) {}
   },
 
-  createLeague: async (playerId, numPlayers, sets, legs) => {
+  createLeague: async (
+    playerIds,
+    numPlayers,
+    sets,
+    legs,
+    leagueType = "private",
+    tournamentId = null,
+  ) => {
     try {
       let totalRounds;
       let matchesPerRound;
@@ -35,6 +42,7 @@ const LeagueService = {
         case 2:
           totalRounds = 1;
           matchesPerRound = [1];
+          break;
         case 4:
           totalRounds = 2;
           matchesPerRound = [2, 1];
@@ -53,7 +61,7 @@ const LeagueService = {
 
       const league = new League({
         leagueId: uuidv4(),
-        players: [playerId],
+        players: playerIds, // Add all players directly to the players array
         numPlayers,
         totalRounds,
         matchesPerRound,
@@ -61,13 +69,15 @@ const LeagueService = {
         legs,
         status: "open",
         matchups: [],
+        leagueType, // Include leagueType (e.g., "tournament" or "private")
+        tournamentId, // Include tournamentId if it's a tournament
       });
+
       await league.save();
 
       return { success: true, league };
     } catch (error) {
       console.error("Error creating league:", error);
-
       return { success: false, message: "Failed to create league." };
     }
   },
@@ -142,13 +152,13 @@ const LeagueService = {
 
       // Check if matchups for the current round already exist
       const existingMatchups = league.matchups.filter(
-        (matchup) => matchup.round === league.currentRound
+        (matchup) => matchup.round === league.currentRound,
       );
       const expectedMatches = league.matchesPerRound[league.currentRound - 1];
 
       if (existingMatchups.length >= expectedMatches) {
         console.log(
-          "Matchups for this round already exist. Cannot initialize again."
+          "Matchups for this round already exist. Cannot initialize again.",
         );
         return {
           success: false,
@@ -198,12 +208,12 @@ const LeagueService = {
           gameWebSocketHandler.sendLeagueMatchCreatedNotification(
             String(players[i]),
             message,
-            wss
+            wss,
           );
           gameWebSocketHandler.sendLeagueMatchCreatedNotification(
             String(players[i + 1]),
             message,
-            wss
+            wss,
           );
         }
       }
@@ -211,7 +221,7 @@ const LeagueService = {
       let round = 2;
       while (league.matchups.filter((m) => m.round === round - 1).length > 0) {
         const previousRoundMatchups = league.matchups.filter(
-          (m) => m.round === round - 1
+          (m) => m.round === round - 1,
         );
         const nextRoundMatchups = [];
 
@@ -258,7 +268,7 @@ const LeagueService = {
     dartNumber,
     dartScore,
     scoreLeft,
-    wss
+    wss,
   ) => {
     try {
       const league = await League.findOne({ leagueId });
@@ -268,7 +278,7 @@ const LeagueService = {
 
       // Find the current matchup for the player
       const currentMatchup = league.matchups.find(
-        (matchup) => matchup.matchId === matchId
+        (matchup) => matchup.matchId === matchId,
       );
       if (!currentMatchup) {
         return { success: false, message: "Matchup not found for the player." };
@@ -366,7 +376,7 @@ const LeagueService = {
         gameWebSocketHandler.sendDartThrowNotification(
           String(pId),
           notificationMessage,
-          wss
+          wss,
         );
       });
 
@@ -541,7 +551,7 @@ const LeagueService = {
       gameWebSocketHandler.handleMatchOverNotification(players, message, wss);
 
       const nextRoundMatchups = league.matchups.filter((m) =>
-        m.prevMatchIds.includes(matchup.matchId)
+        m.prevMatchIds.includes(matchup.matchId),
       );
 
       nextRoundMatchups.forEach((nextMatchup) => {
@@ -563,10 +573,14 @@ const LeagueService = {
             leagueId: league.leagueId,
             matchId: nextMatchup.matchId,
             players: players,
-            winner: winnerId
+            winner: winnerId,
           });
 
-          gameWebSocketHandler.handleMatchReadyNotification(players, message, wss);
+          gameWebSocketHandler.handleMatchReadyNotification(
+            players,
+            message,
+            wss,
+          );
         }
       });
 
@@ -574,7 +588,7 @@ const LeagueService = {
       console.log(`Match ${matchId} ended successfully`);
 
       const nextMatchup = nextRoundMatchups.find(
-        (m) => m.player1Id.equals(winnerId) || m.player2Id.equals(winnerId)
+        (m) => m.player1Id.equals(winnerId) || m.player2Id.equals(winnerId),
       );
 
       return {
@@ -612,7 +626,7 @@ const LeagueService = {
               await LeagueService.endMatch(
                 league.leagueId,
                 matchup.matchId,
-                matchup.player2Id
+                matchup.player2Id,
               );
             } else if (
               matchup.lastActivity.player2LastActivity &&
@@ -621,7 +635,7 @@ const LeagueService = {
               await LeagueService.endMatch(
                 league.leagueId,
                 matchup.matchId,
-                matchup.player1Id
+                matchup.player1Id,
               );
             }
           }

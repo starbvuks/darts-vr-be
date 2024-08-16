@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const LeagueSchema = new mongoose.Schema({
   leagueId: { type: String, required: true, unique: true },
-  gamemode: { type: String, default: "League" },  
+  gamemode: { type: String, default: "League" },
   players: [
     { type: mongoose.Schema.Types.ObjectId, ref: "Player", required: true },
   ],
@@ -87,6 +87,7 @@ const LeagueSchema = new mongoose.Schema({
   totalRounds: { type: Number, default: 0 },
   status: { type: String, enum: ["open", "ongoing", "completed"] },
   leagueType: { type: String, enum: ["tournament", "private"] },
+  tournamentId: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now },
 });
 

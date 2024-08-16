@@ -96,10 +96,12 @@ app.post("/api/league/update-stats", (req, res) => {
 const tourney = require("./routes/tournament/tournamentRoutes.js");
 app.use("/", tourney);
 
-app.post("/api/league/update-stats", (req, res) => {
+app.post("/api/tournament/create", (req, res) => {
+  tournamentController.createTournament(req, res, wss);
+});
+app.post("/api/tournament", (req, res) => {
   tournamentController.joinTournament(req, res, wss);
 });
-
 
 // friend requests
 app.post("/api/friends/send-request", (req, res) => {

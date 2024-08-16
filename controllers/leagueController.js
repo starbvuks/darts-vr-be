@@ -7,7 +7,12 @@ const LeagueController = {
     try {
       const { playerId, numPlayers, sets, legs } = req.body; // Expecting playerId and numPlayers
       authService.validateJwt(req, res, async () => {
-        const league = await LeagueService.createLeague(playerId, numPlayers, sets, legs);
+        const league = await LeagueService.createLeague(
+          playerId,
+          numPlayers,
+          sets,
+          legs,
+        );
         if (!league.success) {
           return res.status(400).json({ message: league.message });
         }
@@ -23,7 +28,12 @@ const LeagueController = {
     try {
       const { leagueId, playerId, friendId } = req.body;
       authService.validateJwt(req, res, async () => {
-        gameWebSocketHandler.sendLeagueInvitation(friendId, playerId, leagueId, wss);
+        gameWebSocketHandler.sendLeagueInvitation(
+          friendId,
+          playerId,
+          leagueId,
+          wss,
+        );
         res.status(200).json({ message: "Invitation sent" });
       });
     } catch (error) {
@@ -55,7 +65,7 @@ const LeagueController = {
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }
-        
+
         return res.status(200).json({ league: result.league });
       });
     } catch (error) {
@@ -66,13 +76,24 @@ const LeagueController = {
 
   dartThrow: async (req, res, wss) => {
     try {
-      const { leagueId, matchId, playerId, dartNumber, dartScore, scoreLeft } = req.body; 
+      const { leagueId, matchId, playerId, dartNumber, dartScore, scoreLeft } =
+        req.body;
       authService.validateJwt(req, res, async () => {
-        if (typeof dartScore !== 'number' || typeof scoreLeft !== 'number') {
-          return res.status(400).json({ message: "Invalid dart score or score left." });
+        if (typeof dartScore !== "number" || typeof scoreLeft !== "number") {
+          return res
+            .status(400)
+            .json({ message: "Invalid dart score or score left." });
         }
 
-        const result = await LeagueService.processDartThrow(leagueId, matchId, playerId, dartNumber, dartScore, scoreLeft, wss);
+        const result = await LeagueService.processDartThrow(
+          leagueId,
+          matchId,
+          playerId,
+          dartNumber,
+          dartScore,
+          scoreLeft,
+          wss,
+        );
         if (!result.success) {
           console.log(result.message);
           return res.status(400).json({ message: result.message });
@@ -89,7 +110,12 @@ const LeagueController = {
     try {
       const { leagueId, matchId, playerId, commentary } = req.body;
       authService.validateJwt(req, res, async () => {
-        const result = await LeagueService.addCommentary(leagueId, matchId, playerId, commentary);
+        const result = await LeagueService.addCommentary(
+          leagueId,
+          matchId,
+          playerId,
+          commentary,
+        );
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }
@@ -105,7 +131,11 @@ const LeagueController = {
     try {
       const { leagueId, matchId, playerId } = req.body;
       authService.validateJwt(req, res, async () => {
-        const result = await LeagueService.playerWonSet(leagueId, matchId, playerId);
+        const result = await LeagueService.playerWonSet(
+          leagueId,
+          matchId,
+          playerId,
+        );
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }
@@ -121,7 +151,11 @@ const LeagueController = {
     try {
       const { leagueId, matchId, playerId } = req.body;
       authService.validateJwt(req, res, async () => {
-        const result = await LeagueService.playerWonLeg(leagueId, matchId, playerId);
+        const result = await LeagueService.playerWonLeg(
+          leagueId,
+          matchId,
+          playerId,
+        );
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }
@@ -137,7 +171,12 @@ const LeagueController = {
     try {
       const { leagueId, matchId, winnerId } = req.body;
       authService.validateJwt(req, res, async () => {
-        const result = await LeagueService.endMatch(leagueId, matchId, winnerId, wss);
+        const result = await LeagueService.endMatch(
+          leagueId,
+          matchId,
+          winnerId,
+          wss,
+        );
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }
@@ -153,7 +192,11 @@ const LeagueController = {
     try {
       const { leagueId, leagueWinnerId } = req.body; // Expecting leagueId in the request body
       authService.validateJwt(req, res, async () => {
-        const result = await LeagueService.endRound(leagueId, leagueWinnerId, wss);
+        const result = await LeagueService.endLeague(
+          leagueId,
+          leagueWinnerId,
+          wss,
+        );
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }
@@ -170,7 +213,12 @@ const LeagueController = {
       const { matchId, playerId } = req.body;
       authService.validateJwt(req, res, async () => {
         await LeagueService.handlePlayerDisconnect(matchId, playerId);
-        return res.status(200).json({ message: "Player has been marked as disconnected and the winner has been determined." });
+        return res
+          .status(200)
+          .json({
+            message:
+              "Player has been marked as disconnected and the winner has been determined.",
+          });
       });
     } catch (error) {
       console.error("Error handling player disconnect:", error);
@@ -186,13 +234,13 @@ const LeagueController = {
   getLeague: async (req, res) => {
     try {
       authService.validateJwt(req, res, async () => {
-        const {leagueId} = req.query;
-        const result = await LeagueService.getLeague(leagueId)
+        const { leagueId } = req.query;
+        const result = await LeagueService.getLeague(leagueId);
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }
         return res.status(200).json(result.league);
-      })
+      });
     } catch (error) {
       console.error("Error getting League", error);
       res.status(500).json({ message: "Error getting League" });
@@ -202,18 +250,18 @@ const LeagueController = {
   getMatchup: async (req, res) => {
     try {
       authService.validateJwt(req, res, async () => {
-        const {leagueId, matchId} = req.query;
-        const result = await LeagueService.getMatchup(leagueId, matchId)
+        const { leagueId, matchId } = req.query;
+        const result = await LeagueService.getMatchup(leagueId, matchId);
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }
         return res.status(200).json(result.matchup);
-      })
+      });
     } catch (error) {
       console.error("Error getting Matchup in League", error);
       res.status(500).json({ message: "Error getting Matchup" });
     }
-  }
+  },
 };
 
 module.exports = LeagueController;
