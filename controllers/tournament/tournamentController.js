@@ -95,6 +95,29 @@ const TournamentController = {
       }
     });
   },
+
+  deleteTournament: async (req, res) => {
+    authService.validateJwt(req, res, async () => {
+      const { tournamentId } = req.body;
+
+      try {
+        const result = await TournamentService.deleteTournament(tournamentId);
+
+        if (!result.success) {
+          return res
+            .status(404)
+            .json({ success: false, message: result.message });
+        }
+
+        return res.status(200).json({ success: true, message: result.message });
+      } catch (error) {
+        console.error("Error deleting tournament:", error);
+        return res
+          .status(500)
+          .json({ success: false, message: "Failed to delete tournament." });
+      }
+    });
+  },
 };
 
 module.exports = TournamentController;

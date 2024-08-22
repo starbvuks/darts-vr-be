@@ -154,9 +154,12 @@ wss.on("connection", (ws, req) => {
 
     ws.userId = playerId;
 
+    friendsController.updatePlayerStatus(playerId, "online");
+
     // Clean up when the connection is closed
     ws.on("close", () => {
       console.log(`user has disconnected`);
+      friendsController.updatePlayerStatus(playerId, "offline");
     });
   } catch (err) {
     console.error("Error verifying token:", err);

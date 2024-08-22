@@ -23,7 +23,7 @@ const TournamentService = {
       "YYYY-MM-DD HH:mm",
       "Asia/Kolkata",
     );
-    const queueOpenTimeIST = startTimeIST.clone().subtract(5, "minutes"); // Queue opens 5 minutes before start
+    const queueOpenTimeIST = startTimeIST.clone().subtract(1, "minutes"); // Queue opens 5 minutes before start
 
     const tournamentId = uuidv4();
     const queueName = `tournament-${tournamentId}`;
@@ -132,6 +132,29 @@ const TournamentService = {
 
   listActiveTournaments: async () => {
     return await Tournament.find({ status: { $in: ["scheduled", "open"] } });
+  },
+
+  deleteTournament: async (tournamentId) => {
+    try {
+      // Find the tournament by ID
+      const tournament = await Tournament.findOne({ tournamentId });
+
+      if (!tournament) {
+        return { success: false, message: "Tournament not found." };
+      }
+
+      // Delete the tournament
+      await Tournament.deleteOne({ tournamentId });
+
+      // Optionally, clear related Redis queue (if relevant)
+      const queueName = `tournament-${tournamentId}`;
+      await RedisService.closeTournamentQueue(queueName);
+
+      return { success: true, message: "Tournament deleted successfully." };
+    } catch (error) {
+      console.error("Error deleting tournament:", error);
+      return { success: false, message: "Failed to delete tournament." };
+    }
   },
 
   joinTournamentQueue: async (tournamentId, playerId) => {

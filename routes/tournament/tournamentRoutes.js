@@ -7,5 +7,6 @@ router.get(
   "/api/tournament/active",
   TournamentController.listActiveTournaments,
 );
+router.post("/api/tournament/delete", TournamentController.deleteTournament);
 
 module.exports = router;
