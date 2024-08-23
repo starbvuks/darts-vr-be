@@ -260,10 +260,10 @@ exports.updatePlayerStatus = async (senderId, newStatus, wss) => {
       },
       wss,
     );
-    res.json({ success: true, player });
+    return { success: true, player };
   } catch (error) {
     console.error(`Error updating player status: ${error}`);
-    res.status(400).json({ message: error.message });
+    return { success: false, message: error.message };
   }
 };
 
