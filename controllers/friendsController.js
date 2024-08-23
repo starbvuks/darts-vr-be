@@ -9,7 +9,7 @@ exports.sendFriendRequest = async (req, res, wss) => {
     try {
       const result = await friendsService.sendFriendRequest(
         senderId,
-        receiverId
+        receiverId,
       );
       if (result.error) {
         res.status(400).json({ error: result.error });
@@ -24,7 +24,7 @@ exports.sendFriendRequest = async (req, res, wss) => {
             senderUsername: sender.username,
             timestamp: new Date().toISOString(),
           },
-          wss
+          wss,
         );
         res.json({ success: true });
       }
@@ -42,7 +42,7 @@ exports.unsendFriendRequest = async (req, res, wss) => {
     try {
       const result = await friendsService.unsendFriendRequest(
         senderId,
-        receiverId
+        receiverId,
       );
       if (result.error) {
         webSocketHandler.broadcastFriendRequestUnsentNotification(
@@ -51,7 +51,7 @@ exports.unsendFriendRequest = async (req, res, wss) => {
             type: "friend_request_unsent_error",
             error: result.error,
           },
-          wss
+          wss,
         );
         res.status(400).json({ error: result.error });
       } else {
@@ -64,7 +64,7 @@ exports.unsendFriendRequest = async (req, res, wss) => {
             receiverId,
             receiverUsername: receiver.username,
           },
-          wss
+          wss,
         );
         res.json({ success: true });
       }
@@ -82,7 +82,7 @@ exports.acceptFriendRequest = async (req, res, wss) => {
     try {
       const result = await friendsService.acceptFriendRequest(
         senderId,
-        receiverId
+        receiverId,
       );
       if (result.error) {
         res.status(400).json({ error: result.error });
@@ -96,7 +96,7 @@ exports.acceptFriendRequest = async (req, res, wss) => {
             senderUsername: sender.username,
             receiverUsername: receiver.username,
           },
-          wss
+          wss,
         );
         res.json({ success: true });
       }
@@ -113,7 +113,7 @@ exports.declineFriendRequest = async (req, res, wss) => {
     try {
       const result = await friendsService.declineFriendRequest(
         senderId,
-        receiverId
+        receiverId,
       );
       if (result.error) {
         res.status(400).json({ error: result.error });
@@ -127,7 +127,7 @@ exports.declineFriendRequest = async (req, res, wss) => {
             senderUsername: sender.username,
             receiverUsername: receiver.username,
           },
-          wss
+          wss,
         );
         res.json({ success: true });
       }
@@ -151,7 +151,7 @@ exports.removeFriend = async (req, res, wss) => {
             type: "friend_remove_error",
             error: result.error,
           },
-          wss
+          wss,
         );
         res.status(400).json({ error: result.error });
       } else {
@@ -164,7 +164,7 @@ exports.removeFriend = async (req, res, wss) => {
             senderUsername: sender.username,
             receiverUsername: receiver.username,
           },
-          wss
+          wss,
         );
         res.json({ success: true });
       }
@@ -188,7 +188,7 @@ exports.blockPlayer = async (req, res, wss) => {
             type: "player_block_error",
             error: result.error,
           },
-          wss
+          wss,
         );
         res.status(400).json({ error: result.error });
       } else {
@@ -201,7 +201,7 @@ exports.blockPlayer = async (req, res, wss) => {
             senderUsername: sender.username,
             receiverUsername: receiver.username,
           },
-          wss
+          wss,
         );
         res.json({ success: true });
       }
@@ -225,7 +225,7 @@ exports.unblockPlayer = async (req, res, wss) => {
             type: "player_unblock_error",
             error: result.error,
           },
-          wss
+          wss,
         );
         res.status(400).json({ error: result.error });
       } else {
@@ -238,7 +238,7 @@ exports.unblockPlayer = async (req, res, wss) => {
             senderUsername: sender.username,
             receiverUsername: receiver.username,
           },
-          wss
+          wss,
         );
         res.json({ success: true });
       }
@@ -250,33 +250,28 @@ exports.unblockPlayer = async (req, res, wss) => {
 };
 
 exports.updatePlayerStatus = async (req, res, wss) => {
-  authService.validateJwt(req, res, async () => {
-    const { senderId, newStatus } = req.body;
-    // const senderId = req.userId;
-    try {
-      const player = await friendsService.updatePlayerStatus(
+  const { senderId, newStatus } = req.body;
+
+  try {
+    const player = await friendsService.updatePlayerStatus(senderId, newStatus);
+    webSocketHandler.broadcastPlayerStatusUpdateNotification(
+      senderId,
+      {
         senderId,
-        newStatus
-      );
-      webSocketHandler.broadcastPlayerStatusUpdateNotification(
-        senderId,
-        {
-          senderId,
-          newStatus,
-        },
-        wss
-      );
-      res.json({ success: true, player });
-    } catch (error) {
-      console.error(`Error updating player status: ${error}`);
-      res.status(400).json({ message: error.message });
-    }
-  });
+        newStatus,
+      },
+      wss,
+    );
+    res.json({ success: true, player });
+  } catch (error) {
+    console.error(`Error updating player status: ${error}`);
+    res.status(400).json({ message: error.message });
+  }
 };
 
 exports.searchFriends = async (req, res) => {
   authService.validateJwt(req, res, async () => {
-    const { searchParam } = req.body; 
+    const { searchParam } = req.body;
 
     try {
       const results = await friendsService.searchUsers(searchParam);

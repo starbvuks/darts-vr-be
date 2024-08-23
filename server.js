@@ -125,9 +125,7 @@ app.post("/api/friends/block-player", (req, res) => {
 app.post("/api/friends/unblock-player", (req, res) => {
   friendsController.unblockPlayer(req, res, wss);
 });
-app.post("/api/friends/update-status", (req, res) => {
-  friendsController.updatePlayerStatus(req, res, wss);
-});
+
 app.post("/api/friends/search", (req, res) => {
   friendsController.searchFriends(req, res, wss);
 });
@@ -154,12 +152,12 @@ wss.on("connection", (ws, req) => {
 
     ws.userId = playerId;
 
-    // friendsController.updatePlayerStatus(playerId, "online");
+    friendsController.updatePlayerStatus(playerId, "online", wss);
 
     // Clean up when the connection is closed
     ws.on("close", () => {
       console.log(`user has disconnected`);
-      // friendsController.updatePlayerStatus(playerId, "offline");x
+      friendsController.updatePlayerStatus(playerId, "offline", wss);
     });
   } catch (err) {
     console.error("Error verifying token:", err);
@@ -177,7 +175,7 @@ app.post("/demo-login", (req, res) => {
   // Validate the provided user ID
   if (user == "6666d32dead7f3bab9218bf8") {
     const token = jwt.sign({ userId: user }, process.env.JWT_SECRET_KEY, {
-      expiresIn: "4h",
+      expiresIn: "6h",
     });
     res.json({ token });
   } else {
