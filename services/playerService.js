@@ -12,7 +12,27 @@ class PlayerService {
   }
 
   async getUserFriends(userId) {
-    return await Player.findById(userId).select("profile.friends").exec();
+    try {
+      const user = await Player.findById(userId)
+        .select("profile.friends")
+        .exec();
+
+      if (!user || !user.profile.friends || user.profile.friends.length === 0) {
+        return [];
+      }
+
+      const friendIds = user.profile.friends.map((friend) => friend.friendId);
+
+      // Fetch friends' details using their IDs
+      const friends = await Player.find({ _id: { $in: friendIds } }).select(
+        "username profile.status",
+      );
+
+      return friends;
+    } catch (error) {
+      console.error("Error fetching user friends:", error);
+      throw new Error("Failed to fetch user friends.");
+    }
   }
 
   async getUserRequests(userId) {

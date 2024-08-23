@@ -611,6 +611,7 @@ const LeagueService = {
         createdAt: { $gte: oneHourAgo },
         status: "ongoing",
       });
+      console.log(leagues);
 
       for (const league of leagues) {
         for (const matchup of league.matchups) {

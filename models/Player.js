@@ -62,12 +62,6 @@ const playerSchema = new mongoose.Schema({
     friends: [
       {
         friendId: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
-        username: String,
-        status: {
-          type: String,
-          enum: ["offline", "online", "in-game"],
-          default: "offline",
-        },
         since: Date,
       },
     ],
