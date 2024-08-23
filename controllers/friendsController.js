@@ -249,9 +249,7 @@ exports.unblockPlayer = async (req, res, wss) => {
   });
 };
 
-exports.updatePlayerStatus = async (req, res, wss) => {
-  const { senderId, newStatus } = req.body;
-
+exports.updatePlayerStatus = async (senderId, newStatus, wss) => {
   try {
     const player = await friendsService.updatePlayerStatus(senderId, newStatus);
     webSocketHandler.broadcastPlayerStatusUpdateNotification(
