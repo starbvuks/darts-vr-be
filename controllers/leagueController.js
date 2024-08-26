@@ -79,7 +79,7 @@ const LeagueController = {
       const { leagueId, matchId, playerId, dartNumber, dartScore, scoreLeft } =
         req.body;
       authService.validateJwt(req, res, async () => {
-        if (typeof dartScore !== "number" || typeof scoreLeft !== "number") {
+        if (typeof scoreLeft !== "number") {
           return res
             .status(400)
             .json({ message: "Invalid dart score or score left." });
@@ -213,12 +213,10 @@ const LeagueController = {
       const { matchId, playerId } = req.body;
       authService.validateJwt(req, res, async () => {
         await LeagueService.handlePlayerDisconnect(matchId, playerId);
-        return res
-          .status(200)
-          .json({
-            message:
-              "Player has been marked as disconnected and the winner has been determined.",
-          });
+        return res.status(200).json({
+          message:
+            "Player has been marked as disconnected and the winner has been determined.",
+        });
       });
     } catch (error) {
       console.error("Error handling player disconnect:", error);
