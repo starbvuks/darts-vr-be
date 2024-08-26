@@ -149,7 +149,7 @@ module.exports = {
       type: "dart_throw",
       leagueId: notificationMessage.leagueId,
       matchId: notificationMessage.matchId,
-      playerId,
+      playerId: notificationMessage.playerId,
       playerUsername: notificationMessage.playerUsername,
       dartScore: notificationMessage.dartScore,
       scoreLeft: notificationMessage.scoreLeft,
