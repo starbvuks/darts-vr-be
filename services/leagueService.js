@@ -266,7 +266,7 @@ const LeagueService = {
     matchId,
     playerId,
     dartNumber,
-    dartScore, // dartScore is now a string like "S20", "D20", or "T20"
+    dartScore, // dartScore is now a string like "SINGLE20", "DOUBLE20", "TRIPLE20", "BULLSEYE", or "MISS"
     scoreLeft,
     wss,
   ) => {
@@ -304,16 +304,16 @@ const LeagueService = {
       // Check if there's an existing dart throw that is not yet complete
       if (
         !dartThrow ||
-        (dartThrow.dart1 !== "0" &&
-          dartThrow.dart2 !== "0" &&
-          dartThrow.dart3 !== "0")
+        (dartThrow.dart1 !== "MISS" &&
+          dartThrow.dart2 !== "MISS" &&
+          dartThrow.dart3 !== "MISS")
       ) {
         // Create a new dart throw object if the previous one is complete or does not exist
         dartThrow = {
           playerId: playerId,
           dart1: dartScore,
-          dart2: "0",
-          dart3: "0",
+          dart2: "MISS", // Defaulting to MISS
+          dart3: "MISS", // Defaulting to MISS
         };
         playerStats.throws.push(dartThrow);
       }
@@ -330,23 +330,23 @@ const LeagueService = {
       // Update player stats
       playerStats.dartsThrown += 1;
 
-      // Determine if the dart hit the board successfully
-      if (dartScore !== "0") {
+      // Handle the different dartScore scenarios
+      if (dartScore !== "MISS") {
         playerStats.dartsHit += 1;
-      }
 
-      // Check for a bullseye (assuming "50" is bullseye score)
-      if (dartScore === "S50") {
-        playerStats.bullseyes += 1;
-      }
+        // Check for bullseye
+        if (dartScore === "BULLSEYE") {
+          playerStats.bullseyes += 1;
+        }
 
-      // Check for a "one eighty" (assuming all three darts hitting T20)
-      if (
-        dartThrow.dart1 === "T20" &&
-        dartThrow.dart2 === "T20" &&
-        dartThrow.dart3 === "T20"
-      ) {
-        playerStats.oneEighties += 1;
+        // Check for a "one eighty" (all three darts hitting TRIPLE20)
+        if (
+          dartThrow.dart1 === "TRIPLE20" &&
+          dartThrow.dart2 === "TRIPLE20" &&
+          dartThrow.dart3 === "TRIPLE20"
+        ) {
+          playerStats.oneEighties += 1;
+        }
       }
 
       // Update the player's remaining score
