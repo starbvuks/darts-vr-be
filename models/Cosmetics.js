@@ -4,10 +4,10 @@ const cosmeticsSchema = new mongoose.Schema({
   name: String,
   unityId: String,
   price: Number,
+  cosmeticId: String,
   type: {
     type: String,
-    enum: ["hat", "hands", "dartSkin", "glasses", "gender"],
-    // change glasses -> accessories
+    enum: ["head", "hands", "dartSkin", "accessory", "face"],
   },
   createdAt: { type: Date, default: Date.now },
 });

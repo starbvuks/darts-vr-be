@@ -71,32 +71,58 @@ class PlayerService {
     return player;
   }
 
-  async equipCosmetic(userId, cosmeticId) {
+  async equipCosmetics(userId, cosmeticIds) {
     const player = await Player.findById(userId);
-    const cosmetic = await Cosmetics.findById(cosmeticId);
 
-    if (!cosmetic) {
-      throw new Error("Invalid cosmetic ID");
+    if (!player) {
+      throw new Error("Player not found");
     }
 
-    // Equip the new cosmetic
-    switch (cosmetic.type) {
-      case "hat":
-        player.profile.cosmetics.hat.hatId = cosmetic._id;
-        player.profile.cosmetics.hat.hatName = cosmetic.name;
-        break;
-      case "gloves":
-        player.profile.cosmetics.gloves.glovesId = cosmetic._id;
-        player.profile.cosmetics.gloves.gloveName = cosmetic.name;
-        break;
-      case "dart":
-        player.profile.cosmetics.dartSkin.dartSkinId = cosmetic._id;
-        player.profile.cosmetics.dartSkin.dartSkinName = cosmetic.name;
-        break;
+    for (const cosmeticId of cosmeticIds) {
+      const cosmetic = await Cosmetics.findById(cosmeticId);
+
+      if (!cosmetic) {
+        throw new Error(`Invalid cosmetic ID: ${cosmeticId}`);
+      }
+
+      // Equip the new cosmetic based on its type
+      switch (cosmetic.type) {
+        case "hat":
+          player.profile.cosmetics.hat.hatId = cosmetic._id;
+          player.profile.cosmetics.hat.hatName = cosmetic.name;
+          break;
+        case "hands":
+          player.profile.cosmetics.hands.handsId = cosmetic._id;
+          player.profile.cosmetics.hands.handsName = cosmetic.name;
+          break;
+        case "dartSkin":
+          player.profile.cosmetics.dartSkin.dartSkinId = cosmetic._id;
+          player.profile.cosmetics.dartSkin.dartSkinName = cosmetic.name;
+          break;
+        case "accessories":
+          player.profile.cosmetics.glasses.glassesId = cosmetic._id;
+          player.profile.cosmetics.glasses.glassesName = cosmetic.name;
+          break;
+        case "face":
+          player.profile.cosmetics.gender.genderId = cosmetic._id;
+          player.profile.cosmetics.gender.genderName = cosmetic.name;
+          break;
+        default:
+          throw new Error(`Unknown cosmetic type: ${cosmetic.type}`);
+      }
     }
 
     await player.save();
     return player;
+  }
+
+  async getAllCosmetics(req, res) {
+    try {
+      return Cosmetics.find().exec();
+    } catch (error) {
+      console.error("Error fetching cosmetics:", error);
+      throw new Error("Failed to fetch cosmetics.");
+    }
   }
 
   async unlockAchievement(userId, achievement) {

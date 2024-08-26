@@ -12,7 +12,9 @@ router.get("/api/users/preferences", playerController.getUserPreferences);
 router.post("api/unlock-achievement", playerController.unlockAchievement);
 router.put("/api/users/handedness", playerController.changeHandedness);
 router.put("/api/users/gender", playerController.changeGender);
-router.put("/api/users/equip-cosmetic", playerController.equipCosmetic);
+router.put("/api/users/equip-cosmetic", playerController.equipCosmetics);
+
+router.get("/api/all-cosmetics", playerController.getAllCosmetics);
 
 module.exports = router;
 

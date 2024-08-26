@@ -29,10 +29,10 @@ const LeagueSchema = new mongoose.Schema({
         legsWon: { type: Number, default: 0 },
         throws: [
           {
-            dart1: { type: Number, default: 0 },
-            dart2: { type: Number, default: 0 },
-            dart3: { type: Number, default: 0 },
-            score: { type: Number, default: 0 },
+            dart1: { type: String, default: 0 },
+            dart2: { type: String, default: 0 },
+            dart3: { type: String, default: 0 },
+            score: { type: String, default: 0 },
             commentary: { type: String, default: "" },
             _id: false,
           },
@@ -48,10 +48,10 @@ const LeagueSchema = new mongoose.Schema({
         legsWon: { type: Number, default: 0 },
         throws: [
           {
-            dart1: { type: Number, default: 0 },
-            dart2: { type: Number, default: 0 },
-            dart3: { type: Number, default: 0 },
-            score: { type: Number, default: 0 },
+            dart1: { type: String, default: 0 },
+            dart2: { type: String, default: 0 },
+            dart3: { type: String, default: 0 },
+            score: { type: String, default: 0 },
             commentary: { type: String, default: "" },
             _id: false,
           },

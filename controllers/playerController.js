@@ -1,5 +1,6 @@
 const PlayerService = require("../services/playerService");
 const authService = require("../services/auth/authService");
+const Cosmetics = require("../models/Cosmetics");
 const jwt = require("jsonwebtoken");
 
 exports.getUserProfile = (req, res) => {
@@ -95,17 +96,30 @@ exports.changeGender = (req, res) => {
   });
 };
 
-exports.equipCosmetic = (req, res) => {
+exports.equipCosmetics = (req, res) => {
   authService.validateJwt(req, res, async () => {
-    const { cosmeticId } = req.body;
+    const { cosmeticIds } = req.body;
     const userId = req.userId;
     try {
-      const player = await PlayerService.equipCosmetic(userId, cosmeticId);
+      const player = await PlayerService.equipCosmetics(userId, cosmeticIds);
       res.json(player);
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
   });
+};
+
+exports.getAllCosmetics = (req, res) => {
+  try {
+    const cosmetics = PlayerService.getAllCosmetics();
+    return res.status(200).json({ success: true, cosmetics });
+  } catch (error) {
+    console.error("Error fetching cosmetics:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch cosmetics.",
+    });
+  }
 };
 
 exports.unlockAchievement = (req, res) => {
