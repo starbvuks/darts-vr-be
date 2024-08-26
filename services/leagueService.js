@@ -438,10 +438,16 @@ const LeagueService = {
 
       let playerStats;
 
-      if (matchup.player1Id.equals(playerId)) {
+      if (
+        matchup.player1Id.equals(playerId) &&
+        league.sets > matchup.player1Stats.setsWon
+      ) {
         matchup.player1Stats.setsWon += 1;
         playerStats = matchup.player1Stats;
-      } else if (matchup.player2Id.equals(playerId)) {
+      } else if (
+        matchup.player2Id.equals(playerId) &&
+        league.sets > matchup.player2Stats.setsWon
+      ) {
         matchup.player2Stats.setsWon += 1;
         playerStats = matchup.player2Stats;
       } else {
@@ -481,10 +487,16 @@ const LeagueService = {
 
       let playerStats;
 
-      if (matchup.player1Id.equals(playerId)) {
+      if (
+        matchup.player1Id.equals(playerId) &&
+        league.legs > matchup.player1Stats.legsWon
+      ) {
         matchup.player1Stats.legsWon += 1;
         playerStats = matchup.player1Stats;
-      } else if (matchup.player2Id.equals(playerId)) {
+      } else if (
+        matchup.player2Id.equals(playerId) &&
+        league.legs > matchup.player2Stats.legsWon
+      ) {
         matchup.player2Stats.legsWon += 1;
         playerStats = matchup.player2Stats;
       } else {
