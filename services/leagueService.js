@@ -545,7 +545,7 @@ const LeagueService = {
         };
       }
 
-      console.log(`Ending match ${matchId} with winner ${winnerId}`);
+      // console.log(`Ending match ${matchId} with winner ${winnerId}`);
       matchup.winnerId = winnerId;
       matchup.status = "completed";
 
@@ -612,7 +612,7 @@ const LeagueService = {
       });
 
       await league.save();
-      console.log(`Match ${matchId} ended successfully`);
+      // console.log(`Match ${matchId} ended successfully`);
 
       const nextMatchup = nextRoundMatchups.find(
         (m) => m.player1Id.equals(winnerId) || m.player2Id.equals(winnerId),
@@ -620,7 +620,7 @@ const LeagueService = {
 
       return {
         success: true,
-        nextMatchup,
+        league,
       };
     } catch (error) {
       console.error("Error ending match:", error);
