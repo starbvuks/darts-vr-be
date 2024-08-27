@@ -51,6 +51,10 @@ app.use("/", playerInfo);
 const gamemodes = require("./routes/gamemodes/gamemodeRoutes.js");
 app.use("/", gamemodes);
 
+// tournament
+const leaderboard = require("./routes/leaderboardRoutes.js");
+app.use("/api", leaderboard);
+
 app.post("/api/zombies", (req, res) => {
   zombiesController.joinOrCreateMatch(req, res, wss);
 });
@@ -125,7 +129,6 @@ app.post("/api/friends/block-player", (req, res) => {
 app.post("/api/friends/unblock-player", (req, res) => {
   friendsController.unblockPlayer(req, res, wss);
 });
-
 app.post("/api/friends/search", (req, res) => {
   friendsController.searchFriends(req, res, wss);
 });

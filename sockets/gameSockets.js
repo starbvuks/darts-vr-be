@@ -25,26 +25,32 @@ module.exports = {
   },
 
   handleMatchOverNotification: (players, message, wss) => {
+    const formattedMessage = JSON.stringify(message); // Convert message to string
+
     players.forEach((playerId) => {
       wss.clients.forEach((client) => {
         if (
           client.userId === playerId &&
           client.readyState === WebSocket.OPEN
         ) {
-          client.send(message);
+          client.send(formattedMessage); // Send the serialized message
+          console.log(`Sent match over message to player ${playerId}`);
         }
       });
     });
   },
 
   handleMatchReadyNotification: (players, message, wss) => {
+    const formattedMessage = JSON.stringify(message); // Convert message to string
+
     players.forEach((playerId) => {
       wss.clients.forEach((client) => {
         if (
           client.userId === playerId &&
           client.readyState === WebSocket.OPEN
         ) {
-          client.send(message);
+          client.send(formattedMessage); // Send the serialized message
+          console.log(`Sent match ready message to player ${playerId}`);
         }
       });
     });

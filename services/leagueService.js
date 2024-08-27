@@ -549,46 +549,63 @@ const LeagueService = {
       matchup.winnerId = winnerId;
       matchup.status = "completed";
 
-      const players = [matchup.player1Id, matchup.player2Id];
-      const message = JSON.stringify({
+      // Convert player IDs to strings
+      const players = [
+        matchup.player1Id.toString(),
+        matchup.player2Id.toString(),
+      ];
+
+      const matchOverMessage = {
         type: "match_over",
         gamemode: "league",
         leagueId: league.leagueId,
         matchId: matchId,
         players: players,
-      });
+        winnerId: winnerId.toString(),
+      };
 
-      gameWebSocketHandler.handleMatchOverNotification(players, message, wss);
+      // Send match over notification to both players in the current matchup
+      gameWebSocketHandler.handleMatchOverNotification(
+        players,
+        matchOverMessage,
+        wss,
+      );
 
+      // Handle the next round
       const nextRoundMatchups = league.matchups.filter((m) =>
         m.prevMatchIds.includes(matchup.matchId),
       );
 
       nextRoundMatchups.forEach((nextMatchup) => {
-        if (nextMatchup.player1Id === null) {
+        if (!nextMatchup.player1Id) {
           nextMatchup.player1Id = winnerId;
           nextMatchup.lastActivity.player1LastActivity = new Date();
-        } else if (nextMatchup.player2Id === null) {
+        } else if (!nextMatchup.player2Id) {
           nextMatchup.player2Id = winnerId;
           nextMatchup.lastActivity.player2LastActivity = new Date();
         }
 
+        // Check if the matchup is ready to start
         if (nextMatchup.player1Id && nextMatchup.player2Id) {
           nextMatchup.status = "ongoing";
-          players = [nextMatchup.player1Id, nextMatchup.player2Id];
+          const nextPlayers = [
+            nextMatchup.player1Id.toString(),
+            nextMatchup.player2Id.toString(),
+          ];
 
-          const message = JSON.stringify({
+          const matchReadyMessage = {
             type: "match_ready",
             gamemode: "league",
             leagueId: league.leagueId,
             matchId: nextMatchup.matchId,
-            players: players,
-            winner: winnerId,
-          });
+            players: nextPlayers,
+            winnerId: winnerId.toString(),
+          };
 
+          // Send match ready notification to both players in the next matchup
           gameWebSocketHandler.handleMatchReadyNotification(
-            players,
-            message,
+            nextPlayers,
+            matchReadyMessage,
             wss,
           );
         }

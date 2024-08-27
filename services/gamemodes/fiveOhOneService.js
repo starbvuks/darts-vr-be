@@ -132,6 +132,9 @@ const FiveOhOneService = {
       player.stats.totalDartsHit += playerStats.dartsHit; // Add to total darts hit
       player.stats.total180s += playerStats.oneEighty ? 1 : 0; // Increment total 180s if scored
       player.stats.totalBullseyes += playerStats.bullseye; // Add to total bullseyes
+      // 501 profile stats
+      player.stats.fiveOhOneStats.bullseyeHit += playerStats.bullseye;
+      player.stats.fiveOhOneStats.total180s += playerStats.oneEighty ? 1 : 0;
 
       await player.save(); // Save the updated player stats
       await match.save(); // Save the updated match stats
