@@ -57,13 +57,22 @@ module.exports = {
   },
 
   handleLeagueOverNotification: (players, message, wss) => {
+    const formattedMessage = JSON.stringify(message);
+    console.log("Sending message:", formattedMessage);
+
     players.forEach((playerId) => {
+      const playerIdString = playerId.toString(); // Ensure playerId is a string
+
       wss.clients.forEach((client) => {
+        console.log(
+          `Checking client: ${client.userId} against player: ${playerIdString}`,
+        );
         if (
-          client.userId === playerId &&
+          client.userId === playerIdString && // Compare as strings
           client.readyState === WebSocket.OPEN
         ) {
-          client.send(message);
+          client.send(formattedMessage); // Send the serialized message
+          console.log(`Sent match over message to player ${playerIdString}`);
         }
       });
     });

@@ -677,28 +677,38 @@ const LeagueService = {
   },
 
   endLeague: async (leagueId, leagueWinnerId, wss) => {
-    const league = await League.findOne({ leagueId });
-    if (!league) {
-      return Error({ success: false, message: "League not found." });
+    try {
+      const league = await League.findOne({ leagueId });
+      if (!league) {
+        console.log("League not found");
+        return { success: false, message: "League not found." };
+      }
+
+      league.status = "completed";
+      league.winnerId = leagueWinnerId;
+
+      const players = league.players.map((playerId) => playerId.toString());
+      console.log("Players to notify:", players);
+
+      const message = {
+        type: "match_over",
+        gamemode: "league",
+        leagueId: league.leagueId,
+        winner: leagueWinnerId,
+        players,
+      };
+
+      console.log("Sending match over notification with message:", message);
+      gameWebSocketHandler.handleLeagueOverNotification(players, message, wss);
+
+      await league.save();
+      console.log("League updated and saved successfully.");
+
+      return { success: true, league }; // Return league data
+    } catch (error) {
+      console.error("Error ending league:", error);
+      return { success: false, message: "Failed to end league." };
     }
-
-    league.status = "completed";
-    league.winnerId = leagueWinnerId;
-
-    const players = league.players;
-    const message = JSON.stringify({
-      type: "match_over",
-      gamemode: "league",
-      leagueId: league.leagueId,
-      winner: leagueWinnerId,
-      players,
-    });
-
-    gameWebSocketHandler.handleMatchOverNotification(players, message, wss);
-
-    await league.save();
-
-    return { success: true };
   },
 
   getLeague: async (leagueId) => {
