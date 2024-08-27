@@ -558,6 +558,8 @@ const LeagueService = {
       const matchOverMessage = {
         type: "match_over",
         gamemode: "league",
+        matchRound: matchup.round,
+        totalRounds: league.totalRounds,
         leagueId: league.leagueId,
         matchId: matchId,
         players: players,
