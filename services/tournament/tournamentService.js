@@ -131,7 +131,9 @@ const TournamentService = {
   },
 
   listActiveTournaments: async () => {
-    return await Tournament.find({ status: { $in: ["scheduled", "open"] } });
+    return await Tournament.find({
+      status: { $in: ["scheduled", "open"] },
+    }).sort({ startDate: -1 }); // Sort by startDate in descending order
   },
 
   deleteTournament: async (tournamentId) => {
