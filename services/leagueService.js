@@ -502,7 +502,6 @@ const LeagueService = {
       playerStats.legsWon += 1;
 
       if (playerStats.legsWon >= league.legs) {
-        playerStats.setsWon += 1;
         playerStats.legsWon = 0; // Reset legs won for the next set
         opponentStats.legsWon = 0; // Reset opponent's legs won for the next set
 
