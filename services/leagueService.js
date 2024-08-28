@@ -483,36 +483,43 @@ const LeagueService = {
         return { success: false, message: "Matchup not found." };
       }
 
-      let playerStats;
+      let playerStats, opponentStats;
 
-      if (
-        matchup.player1Id.equals(playerId) &&
-        league.legs > matchup.player1Stats.legsWon
-      ) {
-        matchup.player1Stats.legsWon += 1;
+      if (matchup.player1Id.equals(playerId)) {
         playerStats = matchup.player1Stats;
-      } else if (
-        matchup.player2Id.equals(playerId) &&
-        league.legs > matchup.player2Stats.legsWon
-      ) {
-        matchup.player2Stats.legsWon += 1;
+        opponentStats = matchup.player2Stats;
+      } else if (matchup.player2Id.equals(playerId)) {
         playerStats = matchup.player2Stats;
+        opponentStats = matchup.player1Stats;
       } else {
         return { success: false, message: "Player not part of this matchup." };
       }
 
-      const playerSetsWon = playerStats.setsWon;
-      const playerLegsWon = playerStats.legsWon;
-      const leagueSets = league.sets;
-      const leagueLegs = league.legs;
+      if (playerStats.legsWon >= league.legs) {
+        return { success: false, message: "Cannot win more legs in this set." };
+      }
+
+      playerStats.legsWon += 1;
+
+      if (playerStats.legsWon >= league.legs) {
+        playerStats.setsWon += 1;
+        playerStats.legsWon = 0; // Reset legs won for the next set
+        opponentStats.legsWon = 0; // Reset opponent's legs won for the next set
+
+        if (playerStats.setsWon >= league.sets) {
+          matchup.winnerId = playerId;
+          matchup.status = "completed";
+        }
+      }
 
       await league.save();
+
       return {
         success: true,
-        playerSetsWon,
-        playerLegsWon,
-        leagueSets,
-        leagueLegs,
+        playerSetsWon: playerStats.setsWon,
+        playerLegsWon: playerStats.legsWon,
+        leagueSets: league.sets,
+        leagueLegs: league.legs,
       };
     } catch (error) {
       console.error("Error updating legs won:", error);
