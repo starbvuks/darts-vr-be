@@ -691,7 +691,7 @@ const LeagueService = {
       console.log("Players to notify:", players);
 
       const message = {
-        type: "match_over",
+        type: "league_over",
         gamemode: "league",
         leagueId: league.leagueId,
         winner: leagueWinnerId,
