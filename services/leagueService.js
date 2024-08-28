@@ -422,7 +422,7 @@ const LeagueService = {
     }
   },
 
-  playerWonSet: async (leagueId, matchId, playerId) => {
+  playerWonLeg: async (leagueId, matchId, playerId) => {
     try {
       const league = await League.findOne({ leagueId });
       if (!league) {
@@ -436,42 +436,41 @@ const LeagueService = {
 
       let playerStats;
 
-      if (
-        matchup.player1Id.equals(playerId) &&
-        league.sets > matchup.player1Stats.setsWon
-      ) {
-        matchup.player1Stats.setsWon += 1;
+      if (matchup.player1Id.equals(playerId)) {
         playerStats = matchup.player1Stats;
-      } else if (
-        matchup.player2Id.equals(playerId) &&
-        league.sets > matchup.player2Stats.setsWon
-      ) {
-        matchup.player2Stats.setsWon += 1;
+      } else if (matchup.player2Id.equals(playerId)) {
         playerStats = matchup.player2Stats;
       } else {
         return { success: false, message: "Player not part of this matchup." };
       }
 
-      const playerSetsWon = playerStats.setsWon;
-      const playerLegsWon = playerStats.legsWon;
-      const leagueSets = league.sets;
-      const leagueLegs = league.legs;
+      // Ensure that legs won do not exceed the maximum allowed
+      if (playerStats.legsWon >= league.legs) {
+        return {
+          success: false,
+          message:
+            "Player has already won the maximum number of legs for this set.",
+        };
+      }
+
+      playerStats.legsWon += 1;
 
       await league.save();
+
       return {
         success: true,
-        playerSetsWon,
-        playerLegsWon,
-        leagueSets,
-        leagueLegs,
+        playerLegsWon: playerStats.legsWon,
+        leagueLegs: league.legs,
+        playerSetsWon: playerStats.setsWon,
+        leagueSets: league.sets,
       };
     } catch (error) {
-      console.error("Error updating sets won:", error);
-      return { success: false, message: "Failed to update sets won." };
+      console.error("Error updating legs won:", error);
+      return { success: false, message: "Failed to update legs won." };
     }
   },
 
-  playerWonLeg: async (leagueId, matchId, playerId) => {
+  playerWonSet: async (leagueId, matchId, playerId) => {
     try {
       const league = await League.findOne({ leagueId });
       if (!league) {
@@ -495,34 +494,34 @@ const LeagueService = {
         return { success: false, message: "Player not part of this matchup." };
       }
 
-      if (playerStats.legsWon >= league.legs) {
-        return { success: false, message: "Cannot win more legs in this set." };
+      // Ensure that sets won do not exceed the maximum allowed
+      if (playerStats.setsWon >= league.sets) {
+        return {
+          success: false,
+          message:
+            "Player has already won the maximum number of sets for this league.",
+        };
       }
 
-      playerStats.legsWon += 1;
+      // Increment the set count for the player
+      playerStats.setsWon += 1;
 
-      if (playerStats.legsWon >= league.legs) {
-        playerStats.legsWon = 0; // Reset legs won for the next set
-        opponentStats.legsWon = 0; // Reset opponent's legs won for the next set
-
-        if (playerStats.setsWon >= league.sets) {
-          matchup.winnerId = playerId;
-          matchup.status = "completed";
-        }
-      }
+      // Reset legs for both players
+      playerStats.legsWon = 0;
+      opponentStats.legsWon = 0;
 
       await league.save();
 
       return {
         success: true,
-        playerSetsWon: playerStats.setsWon,
         playerLegsWon: playerStats.legsWon,
-        leagueSets: league.sets,
         leagueLegs: league.legs,
+        playerSetsWon: playerStats.setsWon,
+        leagueSets: league.sets,
       };
     } catch (error) {
-      console.error("Error updating legs won:", error);
-      return { success: false, message: "Failed to update legs won." };
+      console.error("Error updating sets won:", error);
+      return { success: false, message: "Failed to update sets won." };
     }
   },
 
