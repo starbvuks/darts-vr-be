@@ -3,6 +3,7 @@ const RedisService = require("./redisService");
 const Zombies = require("../models/Game/Zombies");
 const Killstreak = require("../models/Game/Killstreak");
 const FiveOhOne = require("../models/Game/FiveOhOne");
+const Player = require("../models/Player");
 const gameSockets = require("../sockets/gameSockets");
 
 const MatchmakingService = {
@@ -184,16 +185,32 @@ const MatchmakingService = {
           numPlayers,
         );
 
+        // Fetch the usernames of the players
+        const players = await Player.find({ _id: { $in: playerIdsToMatch } });
+
+        // Map playerIds to their respective usernames, defaulting to "player1", "player2", etc. if no username is found
+        const playerData = playerIdsToMatch.map((playerId, index) => {
+          const player = players.find((p) => p._id.equals(playerId));
+          return {
+            id: playerId,
+            username: player ? player.username : `player${index + 1}`,
+          };
+        });
+
         // Create a new match
         const newMatch = new FiveOhOne({
           matchId: uuidv4(),
           matchType: `multiplayer`,
           status: "ongoing",
           numPlayers: numPlayers,
-          player1Id: playerIdsToMatch[0],
-          player2Id: numPlayers > 1 ? playerIdsToMatch[1] : null,
-          player3Id: numPlayers > 2 ? playerIdsToMatch[2] : null,
-          player4Id: numPlayers > 3 ? playerIdsToMatch[3] : null,
+          player1Id: playerData[0].id,
+          player2Id: numPlayers > 1 ? playerData[1].id : null,
+          player3Id: numPlayers > 2 ? playerData[2].id : null,
+          player4Id: numPlayers > 3 ? playerData[3].id : null,
+          player1Username: playerData[0].username,
+          player2Username: numPlayers > 1 ? playerData[1].username : null,
+          player3Username: numPlayers > 2 ? playerData[2].username : null,
+          player4Username: numPlayers > 3 ? playerData[3].username : null,
           player1Stats: {
             bullseyes: 0,
             oneEighties: 0,
@@ -241,7 +258,7 @@ const MatchmakingService = {
         const message = JSON.stringify({
           matchType: `${gameType}`,
           matchId: newMatch.matchId,
-          players: playerIdsToMatch,
+          players: playerData.map((p) => p.id),
           numPlayers: numPlayers,
         });
         await RedisService.publishMatchCreated(

@@ -6,11 +6,15 @@ const mongoose = require("mongoose");
 const FiveOhOneService = {
   createPrivateMatch: async (creatorId) => {
     try {
+      const creator = await Player.findById(creatorId); // Get creator's username
+      const creatorUsername = creator ? creator.username : "player1";
+
       const newMatch = new FiveOhOne({
         matchId: uuidv4(),
         matchType: "private",
         status: "open",
         player1Id: creatorId,
+        player1Username: creatorUsername, // Set creator's username
         player2Id: null,
         player3Id: null,
         player4Id: null,
@@ -35,6 +39,9 @@ const FiveOhOneService = {
         return { success: false, message: "Match not found or is not open." };
       }
 
+      const player = await Player.findById(playerId); // Get player's username
+      const playerUsername = player ? player.username : null;
+
       // Check how many players are already in the match
       const currentPlayers = [
         match.player1Id,
@@ -51,13 +58,16 @@ const FiveOhOneService = {
         };
       }
 
-      // Assign the player to the next available slot
+      // Assign the player to the next available slot and set the username
       if (!match.player2Id) {
         match.player2Id = playerId;
+        match.player2Username = playerUsername || "player2";
       } else if (!match.player3Id) {
         match.player3Id = playerId;
+        match.player3Username = playerUsername || "player3";
       } else if (!match.player4Id) {
         match.player4Id = playerId;
+        match.player4Username = playerUsername || "player4";
       }
 
       await match.save();
