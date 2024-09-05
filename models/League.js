@@ -15,9 +15,17 @@ const LeagueSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Player",
       },
+      player1Username: {
+        type: String,
+        default: null,
+      },
       player2Id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Player",
+        type: String,
+        default: 0,
+      },
+      player2Username: {
+        type: String,
+        default: null,
       },
       player1Stats: {
         dartsThrown: { type: Number, default: 0 },

@@ -7,6 +7,8 @@ const http = require("http");
 const { WebSocketServer } = require("ws");
 const url = require("url");
 
+const PnEmail = require("./models/PnEmail");
+
 const friendsController = require("./controllers/friendsController");
 const zombiesController = require("./controllers/gamemodes/zombiesController");
 const killstreakController = require("./controllers/gamemodes/killstreakController");
@@ -183,6 +185,28 @@ app.post("/demo-login", (req, res) => {
     res.json({ token });
   } else {
     res.status(401).send({ message: "Invalid user ID" });
+  }
+});
+
+app.post("/pn-email", async (req, res) => {
+  const { email, firstName } = req.body;
+
+  try {
+    const newEmailEntry = new PnEmail({ email, firstName });
+
+    await newEmailEntry.save();
+
+    return res
+      .status(201)
+      .json({ success: true, message: "Email added successfully." });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email already exists." });
+    }
+    console.error("Error adding email:", error);
+    return res.status(500).json({ success: false, message: "Server error." });
   }
 });
 

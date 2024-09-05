@@ -150,7 +150,6 @@ const LeagueService = {
       const players = league.players;
       const matchups = [];
 
-      // Check if matchups for the current round already exist
       const existingMatchups = league.matchups.filter(
         (matchup) => matchup.round === league.currentRound,
       );
@@ -169,11 +168,17 @@ const LeagueService = {
       for (let i = 0; i < players.length; i += 2) {
         if (i + 1 < players.length) {
           const matchId = uuidv4();
+
+          const player1 = await Player.findById(players[i]);
+          const player2 = await Player.findById(players[i + 1]);
+
           const matchup = {
             matchId: matchId,
             round: league.currentRound,
             player1Id: players[i],
+            player1Username: player1 ? player1.username : "Player 1",
             player2Id: players[i + 1],
+            player2Username: player2 ? player2.username : "Player 2",
             player1Stats: {
               dartsThrown: 0,
               dartsHit: 0,
@@ -227,7 +232,7 @@ const LeagueService = {
 
         for (let i = 0; i < previousRoundMatchups.length; i += 2) {
           if (i + 1 < previousRoundMatchups.length) {
-            const matchId = uuidv4(); // Generate a unique match ID
+            const matchId = uuidv4();
             const prevMatchIds = [
               previousRoundMatchups[i].matchId,
               previousRoundMatchups[i + 1].matchId,
@@ -237,7 +242,9 @@ const LeagueService = {
               matchId,
               round,
               player1Id: null,
+              player1Username: null,
               player2Id: null,
+              player2Username: null,
               winnerId: null,
               status: "ongoing",
               createdAt: new Date(),
@@ -550,11 +557,9 @@ const LeagueService = {
         };
       }
 
-      // console.log(`Ending match ${matchId} with winner ${winnerId}`);
       matchup.winnerId = winnerId;
       matchup.status = "completed";
 
-      // Convert player IDs to strings
       const players = [
         matchup.player1Id.toString(),
         matchup.player2Id.toString(),
@@ -571,28 +576,29 @@ const LeagueService = {
         winnerId: winnerId.toString(),
       };
 
-      // Send match over notification to both players in the current matchup
       gameWebSocketHandler.handleMatchOverNotification(
         players,
         matchOverMessage,
         wss,
       );
 
-      // Handle the next round
       const nextRoundMatchups = league.matchups.filter((m) =>
         m.prevMatchIds.includes(matchup.matchId),
       );
 
-      nextRoundMatchups.forEach((nextMatchup) => {
+      for (const nextMatchup of nextRoundMatchups) {
         if (!nextMatchup.player1Id) {
+          const player = await Player.findById(winnerId);
           nextMatchup.player1Id = winnerId;
+          nextMatchup.player1Username = player ? player.username : "Player 1";
           nextMatchup.lastActivity.player1LastActivity = new Date();
         } else if (!nextMatchup.player2Id) {
+          const player = await Player.findById(winnerId);
           nextMatchup.player2Id = winnerId;
+          nextMatchup.player2Username = player ? player.username : "Player 2";
           nextMatchup.lastActivity.player2LastActivity = new Date();
         }
 
-        // Check if the matchup is ready to start
         if (nextMatchup.player1Id && nextMatchup.player2Id) {
           nextMatchup.status = "ongoing";
           const nextPlayers = [
@@ -609,22 +615,15 @@ const LeagueService = {
             winnerId: winnerId.toString(),
           };
 
-          // Send match ready notification to both players in the next matchup
           gameWebSocketHandler.handleMatchReadyNotification(
             nextPlayers,
             matchReadyMessage,
             wss,
           );
         }
-      });
+      }
 
       await league.save();
-      // console.log(`Match ${matchId} ended successfully`);
-
-      const nextMatchup = nextRoundMatchups.find(
-        (m) => m.player1Id.equals(winnerId) || m.player2Id.equals(winnerId),
-      );
-
       return {
         success: true,
         league,
