@@ -10,9 +10,8 @@ const FiveOneOneController = {
       authService.validateJwt(req, res, async () => {
         // Check if the request is for a solo match
         if (numPlayers === 1) {
-          const soloMatch = await MatchmakingService.createSoloMatchFiveOhOne(
-            playerId
-          );
+          const soloMatch =
+            await MatchmakingService.createSoloMatchFiveOhOne(playerId);
           if (soloMatch instanceof Error) {
             return res.status(400).json({ message: soloMatch.message });
           }
@@ -23,7 +22,7 @@ const FiveOneOneController = {
             "501",
             playerId,
             numPlayers,
-            wss
+            wss,
           );
           if (match instanceof Error) {
             return res.status(400).json({ message: match.message });
@@ -66,7 +65,7 @@ const FiveOneOneController = {
           friendId,
           playerId,
           matchId,
-          wss
+          wss,
         );
         res.status(200).json({ message: "Invitation sent" });
       });
@@ -81,7 +80,7 @@ const FiveOneOneController = {
       authService.validateJwt(req, res, async () => {
         const result = await FiveOhOneService.joinPrivateMatch(
           matchId,
-          playerId
+          playerId,
         );
         if (!result.success) {
           return res.status(400).json({ message: result.message });
@@ -115,7 +114,7 @@ const FiveOneOneController = {
     const result = await FiveOhOneService.updateMatchStats(
       matchId,
       playerId,
-      playerStats
+      playerStats,
     );
     if (!result.success) {
       return res.status(400).json({ message: result.message });
@@ -167,11 +166,20 @@ const FiveOneOneController = {
 
     try {
       authService.validateJwt(req, res, async () => {
-        const result = await FiveOhOneService.updateLastTurn(matchId, playerId, dart1, dart2, dart3);
+        const result = await FiveOhOneService.updateLastTurn(
+          matchId,
+          playerId,
+          dart1,
+          dart2,
+          dart3,
+        );
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }
-        return res.status(200).json({ message: "Last turn updated successfully", lastTurn: result.lastTurn });
+        return res.status(200).json({
+          message: "Last turn updated successfully",
+          lastTurn: result.lastTurn,
+        });
       });
     } catch (error) {
       console.error("Error updating last turn:", error);
@@ -179,10 +187,9 @@ const FiveOneOneController = {
     }
   },
 
-
   getLastTurn: async (req, res) => {
     const { matchId, playerId } = req.query;
-  
+
     try {
       authService.validateJwt(req, res, async () => {
         const result = await FiveOhOneService.getLastTurn(matchId, playerId);
@@ -201,7 +208,11 @@ const FiveOneOneController = {
     try {
       const { gameType, numPlayers, playerId } = req.body; // Expecting gameType and playerId in the request body
       authService.validateJwt(req, res, async () => {
-        const result = await MatchmakingService.removePlayerFromQueue(gameType, numPlayers, playerId);
+        const result = await MatchmakingService.removePlayerFromQueue(
+          gameType,
+          numPlayers,
+          playerId,
+        );
         if (!result.success) {
           return res.status(400).json({ message: result.message });
         }
@@ -210,6 +221,29 @@ const FiveOneOneController = {
     } catch (error) {
       console.error("Error removing player from queue:", error);
       res.status(500).json({ message: "Internal server error." });
+    }
+  },
+
+  async getCommentaryStats(req, res) {
+    try {
+      const { matchId } = req.query;
+
+      // Fetch commentary stats from the service
+      const commentaryStats =
+        await FiveOhOneService.getCommentaryStats(matchId);
+
+      if (commentaryStats.success) {
+        return res.status(200).json(commentaryStats.commentaryStats); // Directly return the array
+      } else {
+        return res
+          .status(404)
+          .json({ success: false, message: commentaryStats.message });
+      }
+    } catch (error) {
+      console.error("Error fetching commentary stats:", error);
+      return res
+        .status(500)
+        .json({ success: false, message: "Internal server error." });
     }
   },
 };

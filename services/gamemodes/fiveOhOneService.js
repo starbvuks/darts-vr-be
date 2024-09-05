@@ -297,6 +297,89 @@ const FiveOhOneService = {
       res.status(500).json({ message: "Error fetching last turn", error });
     }
   },
+
+  getCommentaryStats: async (matchId) => {
+    try {
+      // Find the match by matchId
+      const match = await FiveOhOne.findOne({ matchId });
+
+      if (!match) {
+        console.error("Match not found:", matchId);
+        return { success: false, message: "Match not found." };
+      }
+
+      // Get player IDs and usernames from the match
+      const playersInfo = [
+        {
+          playerId: match.player1Id,
+          playerUsername: match.player1Username || "Player1",
+        },
+        {
+          playerId: match.player2Id,
+          playerUsername: match.player2Username || "Player2",
+        },
+        {
+          playerId: match.player3Id,
+          playerUsername: match.player3Username || "Player3",
+        },
+        {
+          playerId: match.player4Id,
+          playerUsername: match.player4Username || "Player4",
+        },
+      ].filter((player) => player.playerId); // Filter out null player IDs
+
+      // Fetch player data from the Player collection
+      const playerIds = playersInfo.map((p) => p.playerId);
+      const playerData = await Player.find({ _id: { $in: playerIds } });
+
+      // Prepare commentary stats for each player
+      const commentaryStats = playersInfo.map((playerInfo) => {
+        const player = playerData.find((p) =>
+          p._id.equals(playerInfo.playerId),
+        );
+
+        // If player is found in Player collection, calculate their rating
+        if (player) {
+          const totalMatches = player.stats.totalMatchesPlayed || 0;
+          const totalWins = player.stats.totalWins || 0;
+          const rating =
+            totalMatches > 0 ? (totalWins / totalMatches).toFixed(2) : 0;
+
+          // Find the player's throws in the match
+          let playerThrows = [];
+          if (match.player1Id.equals(player._id)) {
+            playerThrows = match.player1Stats.throws || [];
+          } else if (match.player2Id && match.player2Id.equals(player._id)) {
+            playerThrows = match.player2Stats.throws || [];
+          } else if (match.player3Id && match.player3Id.equals(player._id)) {
+            playerThrows = match.player3Stats.throws || [];
+          } else if (match.player4Id && match.player4Id.equals(player._id)) {
+            playerThrows = match.player4Stats.throws || [];
+          }
+
+          return {
+            playerId: player._id,
+            playerUsername: player.username || playerInfo.playerUsername,
+            rating: parseFloat(rating),
+            throws: playerThrows,
+          };
+        }
+
+        // If player not found in Player collection, return basic info
+        return {
+          playerId: playerInfo.playerId,
+          playerUsername: playerInfo.playerUsername,
+          rating: 0,
+          throws: [],
+        };
+      });
+
+      return { success: true, commentaryStats };
+    } catch (error) {
+      console.error("Error fetching commentary stats:", error);
+      return { success: false, message: "Failed to fetch commentary stats." };
+    }
+  },
 };
 
 module.exports = FiveOhOneService;
