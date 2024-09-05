@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 // 501 Model
 const FiveOhOneSchema = new mongoose.Schema({
   matchId: { type: String, unique: true },
-  gamemode: { type: String, default: "501" },  
+  gamemode: { type: String, default: "501" },
   matchType: {
     type: String,
     enum: ["solo", "multiplayer", "private"],
@@ -16,6 +16,23 @@ const FiveOhOneSchema = new mongoose.Schema({
   player2Id: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
   player3Id: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
   player4Id: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
+
+  player1Username: {
+    type: String,
+    default: null,
+  },
+  player2Username: {
+    type: String,
+    default: null,
+  },
+  player3Username: {
+    type: String,
+    default: null,
+  },
+  player4Username: {
+    type: String,
+    default: null,
+  },
 
   player1Stats: {
     bullseyes: { type: Number, min: 0 },
