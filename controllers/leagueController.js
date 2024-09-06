@@ -265,21 +265,22 @@ const LeagueController = {
     try {
       const { leagueId, matchId } = req.query;
 
-      // Fetch the commentary stats for the matchup in the league
-      const commentaryStats =
-        await LeagueService.getCommentaryStatsForLeagueMatchup(
-          leagueId,
-          matchId,
-        );
+      // Call the service function to get commentary stats for the league matchup
+      const result = await LeagueService.getCommentaryStatsForLeagueMatchup(
+        leagueId,
+        matchId,
+      );
 
-      if (!commentaryStats.success) {
+      if (!result.success) {
         return res
-          .status(404)
-          .json({ success: false, message: commentaryStats.message });
+          .status(400)
+          .json({ success: false, message: result.message });
       }
 
-      // Send the array directly as a response
-      return res.status(200).json(commentaryStats.commentaryStats);
+      // Return the result in the proper format
+      return res.status(200).json({
+        players: result.players, // Return the 'players' array as expected
+      });
     } catch (error) {
       console.error(
         "Error fetching commentary stats for league matchup:",

@@ -792,7 +792,7 @@ const LeagueService = {
       const playerData = await Player.find({ _id: { $in: playerIds } });
 
       // Map through players and construct commentary stats
-      const commentaryStats = playerData.map((player) => {
+      const players = playerData.map((player) => {
         // Calculate win ratio
         const totalMatches = player.stats.totalMatchesPlayed || 0;
         const totalWins = player.stats.totalWins || 0;
@@ -829,7 +829,7 @@ const LeagueService = {
         };
       });
 
-      return { success: true, commentaryStats };
+      return { success: true, players }; // Return the array under 'players'
     } catch (error) {
       console.error(
         "Error fetching commentary stats for league matchup:",
