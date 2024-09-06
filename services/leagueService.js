@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require("uuid");
 const cron = require("node-cron");
+const mongoose = require("mongoose");
 
 const Player = require("../models/Player");
 const League = require("../models/League");
@@ -758,6 +759,83 @@ const LeagueService = {
       return { success: true, matchup };
     } catch (error) {
       return { success: false, message: "Failed to retrieve match.", error };
+    }
+  },
+
+  getCommentaryStatsForLeagueMatchup: async (leagueId, matchId) => {
+    try {
+      const league = await League.findOne({ leagueId });
+
+      if (!league) {
+        throw new Error("League not found");
+      }
+
+      const matchup = league.matchups.find((m) => m.matchId === matchId);
+
+      if (!matchup) {
+        throw new Error("Matchup not found");
+      }
+
+      // Convert player1Id and player2Id to ObjectId if they are not already
+      const player1Id =
+        typeof matchup.player1Id === "string"
+          ? new mongoose.Types.ObjectId(matchup.player1Id)
+          : matchup.player1Id;
+      const player2Id =
+        typeof matchup.player2Id === "string"
+          ? new mongoose.Types.ObjectId(matchup.player2Id)
+          : matchup.player2Id;
+
+      const playerIds = [player1Id, player2Id].filter(Boolean); // Filter out any null/undefined player IDs
+
+      // Fetch player data for player1 and player2
+      const playerData = await Player.find({ _id: { $in: playerIds } });
+
+      // Map through players and construct commentary stats
+      const commentaryStats = playerData.map((player) => {
+        // Calculate win ratio
+        const totalMatches = player.stats.totalMatchesPlayed || 0;
+        const totalWins = player.stats.totalWins || 0;
+        const rating =
+          totalMatches > 0 ? (totalWins / totalMatches).toFixed(2) : 0;
+
+        // Find the last throw for this player in the match
+        let lastThrow = [];
+        if (player1Id.equals(player._id)) {
+          lastThrow =
+            matchup.player1Stats.throws.length > 0
+              ? [
+                  matchup.player1Stats.throws[
+                    matchup.player1Stats.throws.length - 1
+                  ],
+                ]
+              : [];
+        } else if (player2Id && player2Id.equals(player._id)) {
+          lastThrow =
+            matchup.player2Stats.throws.length > 0
+              ? [
+                  matchup.player2Stats.throws[
+                    matchup.player2Stats.throws.length - 1
+                  ],
+                ]
+              : [];
+        }
+
+        return {
+          playerId: player._id,
+          playerUsername: player.username || "Player",
+          rating: parseFloat(rating), // Win ratio as rating
+          throws: lastThrow, // Only the last throw
+        };
+      });
+
+      return { success: true, commentaryStats };
+    } catch (error) {
+      console.error(
+        "Error fetching commentary stats for league matchup:",
+        error,
+      );
+      return { success: false, message: "Failed to fetch commentary stats." };
     }
   },
 };

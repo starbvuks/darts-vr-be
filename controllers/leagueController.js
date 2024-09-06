@@ -260,6 +260,36 @@ const LeagueController = {
       res.status(500).json({ message: "Error getting Matchup" });
     }
   },
+
+  getCommentaryStatsForLeagueMatchup: async (req, res) => {
+    try {
+      const { leagueId, matchId } = req.query;
+
+      // Fetch the commentary stats for the matchup in the league
+      const commentaryStats =
+        await LeagueService.getCommentaryStatsForLeagueMatchup(
+          leagueId,
+          matchId,
+        );
+
+      if (!commentaryStats.success) {
+        return res
+          .status(404)
+          .json({ success: false, message: commentaryStats.message });
+      }
+
+      // Send the array directly as a response
+      return res.status(200).json(commentaryStats.commentaryStats);
+    } catch (error) {
+      console.error(
+        "Error fetching commentary stats for league matchup:",
+        error,
+      );
+      return res
+        .status(500)
+        .json({ success: false, message: "Internal server error." });
+    }
+  },
 };
 
 module.exports = LeagueController;
