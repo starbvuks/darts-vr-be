@@ -333,7 +333,7 @@ const FiveOhOneService = {
       const playerData = await Player.find({ _id: { $in: playerIds } });
 
       // Prepare commentary stats for each player
-      const commentaryStats = playersInfo.map((playerInfo) => {
+      const players = playersInfo.map((playerInfo) => {
         const player = playerData.find((p) =>
           p._id.equals(playerInfo.playerId),
         );
@@ -374,7 +374,7 @@ const FiveOhOneService = {
         };
       });
 
-      return { success: true, commentaryStats };
+      return { success: true, players }; // Return the 'players' array
     } catch (error) {
       console.error("Error fetching commentary stats:", error);
       return { success: false, message: "Failed to fetch commentary stats." };

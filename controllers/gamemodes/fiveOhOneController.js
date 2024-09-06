@@ -224,21 +224,25 @@ const FiveOneOneController = {
     }
   },
 
-  async getCommentaryStats(req, res) {
+  getCommentaryStats: async (req, res) => {
     try {
-      const { matchId } = req.query;
+      // First, validate JWT
+      authService.validateJwt(req, res, async () => {
+        const { matchId } = req.query;
 
-      // Fetch commentary stats from the service
-      const commentaryStats =
-        await FiveOhOneService.getCommentaryStats(matchId);
+        // Call the service to fetch commentary stats
+        const result = await FiveOhOneService.getCommentaryStats(matchId);
 
-      if (commentaryStats.success) {
-        return res.status(200).json(commentaryStats.commentaryStats); // Directly return the array
-      } else {
-        return res
-          .status(404)
-          .json({ success: false, message: commentaryStats.message });
-      }
+        // Handle errors or success
+        if (!result.success) {
+          return res
+            .status(404)
+            .json({ success: false, message: result.message });
+        }
+
+        // Return the players array as requested
+        return res.status(200).json({ players: result.players });
+      });
     } catch (error) {
       console.error("Error fetching commentary stats:", error);
       return res
