@@ -88,23 +88,23 @@ class PlayerService {
       // Equip the new cosmetic based on its type
       switch (cosmetic.type) {
         case "hat":
-          player.profile.cosmetics.hat.hatId = cosmetic._id;
+          player.profile.cosmetics.hat.hatId = cosmetic.cosmeticId;
           player.profile.cosmetics.hat.hatName = cosmetic.name;
           break;
         case "hands":
-          player.profile.cosmetics.hands.handsId = cosmetic._id;
+          player.profile.cosmetics.hands.handsId = cosmetic.cosmeticId;
           player.profile.cosmetics.hands.handsName = cosmetic.name;
           break;
         case "dartSkin":
-          player.profile.cosmetics.dartSkin.dartSkinId = cosmetic._id;
+          player.profile.cosmetics.dartSkin.dartSkinId = cosmetic.cosmeticId;
           player.profile.cosmetics.dartSkin.dartSkinName = cosmetic.name;
           break;
         case "accessories":
-          player.profile.cosmetics.glasses.glassesId = cosmetic._id;
+          player.profile.cosmetics.glasses.glassesId = cosmetic.cosmeticId;
           player.profile.cosmetics.glasses.glassesName = cosmetic.name;
           break;
         case "face":
-          player.profile.cosmetics.gender.genderId = cosmetic._id;
+          player.profile.cosmetics.gender.genderId = cosmetic.cosmeticId;
           player.profile.cosmetics.gender.genderName = cosmetic.name;
           break;
         default:

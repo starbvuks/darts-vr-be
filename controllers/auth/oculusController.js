@@ -31,20 +31,20 @@ exports.validateOculusSession = async (req, res) => {
             ],
             profile: {
               cosmetics: {
-                hat: {
-                  hatId: "667cfdf66b5fa5683c6eae99",
+                head: {
+                  cosmeticId: "5fca99d1-a5fb-44c3-87e4-dfa3cd7b0817",
                 },
                 hands: {
-                  handsId: "667cfdf66b5fa5683c6eae9a",
+                  cosmeticId: "f571dcf2-5a29-41c0-982e-ea286cf0f201",
                 },
                 dartSkin: {
-                  dartSkinId: "667cfdf66b5fa5683c6eae9b",
+                  cosmeticId: "3621738c-2bf3-45bf-8270-6463769c25e7",
                 },
-                glasses: {
-                  glassesId: "667cfdf66b5fa5683c6eae9c",
+                accesory: {
+                  cosmeticId: "e916fe6f-a0ab-42ca-96bb-d7e13af9ce6a",
                 },
-                gender: {
-                  genderId: "667cfdf66b5fa5683c6eae9d",
+                face: {
+                  cosmeticId: "e35ffbc7-e3a6-413f-aac9-14f180963cef",
                 },
               },
             },

@@ -97,20 +97,20 @@ const playerSchema = new mongoose.Schema({
       },
     ],
     cosmetics: {
-      hat: {
-        hatId: mongoose.Schema.Types.ObjectId,
+      head: {
+        cosmeticId: String,
       },
       hands: {
-        handsId: mongoose.Schema.Types.ObjectId,
+        cosmeticId: String,
       },
       dartSkin: {
-        dartSkinId: mongoose.Schema.Types.ObjectId,
+        cosmeticId: String,
       },
-      glasses: {
-        glassesId: mongoose.Schema.Types.ObjectId,
+      accesory: {
+        cosmeticId: String,
       },
-      gender: {
-        genderId: mongoose.Schema.Types.ObjectId,
+      face: {
+        cosmeticId: String,
       },
     },
   },
