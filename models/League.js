@@ -20,8 +20,8 @@ const LeagueSchema = new mongoose.Schema({
         default: null,
       },
       player2Id: {
-        type: String,
-        default: 0,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Player",
       },
       player2Username: {
         type: String,
