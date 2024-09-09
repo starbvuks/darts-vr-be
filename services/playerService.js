@@ -79,7 +79,7 @@ class PlayerService {
     }
 
     for (const cosmeticId of cosmeticIds) {
-      const cosmetic = await Cosmetics.findById(cosmeticId);
+      const cosmetic = await Cosmetics.findOne({ cosmeticId });
 
       if (!cosmetic) {
         throw new Error(`Invalid cosmetic ID: ${cosmeticId}`);
@@ -87,25 +87,20 @@ class PlayerService {
 
       // Equip the new cosmetic based on its type
       switch (cosmetic.type) {
-        case "hat":
-          player.profile.cosmetics.hat.hatId = cosmetic.cosmeticId;
-          player.profile.cosmetics.hat.hatName = cosmetic.name;
+        case "head":
+          player.profile.cosmetics.head.cosmeticId = cosmetic.cosmeticId;
           break;
         case "hands":
-          player.profile.cosmetics.hands.handsId = cosmetic.cosmeticId;
-          player.profile.cosmetics.hands.handsName = cosmetic.name;
+          player.profile.cosmetics.hands.cosmeticId = cosmetic.cosmeticId;
           break;
         case "dartSkin":
-          player.profile.cosmetics.dartSkin.dartSkinId = cosmetic.cosmeticId;
-          player.profile.cosmetics.dartSkin.dartSkinName = cosmetic.name;
+          player.profile.cosmetics.dartSkin.cosmeticId = cosmetic.cosmeticId;
           break;
-        case "accessories":
-          player.profile.cosmetics.glasses.glassesId = cosmetic.cosmeticId;
-          player.profile.cosmetics.glasses.glassesName = cosmetic.name;
+        case "accessory":
+          player.profile.cosmetics.accesory.cosmeticId = cosmetic.cosmeticId;
           break;
         case "face":
-          player.profile.cosmetics.gender.genderId = cosmetic.cosmeticId;
-          player.profile.cosmetics.gender.genderName = cosmetic.name;
+          player.profile.cosmetics.face.cosmeticId = cosmetic.cosmeticId;
           break;
         default:
           throw new Error(`Unknown cosmetic type: ${cosmetic.type}`);
