@@ -284,6 +284,15 @@ const LeagueService = {
         return { success: false, message: "League not found." };
       }
 
+      console.log(
+        `leagueId: ${leagueId},
+      matchId: ${matchId},
+      playerId: ${playerId},
+      dartNumber: ${dartNumber},
+      dartScore: ${dartScore},
+      scoreLeft: ${scoreLeft}`,
+      );
+
       // Find the current matchup for the player
       const currentMatchup = league.matchups.find(
         (matchup) => matchup.matchId === matchId,
