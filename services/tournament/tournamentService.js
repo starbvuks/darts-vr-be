@@ -186,7 +186,10 @@ const TournamentService = {
 
       const numPlayers = parseInt(tournament.numPlayers, 10);
       if (isNaN(numPlayers) || numPlayers <= 0) {
-        throw new Error("numPlayers is not a valid positive integer.");
+        return {
+          success: false,
+          message: "numPlayers is not a valid positive integer.",
+        };
       }
 
       const allPlayersInQueue = await RedisService.getPlayersFromQueue(

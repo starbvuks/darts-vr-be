@@ -6,6 +6,7 @@ module.exports = {
     const { numPlayers, matchType, matchId, players } = JSON.parse(message);
 
     players.forEach((playerId) => {
+      console.log(`Sent match created message to player ${playerId}`);
       wss.clients.forEach((client) => {
         if (
           client.userId === playerId &&
@@ -34,7 +35,6 @@ module.exports = {
           client.readyState === WebSocket.OPEN
         ) {
           client.send(formattedMessage); // Send the serialized message
-          console.log(`Sent match over message to player ${playerId}`);
         }
       });
     });
@@ -50,7 +50,6 @@ module.exports = {
           client.readyState === WebSocket.OPEN
         ) {
           client.send(formattedMessage); // Send the serialized message
-          console.log(`Sent match ready message to player ${playerId}`);
         }
       });
     });
@@ -58,7 +57,7 @@ module.exports = {
 
   handleLeagueOverNotification: (players, message, wss) => {
     const formattedMessage = JSON.stringify(message);
-    console.log("Sending message:", formattedMessage);
+    // console.log("Sending message:", formattedMessage);
 
     players.forEach((playerId) => {
       const playerIdString = playerId.toString(); // Ensure playerId is a string
@@ -171,7 +170,7 @@ module.exports = {
       dartThrow: notificationMessage.dartThrow,
     });
 
-    console.log(`dart throw socket was sent to: ${playerId}`);
+    // console.log(`dart throw socket was sent to: ${playerId}`);
 
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
