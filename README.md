@@ -27,4 +27,4 @@
     - Real-time notifications for all modules which require it
     - Redis Queues to handle matchmaking for all Gamemodes
   - **Data Models**:
-    - Mongoose Models for Players, all the Gamemodes, Leagues, Tournaments + Matchups, and Cosmetics
+    - Mongoose Models for Players, all the Gamemodes, Leagues, Tournaments + Matchups, and Cosmetics.
