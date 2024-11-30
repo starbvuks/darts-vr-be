@@ -72,7 +72,7 @@ exports.validatePSNSession = async (req, res) => {
       });
       await player.save();
     } else {
-      player.username = username;
+      player.username = decodedPayload.online_id;
       await player.save();
     }
 
