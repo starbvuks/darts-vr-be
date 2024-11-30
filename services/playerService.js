@@ -147,7 +147,12 @@ class PlayerService {
     ];
 
     if (!validAchievements.includes(achievement)) {
-      throw new Error("Invalid achievement name");
+      console.log(
+        `error: the passed value: "${achievement}" is not a valid achievement`,
+      );
+      throw new Error(
+        `error: the passed value: "${achievement}" is not a valid achievement`,
+      );
     }
 
     const player = await Player.findById(userId);
