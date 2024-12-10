@@ -172,6 +172,7 @@ class PlayerService {
     return {
       message: `Achievement ${achievement} unlocked for player ${player.username}`,
       achievements: player.achievements,
+      success: 200,
     };
   }
 }
