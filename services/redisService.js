@@ -18,6 +18,7 @@ const RedisService = {
 
   getPlayersFromQueue: async (queueName, numPlayers) => {
     // Defensive programming to ensure numPlayers is valid
+    console.log(`from redis: ${queueName}, ${numPlayers}`);
     if (
       typeof numPlayers !== "number" ||
       isNaN(numPlayers) ||
