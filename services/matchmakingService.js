@@ -171,18 +171,13 @@ const MatchmakingService = {
 
   // 501
   joinFiveOhOneQueue: async (gameType, playerId, numPlayers, wss) => {
-    const queueName = `${gameType}-${numPlayers}players`;
+    const queueName = ${gameType}-${numPlayers}players;
+    const currentPlayers = await RedisService.getPlayersFromQueue(queueName);
+    if (currentPlayers.includes(playerId)) {
+      return { error: "Player is already in the queue" };
+    }
 
     try {
-      // Check if the player is already in the queue
-      const currentPlayers = await RedisService.getPlayersFromQueue(
-        queueName,
-        numPlayers,
-      );
-      if (currentPlayers.includes(playerId)) {
-        return { error: "Player is already in the queue" };
-      }
-
       // Add the player to the queue
       await RedisService.addToQueue(queueName, playerId);
 
@@ -197,19 +192,19 @@ const MatchmakingService = {
         // Fetch the usernames of the players
         const players = await Player.find({ _id: { $in: playerIdsToMatch } });
 
-        // Map playerIds to their respective usernames
-        const playerData = playerIdsToMatch.map((pId, index) => {
-          const player = players.find((pl) => pl._id.equals(pId));
+        // Map playerIds to their respective usernames, defaulting to "player1", "player2", etc. if no username is found
+        const playerData = playerIdsToMatch.map((playerId, index) => {
+          const player = players.find((p) => p._id.equals(playerId));
           return {
-            id: pId,
-            username: player ? player.username : `player${index + 1}`,
+            id: playerId,
+            username: player ? player.username : player${index + 1},
           };
         });
 
         // Create a new match
         const newMatch = new FiveOhOne({
           matchId: uuidv4(),
-          matchType: `multiplayer`,
+          matchType: multiplayer,
           status: "ongoing",
           numPlayers: numPlayers,
           player1Id: playerData[0].id,
@@ -265,14 +260,13 @@ const MatchmakingService = {
         await RedisService.removePlayersFromQueue(queueName, numPlayers);
 
         const message = JSON.stringify({
-          matchType: `${gameType}`,
+          matchType: ${gameType},
           matchId: newMatch.matchId,
           players: playerData.map((p) => p.id),
           numPlayers: numPlayers,
         });
-
         await RedisService.publishMatchCreated(
-          `${gameType}-${numPlayers}-match-created`,
+          ${gameType}-${numPlayers}-match-created,
           message,
         );
 
