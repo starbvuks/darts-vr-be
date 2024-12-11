@@ -18,7 +18,6 @@ const FiveOneOneController = {
           return res.status(200).json(soloMatch);
         } else {
           // Handle multiplayer match joining
-          console.log(playerId, numPlayers);
           const match = await MatchmakingService.joinFiveOhOneQueue(
             "501",
             playerId,

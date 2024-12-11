@@ -19,7 +19,7 @@ const RedisService = {
 
   getPlayersFromQueue: async (queueName, numPlayers) => {
     // Defensive programming to ensure numPlayers is valid
-    console.log(`from redis: ${queueName}, ${numPlayers}`);
+    // console.log(`from redis: ${queueName}, ${numPlayers}`);
     if (
       typeof numPlayers !== "number" ||
       isNaN(numPlayers) ||
@@ -33,6 +33,7 @@ const RedisService = {
 
     // Redis lrange command to get players from the queue
     const players = await redis.lrange(queueName, 0, numPlayersInt - 1);
+    console.log(`Current contents of ${queueName} queue:`, players);
     return players;
   },
 
