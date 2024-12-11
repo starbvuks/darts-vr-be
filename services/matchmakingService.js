@@ -174,7 +174,10 @@ const MatchmakingService = {
     const queueName = `${gameType}-${numPlayers}players`;
 
     try {
-      const currentPlayers = await RedisService.getPlayersFromQueue(queueName);
+      const currentPlayers = await RedisService.getPlayersFromQueue(
+        queueName,
+        numPlayers,
+      );
       if (currentPlayers.includes(playerId)) {
         return { error: "Player is already in the queue" };
       }
