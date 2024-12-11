@@ -171,13 +171,14 @@ const MatchmakingService = {
 
   // 501
   joinFiveOhOneQueue: async (gameType, playerId, numPlayers, wss) => {
-    const queueName = ${gameType}-${numPlayers}players;
-    const currentPlayers = await RedisService.getPlayersFromQueue(queueName);
-    if (currentPlayers.includes(playerId)) {
-      return { error: "Player is already in the queue" };
-    }
+    const queueName = `${gameType}-${numPlayers}players`;
 
     try {
+      const currentPlayers = await RedisService.getPlayersFromQueue(queueName);
+      if (currentPlayers.includes(playerId)) {
+        return { error: "Player is already in the queue" };
+      }
+
       // Add the player to the queue
       await RedisService.addToQueue(queueName, playerId);
 
@@ -197,14 +198,14 @@ const MatchmakingService = {
           const player = players.find((p) => p._id.equals(playerId));
           return {
             id: playerId,
-            username: player ? player.username : player${index + 1},
+            username: player ? player.username : `player${index + 1}`,
           };
         });
 
         // Create a new match
         const newMatch = new FiveOhOne({
           matchId: uuidv4(),
-          matchType: multiplayer,
+          matchType: `multiplayer`,
           status: "ongoing",
           numPlayers: numPlayers,
           player1Id: playerData[0].id,
@@ -260,13 +261,13 @@ const MatchmakingService = {
         await RedisService.removePlayersFromQueue(queueName, numPlayers);
 
         const message = JSON.stringify({
-          matchType: ${gameType},
+          matchType: `${gameType}`,
           matchId: newMatch.matchId,
           players: playerData.map((p) => p.id),
           numPlayers: numPlayers,
         });
         await RedisService.publishMatchCreated(
-          ${gameType}-${numPlayers}-match-created,
+          `${gameType}-${numPlayers}-match-created`,
           message,
         );
 
