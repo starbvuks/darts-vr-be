@@ -4,6 +4,7 @@ const redis = new Redis("redis://localhost:6379");
 const RedisService = {
   addToQueue: async (queueName, playerId) => {
     const dummyValue = "dummy";
+    console.log(`${playerId} joined queue: ${queueName}`);
 
     const queueLength = await redis.llen(queueName);
     if (queueLength > 0) {
