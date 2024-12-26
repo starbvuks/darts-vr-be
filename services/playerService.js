@@ -7,6 +7,10 @@ class PlayerService {
     return await Player.findById(userId).exec();
   }
 
+  async getUsersProfiles(userIds) {
+    return await Player.find({ _id: { $in: userIds } }).exec();
+  }
+
   async getUserStats(userId) {
     return await Player.findById(userId).select("stats").exec();
   }

@@ -3,6 +3,7 @@ const router = express.Router();
 const playerController = require("../controllers/playerController");
 
 router.get("/api/users", playerController.getUserProfile);
+router.post("/api/users/multiple", playerController.getUsersProfiles);
 router.get("/api/users/stats", playerController.getUserStats);
 router.get("/api/users/friends", playerController.getUserFriends);
 router.get("/api/users/requests", playerController.getUserRequests);

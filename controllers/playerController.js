@@ -15,6 +15,27 @@ exports.getUserProfile = (req, res) => {
   });
 };
 
+exports.getUsersProfiles = (req, res) => {
+  authService.validateJwt(req, res, async () => {
+    const userIds = req.body.userIds;
+
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).send({ message: "Invalid or missing userIds" });
+    }
+
+    try {
+      const users = await PlayerService.getUsersProfiles(userIds);
+      if (!users || users.length === 0) {
+        return res.status(404).send({ message: "No users found" });
+      }
+      res.send(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).send({ message: "Server error" });
+    }
+  });
+};
+
 exports.getUserStats = async (req, res) => {
   authService.validateJwt(req, res, async () => {
     const userId = req.userId;

@@ -12,13 +12,7 @@ const client = new MongoClient(uri, {
   serverSelectionTimeoutMS: 20000,
 });
 
-const cosmeticsData = [
-  { name: "Golden Beige", type: "face", unityId: "2" },
-  { name: "Tan", type: "face", unityId: "3" },
-  { name: "Chestnut", type: "face", unityId: "4" },
-  { name: "Ebony", type: "face", unityId: "5" },
-  { name: "Onyx", type: "face", unityId: "6" },
-];
+const cosmeticsData = [{ name: "Leather Hands", type: "hands", unityId: "6" }];
 
 // const cosmeticsData = [
 //   { name: "DefaultFace", type: "face", unityId: "0" },
