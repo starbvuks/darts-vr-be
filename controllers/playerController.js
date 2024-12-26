@@ -1,7 +1,7 @@
 const PlayerService = require("../services/playerService");
 const authService = require("../services/auth/authService");
 const Cosmetics = require("../models/Cosmetics");
-const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 exports.getUserProfile = (req, res) => {
   authService.validateJwt(req, res, async () => {
@@ -23,12 +23,38 @@ exports.getUsersProfiles = (req, res) => {
       return res.status(400).send({ message: "Invalid or missing userIds" });
     }
 
-    try {
-      const users = await PlayerService.getUsersProfiles(userIds);
-      if (!users || users.length === 0) {
-        return res.status(404).send({ message: "No users found" });
+    const results = [];
+    const validIds = [];
+    const invalidIds = [];
+
+    // Validate IDs and separate them into valid and invalid lists
+    userIds.forEach((id) => {
+      if (mongoose.Types.ObjectId.isValid(id)) {
+        validIds.push(id);
+      } else {
+        invalidIds.push(id);
+        results.push({ id, error: `The ID ${id} is not valid` });
       }
-      res.send(users);
+    });
+
+    try {
+      // Fetch valid user profiles
+      if (validIds.length > 0) {
+        const users = await PlayerService.getUsersProfiles(validIds);
+        // Add valid users to results
+        users.forEach((user) => {
+          results.push(user);
+        });
+
+        // Handle valid IDs not found in the database
+        const foundIds = users.map((user) => user._id.toString());
+        const notFoundIds = validIds.filter((id) => !foundIds.includes(id));
+        notFoundIds.forEach((id) => {
+          results.push({ id, error: `No user found with ID ${id}` });
+        });
+      }
+
+      res.send(results);
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).send({ message: "Server error" });
