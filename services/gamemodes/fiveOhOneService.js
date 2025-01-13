@@ -101,8 +101,9 @@ const FiveOhOneService = {
         return { success: false, message: "Match not found." };
       }
 
+      // Determine which player's stats to update
       let playerStatsField;
-      if (match.player1Id.equals(playerId)) {
+      if (match.player1Id && match.player1Id.equals(playerId)) {
         playerStatsField = "player1Stats";
       } else if (match.player2Id && match.player2Id.equals(playerId)) {
         playerStatsField = "player2Stats";
@@ -114,7 +115,7 @@ const FiveOhOneService = {
         return { success: false, message: "Player not found in this match." };
       }
 
-      // Ensure player stats are initialized
+      // Initialize if needed
       if (!match[playerStatsField] || Array.isArray(match[playerStatsField])) {
         match[playerStatsField] = {
           bullseyes: 0,
@@ -122,36 +123,122 @@ const FiveOhOneService = {
           scoreLeft: 0,
           dartsThrown: 0,
           dartsHit: 0,
+          total180ShotsAttempt: 0,
+          total141Checkout: 0,
+          totalDoubleShots: 0,
+          totalDoubleShotsAttempt: 0,
+          total9DartFinish: 0,
         };
       }
 
-      // Update the player's stats
-      match[playerStatsField].scoreLeft = playerStats.scoreLeft; // Update scoreLeft
-      match[playerStatsField].bullseyes += playerStats.bullseye; // Add bullseyes scored in this turn
-      match[playerStatsField].oneEighties += playerStats.oneEighty ? 1 : 0; // Increment oneEighties if scored
-      match[playerStatsField].dartsThrown += playerStats.dartsThrown; // Add darts thrown in this turn
-      match[playerStatsField].dartsHit += playerStats.dartsHit; // Add darts hit in this turn
+      // =========== Update match-level stats ===========
+      // Old fields
+      match[playerStatsField].scoreLeft = playerStats.scoreLeft;
+      match[playerStatsField].bullseyes += playerStats.bullseye || 0;
+      match[playerStatsField].oneEighties += playerStats.oneEighty ? 1 : 0;
+      match[playerStatsField].dartsThrown += playerStats.dartsThrown || 0;
+      match[playerStatsField].dartsHit += playerStats.dartsHit || 0;
 
-      // Update overall player stats
-      const player = await Player.findById(playerId); // Assuming you have a Player model
+      // New fields
+      match[playerStatsField].total180ShotsAttempt +=
+        playerStats.total180ShotsAttempt || 0;
+      match[playerStatsField].total141Checkout +=
+        playerStats.total141Checkout || 0;
+      match[playerStatsField].totalDoubleShots +=
+        playerStats.totalDoubleShots || 0;
+      match[playerStatsField].totalDoubleShotsAttempt +=
+        playerStats.totalDoubleShotsAttempt || 0;
+      match[playerStatsField].total9DartFinish +=
+        playerStats.total9DartFinish || 0;
+
+      // =========== Update player's aggregated stats ===========
+      const player = await Player.findById(playerId);
       if (!player) {
         return { success: false, message: "Player not found." };
       }
 
-      player.stats.totalDartsThrown += playerStats.dartsThrown; // Add to total darts thrown
-      player.stats.totalDartsHit += playerStats.dartsHit; // Add to total darts hit
-      player.stats.total180s += playerStats.oneEighty ? 1 : 0; // Increment total 180s if scored
-      player.stats.totalBullseyes += playerStats.bullseye; // Add to total bullseyes
-      // 501 profile stats
-      player.stats.fiveOhOneStats.bullseyeHit += playerStats.bullseye;
-      player.stats.fiveOhOneStats.total180s += playerStats.oneEighty ? 1 : 0;
+      // Overall stats
+      player.stats.totalDartsThrown += playerStats.dartsThrown || 0;
+      player.stats.totalDartsHit += playerStats.dartsHit || 0;
+      if (playerStats.oneEighty) {
+        player.stats.total180s += 1;
+      }
+      player.stats.totalBullseyes += playerStats.bullseye || 0;
 
-      await player.save(); // Save the updated player stats
-      await match.save(); // Save the updated match stats
+      // 501 stats (assuming this match is multiplayer mode)
+      // If you’ve separated single vs. multi, update `.fiveOhOneStats.multi` instead:
+      player.stats.fiveOhOneStats.multi.total180ShotsAttempt +=
+        playerStats.total180ShotsAttempt || 0;
+      player.stats.fiveOhOneStats.multi.total141Checkout +=
+        playerStats.total141Checkout || 0;
+      player.stats.fiveOhOneStats.multi.totalDoubleShots +=
+        playerStats.totalDoubleShots || 0;
+      player.stats.fiveOhOneStats.multi.totalDoubleShotsAttempt +=
+        playerStats.totalDoubleShotsAttempt || 0;
+      player.stats.fiveOhOneStats.multi.total9DartFinish +=
+        playerStats.total9DartFinish || 0;
+
+      // Also update bullseye, oneEighty etc. in the multi stats
+      player.stats.fiveOhOneStats.multi.bullseyeHit +=
+        playerStats.bullseye || 0;
+      if (playerStats.oneEighty) {
+        player.stats.fiveOhOneStats.multi.total180s += 1;
+      }
+
+      // Save both match and player
+      await match.save();
+      await player.save();
+
       return { success: true, match };
     } catch (error) {
       console.error("Error updating match stats:", error);
       return { success: false, message: "Failed to update match stats." };
+    }
+  },
+
+  updateSingleplayerStats: async (playerId, playerStats) => {
+    try {
+      const player = await Player.findById(playerId);
+      if (!player) {
+        return { success: false, message: "Player not found." };
+      }
+
+      // ============== Update Player's Overall Stats ==============
+      player.stats.totalDartsThrown += playerStats.dartsThrown || 0;
+      player.stats.totalDartsHit += playerStats.dartsHit || 0;
+      if (playerStats.oneEighty) {
+        player.stats.total180s += 1;
+      }
+      player.stats.totalBullseyes += playerStats.bullseye || 0;
+
+      // ============== Update Single-Player 501 Stats ==============
+      // Example: we assume you've created 'player.stats.fiveOhOneStats.single'
+      player.stats.fiveOhOneStats.single.bullseyeHit +=
+        playerStats.bullseye || 0;
+      if (playerStats.oneEighty) {
+        player.stats.fiveOhOneStats.single.total180s += 1;
+      }
+
+      // New fields
+      player.stats.fiveOhOneStats.single.total180ShotsAttempt +=
+        playerStats.total180ShotsAttempt || 0;
+      player.stats.fiveOhOneStats.single.total141Checkout +=
+        playerStats.total141Checkout || 0;
+      player.stats.fiveOhOneStats.single.totalDoubleShots +=
+        playerStats.totalDoubleShots || 0;
+      player.stats.fiveOhOneStats.single.totalDoubleShotsAttempt +=
+        playerStats.totalDoubleShotsAttempt || 0;
+      player.stats.fiveOhOneStats.single.total9DartFinish +=
+        playerStats.total9DartFinish || 0;
+
+      await player.save();
+      return { success: true, player };
+    } catch (error) {
+      console.error("Error in updateSingleplayerStats service:", error);
+      return {
+        success: false,
+        message: "Failed to update singleplayer stats.",
+      };
     }
   },
 

@@ -31,6 +31,7 @@ router.post("/api/501/create-private", FiveOhOneController.createPrivateMatch);
 router.post("/api/501/join", FiveOhOneController.joinInvitedMatch);
 router.post("/api/501/start-match", FiveOhOneController.startMatch);
 router.patch("/api/501/update", FiveOhOneController.updateMatchStats);
+router.patch("/api/501/update-sp", FiveOhOneController.updateSingleplayerStats);
 router.post("/api/501/end-match", FiveOhOneController.endMatch);
 router.get("/api/501/get-match/:matchId", FiveOhOneController.getMatch);
 router.post("/api/501/close-match", FiveOhOneController.closeMatch);

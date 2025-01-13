@@ -122,6 +122,31 @@ const FiveOneOneController = {
     return res.status(200).json(result.match);
   },
 
+  updateSingleplayerStats: async (req, res) => {
+    try {
+      authService.validateJwt(req, res, async () => {
+        const { playerId, playerStats } = req.body;
+
+        const result = await FiveOhOneService.updateSingleplayerStats(
+          playerId,
+          playerStats,
+        );
+
+        if (!result.success) {
+          return res.status(400).json({ message: result.message });
+        }
+
+        return res.status(200).json({
+          message: "Singleplayer stats updated successfully",
+          player: result.player,
+        });
+      });
+    } catch (error) {
+      console.error("Error in updateSingleplayerStats controller:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  },
+
   endMatch: async (req, res) => {
     const { matchId, winnerId } = req.body;
     const result = await FiveOhOneService.endMatch(matchId, winnerId);
