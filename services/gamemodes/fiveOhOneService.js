@@ -132,12 +132,15 @@ const FiveOhOneService = {
       }
 
       // =========== Update match-level stats ===========
-      // Old fields
-      match[playerStatsField].scoreLeft = playerStats.scoreLeft;
+      // Existing fields
+      match[playerStatsField].scoreLeft =
+        playerStats.scoreLeft ?? match[playerStatsField].scoreLeft;
       match[playerStatsField].bullseyes += playerStats.bullseye || 0;
-      match[playerStatsField].oneEighties += playerStats.oneEighty ? 1 : 0;
       match[playerStatsField].dartsThrown += playerStats.dartsThrown || 0;
       match[playerStatsField].dartsHit += playerStats.dartsHit || 0;
+
+      // CHANGED: oneEighty is now an integer count of 180s (e.g., 2 if the player hit two 180s in this turn)
+      match[playerStatsField].oneEighties += playerStats.oneEighty || 0;
 
       // New fields
       match[playerStatsField].total180ShotsAttempt +=
@@ -157,16 +160,18 @@ const FiveOhOneService = {
         return { success: false, message: "Player not found." };
       }
 
-      // Overall stats
+      // Overall
       player.stats.totalDartsThrown += playerStats.dartsThrown || 0;
       player.stats.totalDartsHit += playerStats.dartsHit || 0;
-      if (playerStats.oneEighty) {
-        player.stats.total180s += 1;
-      }
       player.stats.totalBullseyes += playerStats.bullseye || 0;
 
-      // 501 stats (assuming this match is multiplayer mode)
-      // If you’ve separated single vs. multi, update `.fiveOhOneStats.multi` instead:
+      // Now add integer value of 180 hits
+      player.stats.total180s += playerStats.oneEighty || 0;
+
+      // 501 (assuming multiplayer sub-object)
+      player.stats.fiveOhOneStats.multi.bullseyeHit +=
+        playerStats.bullseye || 0;
+      player.stats.fiveOhOneStats.multi.total180s += playerStats.oneEighty || 0;
       player.stats.fiveOhOneStats.multi.total180ShotsAttempt +=
         playerStats.total180ShotsAttempt || 0;
       player.stats.fiveOhOneStats.multi.total141Checkout +=
@@ -178,14 +183,6 @@ const FiveOhOneService = {
       player.stats.fiveOhOneStats.multi.total9DartFinish +=
         playerStats.total9DartFinish || 0;
 
-      // Also update bullseye, oneEighty etc. in the multi stats
-      player.stats.fiveOhOneStats.multi.bullseyeHit +=
-        playerStats.bullseye || 0;
-      if (playerStats.oneEighty) {
-        player.stats.fiveOhOneStats.multi.total180s += 1;
-      }
-
-      // Save both match and player
       await match.save();
       await player.save();
 
@@ -206,20 +203,15 @@ const FiveOhOneService = {
       // ============== Update Player's Overall Stats ==============
       player.stats.totalDartsThrown += playerStats.dartsThrown || 0;
       player.stats.totalDartsHit += playerStats.dartsHit || 0;
-      if (playerStats.oneEighty) {
-        player.stats.total180s += 1;
-      }
       player.stats.totalBullseyes += playerStats.bullseye || 0;
+      // oneEighty is now an integer (e.g., 2)
+      player.stats.total180s += playerStats.oneEighty || 0;
 
       // ============== Update Single-Player 501 Stats ==============
-      // Example: we assume you've created 'player.stats.fiveOhOneStats.single'
       player.stats.fiveOhOneStats.single.bullseyeHit +=
         playerStats.bullseye || 0;
-      if (playerStats.oneEighty) {
-        player.stats.fiveOhOneStats.single.total180s += 1;
-      }
-
-      // New fields
+      player.stats.fiveOhOneStats.single.total180s +=
+        playerStats.oneEighty || 0;
       player.stats.fiveOhOneStats.single.total180ShotsAttempt +=
         playerStats.total180ShotsAttempt || 0;
       player.stats.fiveOhOneStats.single.total141Checkout +=
