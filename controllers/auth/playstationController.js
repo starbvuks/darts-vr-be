@@ -81,6 +81,7 @@ exports.validatePSNSession = async (req, res) => {
     );
 
     res.json({ accessToken, refreshToken });
+    console.log(`Login success, token: ${accessToken}`);
   } catch (error) {
     console.error("PSN auth error:", error);
     res.status(400).json({ error: error.message });
