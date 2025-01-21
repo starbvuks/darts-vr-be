@@ -223,8 +223,8 @@ const FiveOhOneService = {
       player.stats.fiveOhOneStats.single.total9DartFinish +=
         playerStats.total9DartFinish || 0;
 
-      player.stats.single.fiveOhOneStats.totalfive0OneGamesPlayed += 1;
-      player.stats.single.fiveOhOneStats.totalfive0OneGamesWon += 1;
+      player.stats.fiveOhOneStats.single.totalfive0OneGamesPlayed += 1;
+      player.stats.fiveOhOneStats.single.totalfive0OneGamesWon += 1;
 
       await player.save();
       return { success: true, player };
@@ -267,11 +267,11 @@ const FiveOhOneService = {
 
         // Increment total matches played
         player.stats.totalMatchesPlayed += 1;
-        player.stats.multi.fiveOhOneStats.totalfive0OneGamesPlayed += 1;
+        player.stats.fiveOhOneStats.multi.totalfive0OneGamesPlayed += 1;
 
         // If this player is the winner, increment win stats
         if (playerId.equals(winnerId)) {
-          player.stats.multi.fiveOhOneStats.totalfive0OneGamesWon += 1; // Increment total wins in 501
+          player.stats.fiveOhOneStats.multi.totalfive0OneGamesWon += 1; // Increment total wins in 501
           player.stats.totalWins += 1; // Increment overall wins
         }
 

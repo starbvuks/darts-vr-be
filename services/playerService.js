@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Player = require("../models/Player");
 const Cosmetics = require("../models/Cosmetics");
+const FiveOhOne = require("../models/Game/FiveOhOne");
 
 class PlayerService {
   async getUserProfile(userId) {
@@ -12,8 +13,45 @@ class PlayerService {
   }
 
   async getUserStats(userId) {
-    return await Player.findById(userId).select("stats").exec();
+    // Fetch the player's stats
+    const playerStats = await Player.findById(userId).select("stats").exec();
+  
+    // Fetch the last 5 matches for the player from the FiveOhOne model
+    const recentMatches = await FiveOhOne.find({
+      $or: [
+        { player1Id: userId },
+        { player2Id: userId },
+        { player3Id: userId },
+        { player4Id: userId },
+      ],
+      status: "closed", // Only include completed matches
+    })
+      .sort({ createdAt: -1 }) // Sort by the most recent
+      .limit(5) // Limit to the last 5 matches
+      .exec();
+  
+    // Map the matches to determine win/loss/null for each
+    const matchHistory = recentMatches.map((match) => {
+      if (match.winner && match.winner.equals(userId)) {
+        return true; // Player won
+      } else if (match.winner) {
+        return false; // Player lost
+      }
+      return null; // No clear win/loss
+    });
+  
+    // Ensure exactly 5 entries in matchHistory (fill with null if fewer matches exist)
+    while (matchHistory.length < 5) {
+      matchHistory.push(null);
+    }
+  
+    // Add matchHistory to the response
+    return {
+      stats: playerStats ? playerStats.stats : null,
+      matchHistory,
+    };
   }
+  
 
   async getUserFriends(userId) {
     try {
