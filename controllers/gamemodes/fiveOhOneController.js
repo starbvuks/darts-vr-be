@@ -6,7 +6,7 @@ const gameWebSocketHandler = require("../../sockets/gameSockets");
 const FiveOneOneController = {
   joinOrCreateMatch: async (req, res, wss) => {
     try {
-      const { playerId, numPlayers } = req.body; // Expecting playerId and numPlayers in the request body
+      const { playerId, numPlayers } = req.body;
       authService.validateJwt(req, res, async () => {
         // Check if the request is for a solo match
         if (numPlayers === 1) {
@@ -41,7 +41,24 @@ const FiveOneOneController = {
     }
   },
 
-  createPrivateMatch: async (req, res) => {
+  createRematch: async (req, res, wss) => {
+    try {
+      const { creatorId, playerIds, numPlayers } = req.body;
+      authService.validateJwt(req, res, async () => {
+        const result = await FiveOhOneService.createRematch(creatorId, playerIds, numPlayers, wss);
+        if (!result.success) {
+          return res.status(400).json({ message: result.message });
+        }
+  
+        return res.status(200).json(result.match);
+      });
+    } catch (error) {
+      console.error("Error in createRematch controller:", error);
+      res.status(500).json({ message: "Internal server error." });
+    }
+  },
+
+  createPrivateMatch:  async (req, res) => {
     try {
       const { playerId } = req.body;
       authService.validateJwt(req, res, async () => {

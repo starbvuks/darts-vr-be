@@ -74,6 +74,9 @@ app.post("/api/killstreak/invite", (req, res) => {
 app.post("/api/501", (req, res) => {
   fiveOhOneController.joinOrCreateMatch(req, res, wss);
 });
+app.post("/api/501/rematch", (req, res) => {
+  fiveOhOneController.createRematch(req, res, wss);
+});
 app.post("/api/501/invite", (req, res) => {
   fiveOhOneController.inviteFriend(req, res, wss);
 });
@@ -144,6 +147,9 @@ wss.on("connection", (ws, req) => {
   const token = urlParams.searchParams.get("token");
 
   console.log("WebSocket connection received");
+  console.log('Currently connected user IDs:', 
+    [...wss.clients].map(c => c.userId)
+  );
 
   if (!token) {
     console.error("No token provided");

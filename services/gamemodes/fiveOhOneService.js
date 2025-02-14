@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require("uuid");
 const FiveOhOne = require("../../models/Game/FiveOhOne");
 const Player = require("../../models/Player");
+const gameSockets = require("../../sockets/gameSockets");
 const mongoose = require("mongoose");
 
 const FiveOhOneService = {
@@ -31,6 +32,70 @@ const FiveOhOneService = {
       return { success: false, message: "Failed to create private match." };
     }
   },
+
+
+  createRematch: async (creatorId, playerIds, numPlayers, wss) => {
+    try {
+      if (playerIds.length !== numPlayers) {
+        return {
+          success: false,
+          message: "Number of player IDs does not match numPlayers.",
+        };
+      }
+
+      const players = await Player.find({ _id: { $in: playerIds } });
+
+      if (players.length !== numPlayers) {
+        return { success: false, message: "Some players not found." };
+      }
+
+      const playerData = playerIds
+        .map((id, index) => {
+          const player = players.find((p) => p._id.equals(id));
+          return {
+            id: player ? player._id.toString() : null,
+            username: player ? player.username : `player${index + 1}`,
+          };
+        })
+        .filter((p) => p.id !== null);
+
+      const newMatch = new FiveOhOne({
+        matchId: uuidv4(),
+        matchType: "private",
+        status: "open",
+        numPlayers,
+        player1Id: playerData[0].id,
+        player2Id: numPlayers > 1 ? playerData[1].id : null,
+        player3Id: numPlayers > 2 ? playerData[2].id : null,
+        player4Id: numPlayers > 3 ? playerData[3].id : null,
+        player1Username: playerData[0].username,
+        player2Username: numPlayers > 1 ? playerData[1].username : null,
+        player3Username: numPlayers > 2 ? playerData[2].username : null,
+        player4Username: numPlayers > 3 ? playerData[3].username : null,
+        player1Stats: {},
+        player2Stats: numPlayers > 1 ? {} : null,
+        player3Stats: numPlayers > 2 ? {} : null,
+        player4Stats: numPlayers > 3 ? {} : null,
+      });
+
+      await newMatch.save();
+
+      const message = JSON.stringify({
+        matchType: "501",
+        matchId: newMatch.matchId,
+        players: playerData.map((p) => p.id),
+        numPlayers,
+      });
+
+      gameSockets.handleMatchCreatedNotification(message, wss);
+
+      return { success: true, match: newMatch };
+    } catch (error) {
+      console.error("Error creating rematch:", error);
+      return { success: false, message: "Failed to create rematch." };
+    }
+  },
+
 
   joinPrivateMatch: async (matchId, playerId) => {
     try {

@@ -147,7 +147,7 @@ const MatchmakingService = {
         return null;
       }
     } catch (error) {
-      console.error("Error in joinbKillstreakQueue:", error);
+      console.error("Error in joinKillstreakQueue:", error);
       return error;
     }
   },
@@ -172,7 +172,7 @@ const MatchmakingService = {
   // 501
   joinFiveOhOneQueue: async (gameType, playerId, numPlayers, wss) => {
     const queueName = `${gameType}-${numPlayers}players`;
-
+    console.log(wss)
     try {
       const currentPlayers = await RedisService.getPlayersFromQueue(
         queueName,
@@ -262,6 +262,7 @@ const MatchmakingService = {
 
         // Remove the players from the queue
         await RedisService.removePlayersFromQueue(queueName, numPlayers);
+
 
         const message = JSON.stringify({
           matchType: `${gameType}`,
