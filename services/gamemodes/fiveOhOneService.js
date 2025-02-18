@@ -330,15 +330,13 @@ const FiveOhOneService = {
           return { success: false, message: "Player not found." };
         }
 
-        // Increment total matches played
         player.stats.totalMatchesPlayed += 1;
         player.stats.fiveOhOneStats.multi.totalfive0OneGamesPlayed += 1;
-        console.log(`+1 game played for player - ${player}`)
+        console.log(`+1 game played for player - ${player.username}`)
 
-        // If this player is the winner, increment win stats
         if (playerId.equals(winnerId)) {
           player.stats.fiveOhOneStats.multi.totalfive0OneGamesWon += 1; // Increment total wins in 501
-          player.stats.totalWins += 1; // Increment overall wins
+          player.stats.totalWins += 1; 
         }
 
         await player.save(); // Save the updated player stats
