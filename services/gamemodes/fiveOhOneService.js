@@ -333,6 +333,7 @@ const FiveOhOneService = {
         // Increment total matches played
         player.stats.totalMatchesPlayed += 1;
         player.stats.fiveOhOneStats.multi.totalfive0OneGamesPlayed += 1;
+        console.log(`+1 game played for player - ${player}`)
 
         // If this player is the winner, increment win stats
         if (playerId.equals(winnerId)) {
