@@ -62,7 +62,7 @@ const FiveOhOneService = {
       const newMatch = new FiveOhOne({
         matchId: uuidv4(),
         matchType: "private",
-        status: "open",
+        status: "ongoing",
         numPlayers,
         player1Id: playerData[0].id,
         player2Id: numPlayers > 1 ? playerData[1].id : null,
