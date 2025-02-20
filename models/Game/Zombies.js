@@ -11,7 +11,7 @@ const ZombiesSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["open", "closed"],
+    enum: ["open", "closed", "ongoing"],
   },
   player1Stats: {
     waveReached: { type: Number, min: 0 },

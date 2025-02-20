@@ -162,6 +162,30 @@ const KillstreakController = {
       res.status(500).json({ message: "Internal server error" });
     }
   },
+
+  createRematch: async (req, res, wss) => {
+    try {
+      authService.validateJwt(req, res, async () => {
+        const { creatorId, playerIds, numPlayers } = req.body;
+        
+        const result = await KillstreakService.createRematch(
+          creatorId,
+          playerIds,
+          numPlayers,
+          wss
+        );
+
+        if (!result.success) {
+          return res.status(400).json(result);
+        }
+
+        res.status(201).json(result);
+      });
+    } catch (error) {
+      console.error("Error in createRematch controller:", error);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  },
 };
 
 module.exports = KillstreakController;

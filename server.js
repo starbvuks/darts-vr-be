@@ -60,12 +60,18 @@ app.use("/api", leaderboard);
 app.post("/api/zombies", (req, res) => {
   zombiesController.joinOrCreateMatch(req, res, wss);
 });
+app.post("/api/zombies/rematch", (req, res) => {
+  zombiesController.createRematch(req, res, wss);
+});
 app.post("/api/zombies/invite", (req, res) => {
   zombiesController.inviteFriend(req, res, wss);
 });
 
 app.post("/api/killstreak", (req, res) => {
   killstreakController.joinOrCreateMatch(req, res, wss);
+});
+app.post("/api/killstreak/rematch", (req, res) => {
+  killstreakController.createRematch(req, res, wss);
 });
 app.post("/api/killstreak/invite", (req, res) => {
   killstreakController.inviteFriend(req, res, wss);
@@ -137,6 +143,7 @@ app.post("/api/friends/unblock-player", (req, res) => {
 app.post("/api/friends/search", (req, res) => {
   friendsController.searchFriends(req, res, wss);
 });
+
 
 const port = 3000;
 const server = http.createServer(app);

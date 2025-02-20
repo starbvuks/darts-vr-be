@@ -21,6 +21,7 @@ const ATWService = {
       throw error;
     }
   },
+  
   updateMatch: async (matchId, stats) => {
     try {
       const match = await ATW.findOne({ matchId });
@@ -35,6 +36,7 @@ const ATWService = {
       match.highestNumReached = stats.highestNumReached,
       match.victory = stats.victory,
       match.dartsThrown = stats.dartsThrown,
+      match.highestStreak = stats.highestStreak,
       match.status = "closed"
 
       const playerId = match.playerId;
