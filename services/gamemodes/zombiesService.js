@@ -204,7 +204,7 @@ const ZombiesService = {
 
       await newMatch.save();
 
-      rematchHelper.notifyPlayers("zombies", newMatch.matchId, playerData, numPlayers, wss);
+      rematchHelper.notifyPlayers("zmb", newMatch.matchId, playerData, numPlayers, wss);
 
       return { success: true, match: newMatch };
     } catch (error) {

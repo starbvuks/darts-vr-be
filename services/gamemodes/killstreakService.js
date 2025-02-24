@@ -231,7 +231,7 @@ const KillstreakService = {
 
       await newMatch.save();
 
-      rematchHelper.notifyPlayers("killstreak", newMatch.matchId, playerData, numPlayers, wss);
+      rematchHelper.notifyPlayers("ks", newMatch.matchId, playerData, numPlayers, wss);
 
       return { success: true, match: newMatch };
     } catch (error) {
