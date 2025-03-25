@@ -4,8 +4,12 @@ const Cosmetics = require("../models/Cosmetics");
 const FiveOhOne = require("../models/Game/FiveOhOne");
 
 class PlayerService {
-  async getUserProfile(userId) {
-    return await Player.findById(userId).exec();
+  async getUserProfile(req, res) {
+    authService.validateJwt(req, res, async () => {
+      const userId = req.userId;
+      const player = await Player.findById(userId).exec();
+      res.json(player);
+    });
   }
 
   async getUsersProfiles(userIds) {
@@ -215,6 +219,87 @@ class PlayerService {
       message: `Achievement ${achievement} unlocked for player ${player.username}`,
       achievements: player.achievements,
       success: 200,
+    };
+  }
+
+  async get501Stats(userId) {
+    const player = await Player.findById(userId).select("stats.fiveOhOneStats").exec();
+    if (!player) {
+      throw new Error("Player not found");
+    }
+    return {
+      stats: player.stats.fiveOhOneStats || {
+        single: {
+          totalfive0OneGamesPlayed: 0,
+          fiveOhOneGamesWon: 0,
+          bullseyeHit: 0,
+          total180s: 0,
+          total180ShotsAttempt: 0,
+          total141Checkout: 0,
+          totalDoubleShots: 0,
+          totalDoubleShotsAttempt: 0,
+          total9DartFinish: 0
+        },
+        multi: {
+          totalfive0OneGamesPlayed: 0,
+          fiveOhOneGamesWon: 0,
+          bullseyeHit: 0,
+          total180s: 0,
+          total180ShotsAttempt: 0,
+          total141Checkout: 0,
+          totalDoubleShots: 0,
+          totalDoubleShotsAttempt: 0,
+          total9DartFinish: 0
+        }
+      }
+    };
+  }
+
+  async getZombiesStats(userId) {
+    const player = await Player.findById(userId).select("stats.zombiesStats").exec();
+    if (!player) {
+      throw new Error("Player not found");
+    }
+    return {
+      stats: player.stats.zombiesStats || {
+        totalZombiesGamesPlayed: 0,
+        highestWave: 0,
+        zombiesKilled: 0,
+        highestPoints: 0,
+        headshots: 0,
+        bodyshots: 0,
+        legShots: 0
+      }
+    };
+  }
+
+  async getKillstreakStats(userId) {
+    const player = await Player.findById(userId).select("stats.killstreakStats").exec();
+    if (!player) {
+      throw new Error("Player not found");
+    }
+    return {
+      stats: player.stats.killstreakStats || {
+        totalKillstreakGamesPlayed: 0,
+        totalKillstreakGamesWon: 0,
+        highestStreak: 0
+      }
+    };
+  }
+
+  async getATWStats(userId) {
+    const player = await Player.findById(userId).select("stats.atwStats").exec();
+    if (!player) {
+      throw new Error("Player not found");
+    }
+    return {
+      stats: player.stats.atwStats || {
+        totalAtwGamesPlayed: 0,
+        totalAtwGamesWon: 0,
+        leastDartsUsed: 0,
+        highestStreak: 0,
+        highestPoints: 0
+      }
     };
   }
 }

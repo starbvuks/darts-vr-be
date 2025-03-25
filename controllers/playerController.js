@@ -182,3 +182,55 @@ exports.unlockAchievement = (req, res) => {
     }
   });
 };
+
+exports.get501Stats = (req, res) => {
+  authService.validateJwt(req, res, async () => {
+    const userId = req.userId;
+    try {
+      const stats = await PlayerService.get501Stats(userId);
+      res.status(200).json(stats);
+    } catch (error) {
+      console.error("Error fetching 501 stats:", error);
+      res.status(500).json({ message: "Error fetching 501 stats" });
+    }
+  });
+};
+
+exports.getZombiesStats = (req, res) => {
+  authService.validateJwt(req, res, async () => {
+    const userId = req.userId;
+    try {
+      const stats = await PlayerService.getZombiesStats(userId);
+      res.status(200).json(stats);
+    } catch (error) {
+      console.error("Error fetching zombies stats:", error);
+      res.status(500).json({ message: "Error fetching zombies stats" });
+    }
+  });
+};
+
+exports.getKillstreakStats = (req, res) => {
+  authService.validateJwt(req, res, async () => {
+    const userId = req.userId;
+    try {
+      const stats = await PlayerService.getKillstreakStats(userId);
+      res.status(200).json(stats);
+    } catch (error) {
+      console.error("Error fetching killstreak stats:", error);
+      res.status(500).json({ message: "Error fetching killstreak stats" });
+    }
+  });
+};
+
+exports.getATWStats = (req, res) => {
+  authService.validateJwt(req, res, async () => {
+    const userId = req.userId;
+    try {
+      const stats = await PlayerService.getATWStats(userId);
+      res.status(200).json(stats);
+    } catch (error) {
+      console.error("Error fetching ATW stats:", error);
+      res.status(500).json({ message: "Error fetching ATW stats" });
+    }
+  });
+};

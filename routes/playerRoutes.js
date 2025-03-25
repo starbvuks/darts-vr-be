@@ -5,6 +5,10 @@ const playerController = require("../controllers/playerController");
 router.get("/api/users", playerController.getUserProfile);
 router.post("/api/users/multiple", playerController.getUsersProfiles);
 router.get("/api/users/stats", playerController.getUserStats);
+router.get("/api/users/stats/501", playerController.get501Stats);
+router.get("/api/users/stats/zombies", playerController.getZombiesStats);
+router.get("/api/users/stats/killstreak", playerController.getKillstreakStats);
+router.get("/api/users/stats/atw", playerController.getATWStats);
 router.get("/api/users/friends", playerController.getUserFriends);
 router.get("/api/users/requests", playerController.getUserRequests);
 router.get("/api/users/cosmetics", playerController.getUserCosmetics); // on character creation default skins are applied

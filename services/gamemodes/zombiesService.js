@@ -164,6 +164,73 @@ const ZombiesService = {
       return error;
     }
   },
+
+  getMatchHistory: async (playerId) => {
+    try {
+      // Find all matches where the player participated
+      const matches = await Zombies.find({
+        $or: [
+          { player1Id: playerId },
+          { player2Id: playerId },
+          { player3Id: playerId },
+          { player4Id: playerId }
+        ],
+        status: "closed" // Only include completed matches
+      })
+      .sort({ createdAt: -1 }) // Sort by most recent first
+      .limit(20) // Limit to last 20 matches
+      .populate('player1Id', 'username')
+      .populate('player2Id', 'username')
+      .populate('player3Id', 'username')
+      .populate('player4Id', 'username');
+
+      // Process matches to include relevant stats
+      const processedMatches = matches.map(match => {
+        let playerStats;
+        if (match.player1Id && match.player1Id._id.equals(playerId)) {
+          playerStats = match.player1Stats;
+        } else if (match.player2Id && match.player2Id._id.equals(playerId)) {
+          playerStats = match.player2Stats;
+        } else if (match.player3Id && match.player3Id._id.equals(playerId)) {
+          playerStats = match.player3Stats;
+        } else if (match.player4Id && match.player4Id._id.equals(playerId)) {
+          playerStats = match.player4Stats;
+        }
+
+        return {
+          matchId: match.matchId,
+          createdAt: match.createdAt,
+          players: [
+            match.player1Id,
+            match.player2Id,
+            match.player3Id,
+            match.player4Id
+          ].filter(Boolean).map(player => ({
+            playerId: player._id,
+            username: player.username
+          })),
+          wave: match.wave,
+          playerStats: {
+            zombiesKilled: playerStats?.zombiesKilled || 0,
+            headshots: playerStats?.headshots || 0,
+            bodyshots: playerStats?.bodyshots || 0,
+            legshots: playerStats?.legshots || 0,
+            dartsThrown: playerStats?.dartsThrown || 0,
+            dartsHit: playerStats?.dartsHit || 0,
+            points: playerStats?.points || 0
+          }
+        };
+      });
+
+      return {
+        success: true,
+        matches: processedMatches
+      };
+    } catch (error) {
+      console.error("Error fetching zombies match history:", error);
+      return { success: false, message: "Failed to fetch match history." };
+    }
+  },
 };
 
 module.exports = ZombiesService;

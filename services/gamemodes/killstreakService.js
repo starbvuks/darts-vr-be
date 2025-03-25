@@ -4,18 +4,29 @@ const Player = require("../../models/Player");
 const mongoose = require("mongoose");
 
 const KillstreakService = {
-  createMatch: async (playerId) => {
+  createMatch: async (playerId, matchType = "solo") => {
     try {
       const match = new Killstreak({
         player1Id: playerId,
-        matchType: "private-2p",
-        status: "open",
+        matchType: matchType, // "solo" or "private-2p"
+        status: matchType === "solo" ? "ongoing" : "open",
+        numPlayers: matchType === "solo" ? 1 : 2,
         matchId: uuidv4(),
+        player1Stats: {
+          rounds: [],
+          totalDartsThrown: 0,
+          highestStreak: 0
+        },
+        player2Stats: {
+          rounds: [],
+          totalDartsThrown: 0,
+          highestStreak: 0
+        }
       });
       await match.save();
       return match;
     } catch (error) {
-      console.error("Error creating solo Killstreak match:", error);
+      console.error("Error creating Killstreak match:", error);
       return error;
     }
   },
@@ -43,7 +54,7 @@ const KillstreakService = {
 
       match.player2Id = playerId;
       match.numPlayers = 2;
-      match.status = "closed";
+      match.status = "ongoing";
       await match.save();
       return match;
     } catch (error) {
@@ -52,7 +63,7 @@ const KillstreakService = {
     }
   },
 
-  updateMatchStats: async (matchId, playerId, playerStats) => {
+  updateMatchStats: async (matchId, playerId, roundStats) => {
     try {
       const match = await Killstreak.findOne({ matchId });
       if (!match) {
@@ -62,17 +73,39 @@ const KillstreakService = {
       }
 
       const playerIdObj = new mongoose.Types.ObjectId(playerId);
+      let playerStats;
+      let isPlayer1 = false;
 
       if (match.player1Id.equals(playerIdObj)) {
-        match.player1Stats.push(playerStats);
+        playerStats = match.player1Stats;
+        isPlayer1 = true;
       } else if (match.player2Id.equals(playerIdObj)) {
-        match.player2Stats.push(playerStats);
+        playerStats = match.player2Stats;
       } else {
         const error = new Error("Player is not part of this match");
         console.error("Error updating match stats:", error);
         return error;
       }
 
+      // Add the round data
+      playerStats.rounds.push({
+        round: roundStats.round,
+        streak: roundStats.streak,
+        chosenNumber: roundStats.chosenNumber
+      });
+
+      // Update total darts thrown (streak = number of darts thrown in the round)
+      playerStats.totalDartsThrown += roundStats.streak;
+
+      // Update highest streak if current streak is higher
+      playerStats.highestStreak = Math.max(playerStats.highestStreak, roundStats.streak);
+
+      // Save the updated match stats
+      if (isPlayer1) {
+        match.player1Stats = playerStats;
+      } else {
+        match.player2Stats = playerStats;
+      }
       await match.save();
 
       // Update the player's killstreakStats
@@ -83,20 +116,29 @@ const KillstreakService = {
         return error;
       }
 
-      if (!player.stats.killstreakStats) {
-        player.stats.killstreakStats = {
+      // Determine if it's single or multiplayer
+      const statsKey = match.numPlayers === 1 ? 'single' : 'multi';
+
+      // Initialize if needed
+      if (!player.stats.killstreakStats[statsKey]) {
+        player.stats.killstreakStats[statsKey] = {
           totalKillstreakGamesPlayed: 0,
           totalKillstreakGamesWon: 0,
           highestStreak: 0,
+          totalDartsThrown: 0
         };
-      } else {
-        player.stats.killstreakStats.totalKillstreakGamesPlayed += 1;
-        player.stats.killstreakStats.highestStreak = Math.max(player.stats.killstreakStats.highestStreak, playerStats.currentStreak);
       }
 
-      player.stats.totalDartsThrown += playerStats.totalDarts;
-      player.stats.totalDartsHit += playerStats.totalDarts;
-      player.stats.totalMatchesPlayed += 1;
+      // Update the stats
+      player.stats.killstreakStats[statsKey].totalDartsThrown += roundStats.streak;
+      player.stats.killstreakStats[statsKey].highestStreak = Math.max(
+        player.stats.killstreakStats[statsKey].highestStreak,
+        roundStats.streak
+      );
+
+      // Update overall stats
+      player.stats.totalDartsThrown += roundStats.streak;
+      player.stats.totalDartsHit += roundStats.streak; // In Killstreak, all throws are hits
 
       await player.save();
 
@@ -120,7 +162,9 @@ const KillstreakService = {
       match.status = "closed";
       await match.save();
   
-      // Update the player's stats
+      const statsKey = match.numPlayers === 1 ? 'single' : 'multi';
+  
+      // Update the players' stats
       const player1 = await Player.findById(match.player1Id);
       if (!player1) {
         const error = new Error("Player not found");
@@ -128,36 +172,59 @@ const KillstreakService = {
         return error;
       }
   
-      // Increment total matches played and total killstreak games played
-      player1.stats.totalMatchesPlayed += 1;
-      player1.stats.killstreakStats.totalKillstreakGamesPlayed += 1;
+      // Initialize if needed
+      if (!player1.stats.killstreakStats[statsKey]) {
+        player1.stats.killstreakStats[statsKey] = {
+          totalKillstreakGamesPlayed: 0,
+          totalKillstreakGamesWon: 0,
+          highestStreak: 0,
+          totalDartsThrown: 0
+        };
+      }
   
-      // If player1 is the winner, increment total wins and total killstreak games won
+      // Increment games played
+      player1.stats.totalMatchesPlayed += 1;
+      player1.stats.killstreakStats[statsKey].totalKillstreakGamesPlayed += 1;
+  
+      // If player1 is the winner
       if (player1._id.toString() === winner) {
         player1.stats.totalWins += 1;
-        player1.stats.killstreakStats.totalKillstreakGamesWon += 1;
+        player1.stats.killstreakStats[statsKey].totalKillstreakGamesWon += 1;
       }
   
       await player1.save();
   
-      const player2 = await Player.findById(match.player2Id);
-      if (!player2) {
-        const error = new Error("Player not found");
-        console.error("Error updating player stats:", error);
-        return error;
+      // If it's a multiplayer game, update player2's stats
+      if (match.player2Id) {
+        const player2 = await Player.findById(match.player2Id);
+        if (!player2) {
+          const error = new Error("Player not found");
+          console.error("Error updating player stats:", error);
+          return error;
+        }
+  
+        // Initialize if needed
+        if (!player2.stats.killstreakStats[statsKey]) {
+          player2.stats.killstreakStats[statsKey] = {
+            totalKillstreakGamesPlayed: 0,
+            totalKillstreakGamesWon: 0,
+            highestStreak: 0,
+            totalDartsThrown: 0
+          };
+        }
+  
+        // Increment games played
+        player2.stats.totalMatchesPlayed += 1;
+        player2.stats.killstreakStats[statsKey].totalKillstreakGamesPlayed += 1;
+  
+        // If player2 is the winner
+        if (player2._id.toString() === winner) {
+          player2.stats.totalWins += 1;
+          player2.stats.killstreakStats[statsKey].totalKillstreakGamesWon += 1;
+        }
+  
+        await player2.save();
       }
-  
-      // Increment total matches played and total killstreak games played
-      player2.stats.totalMatchesPlayed += 1;
-      player2.stats.killstreakStats.totalKillstreakGamesPlayed += 1;
-  
-      // If player2 is the winner, increment total wins and total killstreak games won
-      if (player2._id.toString() === winner) {
-        player2.stats.totalWins += 1;
-        player2.stats.killstreakStats.totalKillstreakGamesWon += 1;
-      }
-  
-      await player2.save();
   
       return match;
     } catch (error) {
@@ -165,7 +232,6 @@ const KillstreakService = {
       return error;
     }
   },
-  
 
   getMatch: async (matchId) => {
     try {

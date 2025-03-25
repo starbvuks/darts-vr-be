@@ -174,9 +174,18 @@ const playerSchema = new mongoose.Schema({
       },
     },
     killstreakStats: {
-      totalKillstreakGamesPlayed: { type: Number, default: 0 },
-      totalKillstreakGamesWon: { type: Number, default: 0 },
-      highestStreak: { type: Number, default: 0 },
+      single: {
+        totalKillstreakGamesPlayed: { type: Number, default: 0 },
+        totalKillstreakGamesWon: { type: Number, default: 0 },
+        highestStreak: { type: Number, default: 0 },
+        totalDartsThrown: { type: Number, default: 0 }
+      },
+      multi: {
+        totalKillstreakGamesPlayed: { type: Number, default: 0 },
+        totalKillstreakGamesWon: { type: Number, default: 0 },
+        highestStreak: { type: Number, default: 0 },
+        totalDartsThrown: { type: Number, default: 0 }
+      }
     },
   },
   achievements: {

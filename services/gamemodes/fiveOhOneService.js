@@ -325,6 +325,7 @@ const FiveOhOneService = {
       ].filter(Boolean);
 
       for (const playerId of playerIds) {
+        
         const player = await Player.findById(playerId);
         if (!player) {
           return { success: false, message: "Player not found." };
@@ -524,6 +525,80 @@ const FiveOhOneService = {
     } catch (error) {
       console.error("Error fetching commentary stats:", error);
       return { success: false, message: "Failed to fetch commentary stats." };
+    }
+  },
+
+  getMatchHistory: async (playerId) => {
+    try {
+      // Find all matches where the player participated
+      const matches = await FiveOhOne.find({
+        $or: [
+          { player1Id: playerId },
+          { player2Id: playerId },
+          { player3Id: playerId },
+          { player4Id: playerId }
+        ],
+        status: "closed" // Only include completed matches
+      })
+      .sort({ createdAt: -1 }) // Sort by most recent first
+      .limit(20) // Limit to last 20 matches
+      .populate('player1Id', 'username')
+      .populate('player2Id', 'username')
+      .populate('player3Id', 'username')
+      .populate('player4Id', 'username')
+      .populate('winner', 'username');
+
+      // Process matches to include relevant stats
+      const processedMatches = matches.map(match => {
+        let playerStats;
+        if (match.player1Id && match.player1Id._id.equals(playerId)) {
+          playerStats = match.player1Stats;
+        } else if (match.player2Id && match.player2Id._id.equals(playerId)) {
+          playerStats = match.player2Stats;
+        } else if (match.player3Id && match.player3Id._id.equals(playerId)) {
+          playerStats = match.player3Stats;
+        } else if (match.player4Id && match.player4Id._id.equals(playerId)) {
+          playerStats = match.player4Stats;
+        }
+
+        return {
+          matchId: match.matchId,
+          createdAt: match.createdAt,
+          players: [
+            match.player1Id,
+            match.player2Id,
+            match.player3Id,
+            match.player4Id
+          ].filter(Boolean).map(player => ({
+            playerId: player._id,
+            username: player.username
+          })),
+          winner: match.winner ? {
+            playerId: match.winner._id,
+            username: match.winner.username
+          } : null,
+          playerStats: {
+            scoreLeft: playerStats?.scoreLeft || 0,
+            dartsThrown: playerStats?.dartsThrown || 0,
+            dartsHit: playerStats?.dartsHit || 0,
+            bullseyes: playerStats?.bullseyes || 0,
+            oneEighties: playerStats?.oneEighties || 0,
+            total180ShotsAttempt: playerStats?.total180ShotsAttempt || 0,
+            total141Checkout: playerStats?.total141Checkout || 0,
+            totalDoubleShots: playerStats?.totalDoubleShots || 0,
+            totalDoubleShotsAttempt: playerStats?.totalDoubleShotsAttempt || 0,
+            total9DartFinish: playerStats?.total9DartFinish || 0
+          }
+        };
+      });
+
+      return {
+        success: true,
+        matches: processedMatches
+      };
+    } catch (error) {
+      console.error("Error fetching match history:", error);
+      return { success: false, message: "Failed to fetch match history." };
     }
   },
 };

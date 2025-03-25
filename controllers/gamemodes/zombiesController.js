@@ -145,6 +145,22 @@ const ZombiesController = {
       res.status(500).json({ message: "Internal server error" });
     }
   },
+
+  getMatchHistory: async (req, res) => {
+    try {
+      const { playerId } = req.params;
+      authService.validateJwt(req, res, async () => {
+        const result = await ZombiesService.getMatchHistory(playerId);
+        if (!result.success) {
+          return res.status(400).json({ message: result.message });
+        }
+        return res.status(200).json(result);
+      });
+    } catch (error) {
+      console.error("Error fetching zombies match history:", error);
+      return res.status(500).json({ message: "Internal server error." });
+    }
+  },
 };
 
 module.exports = ZombiesController;
