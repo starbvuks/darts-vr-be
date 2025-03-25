@@ -18,6 +18,7 @@ const ATWSchema = new mongoose.Schema({
   points: { type: Number, default: 0 },
   highestNumReached: { type: Number, default: 0 },
   victory: Boolean,
+  highestStreak: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
 });
 

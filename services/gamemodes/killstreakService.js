@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require("uuid");
 const Killstreak = require("../../models/Game/Killstreak");
 const Player = require("../../models/Player");
 const mongoose = require("mongoose");
+const rematchHelper = require("../../utils/rematchHelper");
 
 const KillstreakService = {
   createMatch: async (playerId, matchType = "solo") => {
@@ -263,6 +264,45 @@ const KillstreakService = {
     } catch (error) {
       console.error("Error closing match:", error);
       return error;
+    }
+  },
+
+  createRematch: async (creatorId, playerIds, numPlayers, wss) => {
+    try {
+      const validation = await rematchHelper.validatePlayers(playerIds, numPlayers);
+      if (!validation.success) {
+        return validation;
+      }
+
+      const { playerData } = validation;
+
+      const newMatch = new Killstreak({
+        matchId: uuidv4(),
+        matchType: "private-2p",
+        status: "ongoing",
+        player1Id: playerData[0].id,
+        player2Id: numPlayers > 1 ? playerData[1].id : null,
+        player1Stats: [{
+          currentStreak: 0,
+          totalPoints: 0,
+          totalDarts: 0,
+        }],
+        player2Stats: numPlayers > 1 ? [{
+          currentStreak: 0,
+          totalPoints: 0,
+          totalDarts: 0,
+        }] : null,
+        numPlayers,
+      });
+
+      await newMatch.save();
+
+      rematchHelper.notifyPlayers("ks", newMatch.matchId, playerData, numPlayers, wss);
+
+      return { success: true, match: newMatch };
+    } catch (error) {
+      console.error("Error creating killstreak rematch:", error);
+      return { success: false, message: "Failed to create rematch." };
     }
   },
 };
