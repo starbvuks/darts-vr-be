@@ -88,11 +88,12 @@ const KillstreakService = {
         return error;
       }
 
-      // Add the round data
+      // Add the round data with score
       playerStats.rounds.push({
         round: roundStats.round,
         streak: roundStats.streak,
-        chosenNumber: roundStats.chosenNumber
+        chosenNumber: roundStats.chosenNumber,
+        score: roundStats.score
       });
 
       // Update total darts thrown (streak = number of darts thrown in the round)
@@ -282,16 +283,16 @@ const KillstreakService = {
         status: "ongoing",
         player1Id: playerData[0].id,
         player2Id: numPlayers > 1 ? playerData[1].id : null,
-        player1Stats: [{
-          currentStreak: 0,
-          totalPoints: 0,
-          totalDarts: 0,
-        }],
-        player2Stats: numPlayers > 1 ? [{
-          currentStreak: 0,
-          totalPoints: 0,
-          totalDarts: 0,
-        }] : null,
+        player1Stats: {
+          rounds: [],
+          totalDartsThrown: 0,
+          highestStreak: 0
+        },
+        player2Stats: numPlayers > 1 ? {
+          rounds: [],
+          totalDartsThrown: 0,
+          highestStreak: 0
+        } : null,
         numPlayers,
       });
 

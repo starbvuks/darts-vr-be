@@ -4,6 +4,7 @@ const KillstreakRoundSchema = new mongoose.Schema({
   round: { type: Number, required: true },
   streak: { type: Number, required: true },
   chosenNumber: { type: Number, required: true },
+  score: { type: Number, required: true },
   _id: false
 });
 
