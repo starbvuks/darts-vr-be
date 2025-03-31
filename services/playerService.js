@@ -5,11 +5,10 @@ const FiveOhOne = require("../models/Game/FiveOhOne");
 
 class PlayerService {
   async getUserProfile(req, res) {
-    authService.validateJwt(req, res, async () => {
       const userId = req.userId;
       const player = await Player.findById(userId).exec();
       res.json(player);
-    });
+    
   }
 
   async getUsersProfiles(userIds) {
