@@ -279,6 +279,45 @@ const ZombiesService = {
       return { success: false, message: "Failed to fetch match history." };
     }
   },
+
+  updateSingleplayerStats: async (playerId, playerStats) => {
+    try {
+      const player = await Player.findById(playerId);
+      if (!player) {
+        return { success: false, message: "Player not found." };
+      }
+
+      // Update overall stats
+      player.stats.totalDartsThrown += playerStats.dartsThrown || 0;
+      player.stats.totalDartsHit += playerStats.dartsHit || 0;
+
+      // Update zombie-specific stats for singleplayer
+      player.stats.zombiesStats.single.totalZombiesGamesPlayed += 1;
+      player.stats.zombiesStats.single.totalZombiesGamesWon += 1;
+      player.stats.zombiesStats.single.highestWave = Math.max(
+        player.stats.zombiesStats.single.highestWave,
+        playerStats.waveReached || 0
+      );
+      player.stats.zombiesStats.single.zombiesKilled += playerStats.zombiesKilled || 0;
+      player.stats.zombiesStats.single.highestPoints = Math.max(
+        player.stats.zombiesStats.single.highestPoints,
+        playerStats.score || 0
+      );
+      player.stats.zombiesStats.single.headshots += playerStats.headshots || 0;
+      player.stats.zombiesStats.single.bodyshots += playerStats.bodyshots || 0;
+      player.stats.zombiesStats.single.legShots += playerStats.legShots || 0;
+      player.stats.zombiesStats.single.totalDartsThrown += playerStats.dartsThrown || 0;
+
+      await player.save();
+      return { success: true, player };
+    } catch (error) {
+      console.error("Error in updateSingleplayerStats service:", error);
+      return {
+        success: false,
+        message: "Failed to update singleplayer stats.",
+      };
+    }
+  },
 };
 
 module.exports = ZombiesService;

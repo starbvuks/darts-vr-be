@@ -141,13 +141,28 @@ const playerSchema = new mongoose.Schema({
       highestPoints: { type: Number, default: 0 },
     },
     zombiesStats: {
-      totalZombiesGamesPlayed: { type: Number, default: 0 },
-      highestWave: { type: Number, default: 0 },
-      zombiesKilled: { type: Number, default: 0 },
-      highestPoints: { type: Number, default: 0 },
-      headshots: { type: Number, default: 0 },
-      bodyshots: { type: Number, default: 0 },
-      legShots: { type: Number, default: 0 },
+      single: {
+        totalZombiesGamesPlayed: { type: Number, default: 0 },
+        totalZombiesGamesWon: { type: Number, default: 0 },
+        highestWave: { type: Number, default: 0 },
+        zombiesKilled: { type: Number, default: 0 },
+        highestPoints: { type: Number, default: 0 },
+        headshots: { type: Number, default: 0 },
+        bodyshots: { type: Number, default: 0 },
+        legShots: { type: Number, default: 0 },
+        totalDartsThrown: { type: Number, default: 0 }
+      },
+      multi: {
+        totalZombiesGamesPlayed: { type: Number, default: 0 },
+        totalZombiesGamesWon: { type: Number, default: 0 },
+        highestWave: { type: Number, default: 0 },
+        zombiesKilled: { type: Number, default: 0 },
+        highestPoints: { type: Number, default: 0 },
+        headshots: { type: Number, default: 0 },
+        bodyshots: { type: Number, default: 0 },
+        legShots: { type: Number, default: 0 },
+        totalDartsThrown: { type: Number, default: 0 }
+      }
     },
     fiveOhOneStats: {
       single: {

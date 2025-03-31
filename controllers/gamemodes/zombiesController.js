@@ -185,6 +185,26 @@ const ZombiesController = {
       res.status(500).json({ success: false, message: "Server error" });
     }
   },
+
+  updateSingleplayerStats: async (req, res) => {
+    try {
+      const { playerId, playerStats } = req.body;
+      
+      const result = await ZombiesService.updateSingleplayerStats(
+        playerId,
+        playerStats
+      );
+
+      if (!result.success) {
+        return res.status(400).json(result);
+      }
+
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Error in updateSingleplayerStats controller:", error);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  },
 };
 
 module.exports = ZombiesController;

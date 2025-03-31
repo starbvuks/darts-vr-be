@@ -144,7 +144,6 @@ app.post("/api/friends/search", (req, res) => {
   friendsController.searchFriends(req, res, wss);
 });
 
-
 const port = 3000;
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });

@@ -14,6 +14,9 @@ router.post("/api/zombies/join", ZombiesController.joinInvitedMatch);
 router.patch("/api/zombies/update", ZombiesController.updateMatchStats);
 router.get("/api/zombies/get-match/:matchId", ZombiesController.getMatch);
 router.post("/api/zombies/close-match", ZombiesController.closeMatch);
+app.post("/api/zombies/update-sp", (req, res) => {
+  zombiesController.updateSingleplayerStats(req, res);
+});
 
 // Killstreak Routes
 router.post(
@@ -25,6 +28,9 @@ router.patch("/api/killstreak/update", KillstreakController.updateMatchStats);
 router.post("/api/killstreak/end-match", KillstreakController.endMatch);
 router.get("/api/killstreak/get-match/:matchId", KillstreakController.getMatch);
 router.post("/api/killstreak/close-match", KillstreakController.closeMatch);
+app.post("/api/killstreak/update-sp", (req, res) => {
+  killstreakController.updateSingleplayerStats(req, res);
+});
 
 // 501 Routes
 router.post("/api/501/create-private", FiveOhOneController.createPrivateMatch);

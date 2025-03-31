@@ -306,6 +306,37 @@ const KillstreakService = {
       return { success: false, message: "Failed to create rematch." };
     }
   },
+
+  updateSingleplayerStats: async (playerId, playerStats) => {
+    try {
+      const player = await Player.findById(playerId);
+      if (!player) {
+        return { success: false, message: "Player not found." };
+      }
+
+      // Update overall stats
+      player.stats.totalDartsThrown += playerStats.dartsThrown || 0;
+      player.stats.totalDartsHit += playerStats.dartsThrown || 0; // In Killstreak, all throws are hits
+
+      // Update Killstreak-specific stats for singleplayer
+      player.stats.killstreakStats.single.totalKillstreakGamesPlayed += 1;
+      player.stats.killstreakStats.single.totalKillstreakGamesWon += 1;
+      player.stats.killstreakStats.single.highestStreak = Math.max(
+        player.stats.killstreakStats.single.highestStreak,
+        playerStats.streak || 0
+      );
+      player.stats.killstreakStats.single.totalDartsThrown += playerStats.dartsThrown || 0;
+
+      await player.save();
+      return { success: true, player };
+    } catch (error) {
+      console.error("Error in updateSingleplayerStats service:", error);
+      return {
+        success: false,
+        message: "Failed to update singleplayer stats.",
+      };
+    }
+  },
 };
 
 module.exports = KillstreakService;
