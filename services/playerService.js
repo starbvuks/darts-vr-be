@@ -4,7 +4,7 @@ const Cosmetics = require("../models/Cosmetics");
 const FiveOhOne = require("../models/Game/FiveOhOne");
 
 class PlayerService {
-  async getUserProfile(req, res) {
+  async getUserProfile(userId) {
     return await Player.findById(userId).exec();
   }
 
