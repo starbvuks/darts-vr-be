@@ -5,10 +5,7 @@ const FiveOhOne = require("../models/Game/FiveOhOne");
 
 class PlayerService {
   async getUserProfile(req, res) {
-      const userId = req.userId;
-      const player = await Player.findById(userId).exec();
-      res.json(player);
-    
+    return await Player.findById(userId).exec();
   }
 
   async getUsersProfiles(userIds) {
