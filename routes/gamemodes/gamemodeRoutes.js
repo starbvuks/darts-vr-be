@@ -15,7 +15,7 @@ router.patch("/api/zombies/update", ZombiesController.updateMatchStats);
 router.get("/api/zombies/get-match/:matchId", ZombiesController.getMatch);
 router.post("/api/zombies/close-match", ZombiesController.closeMatch);
 router.post("/api/zombies/update-sp", (req, res) => {
-  zombiesController.updateSingleplayerStats(req, res);
+  ZombiesController.updateSingleplayerStats(req, res);
 });
 
 // Killstreak Routes
@@ -29,7 +29,7 @@ router.post("/api/killstreak/end-match", KillstreakController.endMatch);
 router.get("/api/killstreak/get-match/:matchId", KillstreakController.getMatch);
 router.post("/api/killstreak/close-match", KillstreakController.closeMatch);
 router.post("/api/killstreak/update-sp", (req, res) => {
-  killstreakController.updateSingleplayerStats(req, res);
+  KillstreakController.updateSingleplayerStats(req, res);
 });
 
 // 501 Routes
