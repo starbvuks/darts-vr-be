@@ -1,6 +1,7 @@
 const friendsService = require("../services/friendsService");
 const authService = require("../services/auth/authService");
 const webSocketHandler = require("../sockets/websockets");
+const gameSockets = require("../sockets/gameSockets");
 
 exports.sendFriendRequest = async (req, res, wss) => {
   authService.validateJwt(req, res, async () => {
@@ -279,6 +280,28 @@ exports.searchFriends = async (req, res) => {
       return res
         .status(500)
         .json({ success: false, message: "Failed to search for friends." });
+    }
+  });
+};
+
+exports.notifyLobbyCreated = async (req, res, wss) => {
+  authService.validateJwt(req, res, async () => {
+    const { lobbyId, playerIds } = req.body;
+    
+    try {
+      // Validate player IDs
+      const playersExist = await friendsService.validatePlayersExist(playerIds);
+      if (!playersExist) {
+        return res.status(400).json({ error: "One or more players not found" });
+      }
+
+      // Send socket notifications
+      gameSockets.handleLobbyCreatedNotification(playerIds, lobbyId, wss);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error notifying lobby creation:", error);
+      res.status(500).json({ message: "Failed to notify lobby creation" });
     }
   });
 };

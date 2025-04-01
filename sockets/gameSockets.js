@@ -2,6 +2,25 @@
 const { WebSocket } = require("ws");
 
 module.exports = {
+  handleLobbyCreatedNotification: (playerIds, lobbyId, wss) => {
+    const message = JSON.stringify({
+      type: "lobby_created",
+      lobbyId
+    });
+
+    playerIds.forEach(playerId => {
+      wss.clients.forEach(client => {
+        if (
+          client.userId === playerId &&
+          client.readyState === WebSocket.OPEN
+        ) {
+          console.log(`Sent lobby created message to player ${playerId}`);
+          client.send(message);
+        }
+      });
+    });
+  },
+  
   handleMatchCreatedNotification: (message, wss) => {  
     const { numPlayers, matchType, matchId, players } = JSON.parse(message);
 

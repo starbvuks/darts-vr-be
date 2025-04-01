@@ -143,6 +143,9 @@ app.post("/api/friends/unblock-player", (req, res) => {
 app.post("/api/friends/search", (req, res) => {
   friendsController.searchFriends(req, res, wss);
 });
+app.post("/api/friends/notify-lobby", (req, res) => {
+  friendsController.notifyLobbyCreated(req, res, wss);
+});
 
 const port = 3000;
 const server = http.createServer(app);
