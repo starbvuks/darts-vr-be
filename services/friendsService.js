@@ -410,12 +410,12 @@ async function searchUsers(searchParam) {
   }
 }
 
-async function validatePlayersExist(playerIds) {
+async function validatePlayerExists(playerId) {
   try {
-    const players = await Player.find({ _id: { $in: playerIds } });
-    return players.length === playerIds.length;
+    const player = await Player.findById(playerId);
+    return !!player;
   } catch (error) {
-    console.error("Error validating players:", error);
+    console.error("Error validating player:", error);
     throw error;
   }
 }
@@ -430,5 +430,5 @@ module.exports = {
   unblockPlayer,
   updatePlayerStatus,
   searchUsers,
-  validatePlayersExist
+  validatePlayerExists
 };

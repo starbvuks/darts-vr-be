@@ -286,17 +286,17 @@ exports.searchFriends = async (req, res) => {
 
 exports.notifyLobbyCreated = async (req, res, wss) => {
   authService.validateJwt(req, res, async () => {
-    const { lobbyId, playerIds } = req.body;
+    const { lobbyId, playerId } = req.body;
     
     try {
-      // Validate player IDs
-      const playersExist = await friendsService.validatePlayersExist(playerIds);
-      if (!playersExist) {
-        return res.status(400).json({ error: "One or more players not found" });
+      // Validate player ID
+      const playerExists = await friendsService.validatePlayerExists(playerId);
+      if (!playerExists) {
+        return res.status(400).json({ error: "Player not found" });
       }
 
-      // Send socket notifications
-      gameSockets.handleLobbyCreatedNotification(playerIds, lobbyId, wss);
+      // Send socket notification
+      gameSockets.handleLobbyCreatedNotification(playerId, lobbyId, wss);
       
       res.json({ success: true });
     } catch (error) {
