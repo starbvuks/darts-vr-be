@@ -451,20 +451,22 @@ const LeagueService = {
         return { success: false, message: "Matchup not found." };
       }
 
-      let playerStats, opponentStats;
+      let winningPlayerStats, losingPlayerStats;
+      let isPlayer1Winner = false;
 
       if (matchup.player1Id.equals(playerId)) {
-        playerStats = matchup.player1Stats;
-        opponentStats = matchup.player2Stats;
+        winningPlayerStats = matchup.player1Stats;
+        losingPlayerStats = matchup.player2Stats;
+        isPlayer1Winner = true;
       } else if (matchup.player2Id.equals(playerId)) {
-        playerStats = matchup.player2Stats;
-        opponentStats = matchup.player1Stats;
+        winningPlayerStats = matchup.player2Stats;
+        losingPlayerStats = matchup.player1Stats;
       } else {
         return { success: false, message: "Player not part of this matchup." };
       }
 
       // Ensure that legs won do not exceed the maximum allowed
-      if (playerStats.legsWon >= league.legs) {
+      if (winningPlayerStats.legsWon >= league.legs) {
         return {
           success: false,
           message:
@@ -472,19 +474,22 @@ const LeagueService = {
         };
       }
 
-      playerStats.legsWon += 1;
+      winningPlayerStats.legsWon += 1;
 
       await league.save();
 
-      return {
+      // Construct response based on player1/player2 roles
+      const response = {
         success: true,
-        playerLegsWon: playerStats.legsWon,
-        opponentLegsWon: opponentStats.legsWon,
         leagueLegs: league.legs,
-        playerSetsWon: playerStats.setsWon,
-        opponentSetsWon: opponentStats.setsWon,
         leagueSets: league.sets,
+        player1LegsWon: isPlayer1Winner ? winningPlayerStats.legsWon : losingPlayerStats.legsWon,
+        player2LegsWon: isPlayer1Winner ? losingPlayerStats.legsWon : winningPlayerStats.legsWon,
+        player1SetsWon: isPlayer1Winner ? winningPlayerStats.setsWon : losingPlayerStats.setsWon,
+        player2SetsWon: isPlayer1Winner ? losingPlayerStats.setsWon : winningPlayerStats.setsWon,
       };
+
+      return response;
     } catch (error) {
       console.error("Error updating legs won:", error);
       return { success: false, message: "Failed to update legs won." };
@@ -503,20 +508,22 @@ const LeagueService = {
         return { success: false, message: "Matchup not found." };
       }
 
-      let playerStats, opponentStats;
+      let winningPlayerStats, losingPlayerStats;
+      let isPlayer1Winner = false;
 
       if (matchup.player1Id.equals(playerId)) {
-        playerStats = matchup.player1Stats;
-        opponentStats = matchup.player2Stats;
+        winningPlayerStats = matchup.player1Stats;
+        losingPlayerStats = matchup.player2Stats;
+        isPlayer1Winner = true;
       } else if (matchup.player2Id.equals(playerId)) {
-        playerStats = matchup.player2Stats;
-        opponentStats = matchup.player1Stats;
+        winningPlayerStats = matchup.player2Stats;
+        losingPlayerStats = matchup.player1Stats;
       } else {
         return { success: false, message: "Player not part of this matchup." };
       }
 
       // Ensure that sets won do not exceed the maximum allowed
-      if (playerStats.setsWon >= league.sets) {
+      if (winningPlayerStats.setsWon >= league.sets) {
         return {
           success: false,
           message:
@@ -524,24 +531,27 @@ const LeagueService = {
         };
       }
 
-      // Increment the set count for the player
-      playerStats.setsWon += 1;
+      // Increment the set count for the winning player
+      winningPlayerStats.setsWon += 1;
 
       // Reset legs for both players
-      playerStats.legsWon = 0;
-      opponentStats.legsWon = 0;
+      winningPlayerStats.legsWon = 0;
+      losingPlayerStats.legsWon = 0;
 
       await league.save();
 
-      return {
+      // Construct response based on player1/player2 roles
+      const response = {
         success: true,
-        playerLegsWon: playerStats.legsWon,
-        opponentLegsWon: opponentStats.legsWon,
         leagueLegs: league.legs,
-        playerSetsWon: playerStats.setsWon,
-        opponentSetsWon: opponentStats.setsWon,
         leagueSets: league.sets,
+        player1LegsWon: isPlayer1Winner ? winningPlayerStats.legsWon : losingPlayerStats.legsWon,
+        player2LegsWon: isPlayer1Winner ? losingPlayerStats.legsWon : winningPlayerStats.legsWon,
+        player1SetsWon: isPlayer1Winner ? winningPlayerStats.setsWon : losingPlayerStats.setsWon,
+        player2SetsWon: isPlayer1Winner ? losingPlayerStats.setsWon : winningPlayerStats.setsWon,
       };
+
+      return response;
     } catch (error) {
       console.error("Error updating sets won:", error);
       return { success: false, message: "Failed to update sets won." };
