@@ -14,7 +14,7 @@ const KillstreakSchema = new mongoose.Schema({
   gamemode: { type: String, default: "Killstreak" },  
   matchType: {
     type: String,
-    enum: ["solo", "private-2p"],
+    enum: ["solo", "private-2p", "multiplayer"],
     required: true
   },
   status: {

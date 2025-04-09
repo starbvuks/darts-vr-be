@@ -109,7 +109,7 @@ const MatchmakingService = {
           // Remove the duplicate player from the queue
           await RedisService.removePlayersFromQueue(queueName, 1);
           console.error(
-            "Error in joinZombiesQueue: same player canot be added twice",
+            "Error in joinKillstreakQueue: same player canot be added twice",
           );
           return { error: "Cannot match the same player twice" };
         }

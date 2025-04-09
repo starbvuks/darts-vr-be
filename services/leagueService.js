@@ -451,12 +451,14 @@ const LeagueService = {
         return { success: false, message: "Matchup not found." };
       }
 
-      let playerStats;
+      let playerStats, opponentStats;
 
       if (matchup.player1Id.equals(playerId)) {
         playerStats = matchup.player1Stats;
+        opponentStats = matchup.player2Stats;
       } else if (matchup.player2Id.equals(playerId)) {
         playerStats = matchup.player2Stats;
+        opponentStats = matchup.player1Stats;
       } else {
         return { success: false, message: "Player not part of this matchup." };
       }
@@ -477,8 +479,10 @@ const LeagueService = {
       return {
         success: true,
         playerLegsWon: playerStats.legsWon,
+        opponentLegsWon: opponentStats.legsWon,
         leagueLegs: league.legs,
         playerSetsWon: playerStats.setsWon,
+        opponentSetsWon: opponentStats.setsWon,
         leagueSets: league.sets,
       };
     } catch (error) {
@@ -532,8 +536,10 @@ const LeagueService = {
       return {
         success: true,
         playerLegsWon: playerStats.legsWon,
+        opponentLegsWon: opponentStats.legsWon,
         leagueLegs: league.legs,
         playerSetsWon: playerStats.setsWon,
+        opponentSetsWon: opponentStats.setsWon,
         leagueSets: league.sets,
       };
     } catch (error) {
